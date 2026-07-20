@@ -34,6 +34,7 @@ export class NewIngredientView extends ItemView {
 
 		this.root.render(
 			<IngredientForm
+				app={this.app}
 				onSubmit={(values) => this.handleSubmit(values)}
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}

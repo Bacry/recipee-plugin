@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
-import { IngredientDetails } from '../components/IngredientDetails';
+import { IngredientViewContainer } from '../components/IngredientViewContainer';
 import { parseIngredientFromFrontmatter } from '../models/parseIngredientFromFrontmatter';
 import type MyPlugin from '../main';
 
@@ -25,6 +25,7 @@ export class IngredientView extends ItemView {
 	}
 
 	getDisplayText(): string {
+		// Dynamic tab title: show the file name once we know it, fallback otherwise.
 		if (!this.filePath) return 'Ingredient';
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
 		return file instanceof TFile ? file.basename : 'Ingredient';
@@ -32,7 +33,7 @@ export class IngredientView extends ItemView {
 
 	async setState(state: IngredientViewState, result: unknown) {
 		this.filePath = state.filePath;
-		this.leaf.updateHeader();
+		this.leaf.updateHeader(); // force Obsidian to re-call getDisplayText()
 		this.render();
 		return super.setState(state, result as never);
 	}
@@ -63,6 +64,8 @@ export class IngredientView extends ItemView {
 
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 
+		// Validate + parse raw frontmatter into a typed, trustworthy Ingredient object.
+		// If errors is non-empty, ingredient is guaranteed to be null (see parseIngredientFromFrontmatter contract).
 		const { ingredient, errors, warnings } = parseIngredientFromFrontmatter(
 			frontmatter,
 			file.basename,
@@ -71,6 +74,7 @@ export class IngredientView extends ItemView {
 		);
 
 		if (errors.length > 0) {
+			// Blocking errors: never attempt to render IngredientDetails with invalid data.
 			this.root.render(
 				<div>
 					<h4>Cette note contient des erreurs :</h4>
@@ -85,24 +89,32 @@ export class IngredientView extends ItemView {
 		}
 
 		this.root.render(
-			<div>
-				{warnings.length > 0 && (
-					<ul className="ingredient-validation-warnings">
-						{warnings.map((warning, index) => (
-							<li key={index}>{warning}</li>
-						))}
-					</ul>
-				)}
-				<IngredientDetails
-					name={ingredient!.name}
-					type={ingredient!.type}
-					shopSection={ingredient!.shop_section}
-					densityGMl={ingredient!.density_g_ml}
-					entityWeightG={ingredient!.entity_weight_g}
-					possibleForms={ingredient!.possible_forms}
-					nutrition={ingredient!.nutrition_per_100g}
-				/>
-			</div>
+			<IngredientViewContainer
+				app={this.app}
+				file={file}
+				ingredient={ingredient!}
+				warnings={warnings}
+				ingredientTypes={this.plugin.settings.ingredientTypes}
+				shopSections={this.plugin.settings.shopSections}
+				usdaApiKey={this.plugin.settings.usdaApiKey}
+			/>
+		);
+	}
+
+	async onOpen() {
+		const container = this.containerEl.children[1];
+		this.root = createRoot(container);
+		this.render();
+
+		// Re-render whenever Obsidian finishes re-parsing a file's metadata —
+		// this fires after app.vault.modify() completes and the cache is truly up to date,
+		// which is more reliable than calling render() immediately after modify().
+		this.registerEvent(
+			this.app.metadataCache.on('changed', (file) => {
+				if (file.path === this.filePath) {
+					this.render();
+				}
+			})
 		);
 	}
 
@@ -110,3 +122,5 @@ export class IngredientView extends ItemView {
 		this.root?.unmount();
 	}
 }
+
+

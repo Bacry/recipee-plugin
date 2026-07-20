@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { NutritionPer100g } from '../models/Ingredient';
 import { searchUsda, UsdaResult } from '../services/usda';
 import { translateToEnglish } from '../services/translate';
+import { ErrorModal } from './ErrorModal';
+import { App } from 'obsidian';
 
 export interface IngredientFormValues {
 	name: string;
@@ -15,10 +17,14 @@ export interface IngredientFormValues {
 }
 
 interface IngredientFormProps {
+	app: App; // needed to open the native Obsidian error modal
 	onSubmit: (values: IngredientFormValues) => void;
 	ingredientTypes: string[];
 	shopSections: string[];
 	usdaApiKey: string;
+	initialValues?: IngredientFormValues;
+	submitLabel?: string;
+	onCancel?: () => void;
 }
 
 const emptyNutrition: NutritionPer100g = {
@@ -45,27 +51,81 @@ const nutritionLabels: Record<keyof NutritionPer100g, string> = {
 	cholesterol: 'Cholestérol (mg)',
 };
 
-export function IngredientForm({ onSubmit, ingredientTypes, shopSections, usdaApiKey }: IngredientFormProps) {
-	const [name, setName] = useState('');
-	const [nameEn, setNameEn] = useState('');
-	const [type, setType] = useState('');
-	const [shopSection, setShopSection] = useState('');
-	const [densityGMl, setDensityGMl] = useState('');
-	const [entityWeightG, setEntityWeightG] = useState('');
-	const [possibleForms, setPossibleForms] = useState('');
-	const [nutrition, setNutrition] = useState<NutritionPer100g>(emptyNutrition);
+const NUTRITION_KEYS = Object.keys(emptyNutrition) as (keyof NutritionPer100g)[];
+
+// Nutrition fields are edited as strings (like densityGMl/entityWeightG),
+// and only converted to numbers on submit. This avoids the NaN trap:
+// typing a letter no longer corrupts the field, it's just an invalid string
+// that gets caught by validation before submit.
+function nutritionToStrings(nutrition: NutritionPer100g): Record<keyof NutritionPer100g, string> {
+	const result = {} as Record<keyof NutritionPer100g, string>;
+	for (const key of NUTRITION_KEYS) {
+		result[key] = nutrition[key].toString();
+	}
+	return result;
+}
+
+export function IngredientForm({
+								   app,
+								   onSubmit,
+								   ingredientTypes,
+								   shopSections,
+								   usdaApiKey,
+								   initialValues,
+								   submitLabel = 'Créer l\'ingrédient',
+								   onCancel,
+							   }: IngredientFormProps) {
+	const [name, setName] = useState(initialValues?.name ?? '');
+	const [nameEn, setNameEn] = useState(initialValues?.nameEn ?? '');
+	const [type, setType] = useState(initialValues?.type ?? '');
+	const [shopSection, setShopSection] = useState(initialValues?.shopSection ?? '');
+	const [densityGMl, setDensityGMl] = useState(initialValues?.densityGMl ?? '');
+	const [entityWeightG, setEntityWeightG] = useState(initialValues?.entityWeightG ?? '');
+	const [possibleForms, setPossibleForms] = useState(initialValues?.possibleForms ?? '');
+	const [nutritionInputs, setNutritionInputs] = useState<Record<keyof NutritionPer100g, string>>(
+		nutritionToStrings(initialValues?.nutrition ?? emptyNutrition)
+	);
 	const [searchResults, setSearchResults] = useState<UsdaResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	const searchRequestId = useRef(0);
 
+	// Just store the raw string as typed — no Number() conversion here anymore.
 	function updateNutritionField(field: keyof NutritionPer100g, value: string) {
-		setNutrition((prev) => ({ ...prev, [field]: Number(value) }));
+		setNutritionInputs((prev) => ({ ...prev, [field]: sanitizeNumericInput(value) }));
 	}
 
 	function handleSubmit() {
-		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, possibleForms, nutrition });
+		const errors: string[] = [];
+
+		if (name.trim() === '') {
+			errors.push('Le nom est obligatoire.');
+		}
+		if (type.trim() === '') {
+			errors.push('Le type est obligatoire.');
+		}
+		if (shopSection.trim() === '') {
+			errors.push('Le rayon est obligatoire.');
+		}
+
+		const parsedNutrition = {} as NutritionPer100g;
+		for (const key of NUTRITION_KEYS) {
+			const raw = nutritionInputs[key];
+			const value = Number(raw);
+			if (raw.trim() === '' || Number.isNaN(value)) {
+				errors.push(`"${nutritionLabels[key]}" n'est pas un nombre valide.`);
+			} else {
+				parsedNutrition[key] = value;
+			}
+		}
+
+		if (errors.length > 0) {
+			new ErrorModal(app, errors).open();
+			return;
+		}
+
+		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, possibleForms, nutrition: parsedNutrition });
 	}
 
 	async function runSearch(query: string) {
@@ -126,21 +186,30 @@ export function IngredientForm({ onSubmit, ingredientTypes, shopSections, usdaAp
 	function handleNameEnBlur() {
 		runSearch(nameEn);
 	}
+
+	// Fills nutrition fields from a USDA result — converts numbers to strings
+	// since nutritionInputs is now string-based.
 	function applyResult(index: number) {
 		const result = searchResults[index];
-		setNutrition({
-			kcal: result.kcal ?? 0,
-			lipids: result.lipids ?? 0,
-			non_saturated_lipids: (result.lipids ?? 0) - (result.saturatedLipids ?? 0),
-			glucids: result.glucids ?? 0,
-			sugar: result.sugar ?? 0,
-			proteins: result.proteins ?? 0,
-			salt: result.salt ?? 0,
-			fibers: result.fibers ?? 0,
-			cholesterol: result.cholesterol ?? 0,
+		setNutritionInputs({
+			kcal: (result.kcal ?? 0).toString(),
+			lipids: (result.lipids ?? 0).toString(),
+			non_saturated_lipids: ((result.lipids ?? 0) - (result.saturatedLipids ?? 0)).toString(),
+			glucids: (result.glucids ?? 0).toString(),
+			sugar: (result.sugar ?? 0).toString(),
+			proteins: (result.proteins ?? 0).toString(),
+			salt: (result.salt ?? 0).toString(),
+			fibers: (result.fibers ?? 0).toString(),
+			cholesterol: (result.cholesterol ?? 0).toString(),
 		});
 		setSelectedIndex(index);
 		setIsPopupOpen(false);
+	}
+
+	// Strips any character that isn't a digit or a dot, so numeric fields
+// can never contain letters or invalid symbols while typing.
+	function sanitizeNumericInput(value: string): string {
+		return value.replace(/[^0-9.]/g, '');
 	}
 
 	return (
@@ -236,13 +305,12 @@ export function IngredientForm({ onSubmit, ingredientTypes, shopSections, usdaAp
 
 					<div className="ingredient-form-field">
 						<label>Densité (g/mL)</label>
-						<input value={densityGMl} onChange={(e) => setDensityGMl(e.target.value)} />
+						<input value={densityGMl} onChange={(e) => setDensityGMl(sanitizeNumericInput(e.target.value))} />
 					</div>
 
 					<div className="ingredient-form-field">
 						<label>Poids unitaire (g)</label>
-						<input value={entityWeightG} onChange={(e) => setEntityWeightG(e.target.value)} />
-					</div>
+						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />					</div>
 				</div>
 
 				<div className="ingredient-form-field">
@@ -259,11 +327,11 @@ export function IngredientForm({ onSubmit, ingredientTypes, shopSections, usdaAp
 				<h4>Valeurs nutritionnelles (pour 100g)</h4>
 
 				<div className="ingredient-form-grid-nutrition">
-					{(Object.keys(emptyNutrition) as (keyof NutritionPer100g)[]).map((field) => (
+					{NUTRITION_KEYS.map((field) => (
 						<div className="ingredient-form-field" key={field}>
 							<label>{nutritionLabels[field]}</label>
 							<input
-								value={nutrition[field]}
+								value={nutritionInputs[field]}
 								onChange={(e) => updateNutritionField(field, e.target.value)}
 							/>
 						</div>
@@ -271,7 +339,17 @@ export function IngredientForm({ onSubmit, ingredientTypes, shopSections, usdaAp
 				</div>
 			</section>
 
-			<button className="ingredient-form-submit" onClick={handleSubmit}>Créer l'ingrédient</button>
+			<div className="ingredient-form-actions">
+				<button
+					className="ingredient-form-submit"
+					onClick={(e) => {
+						handleSubmit();
+						e.currentTarget.blur();
+					}}
+				>
+					{submitLabel}
+				</button>
+			</div>
 		</div>
 	);
 }

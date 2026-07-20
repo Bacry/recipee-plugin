@@ -8,6 +8,7 @@ interface IngredientDetailsProps {
 	entityWeightG?: number;
 	possibleForms?: string[];
 	nutrition: NutritionPer100g;
+	onEdit: () => void; // renders the "Modifier" button next to the name
 }
 
 export function IngredientDetails({
@@ -18,10 +19,14 @@ export function IngredientDetails({
 									  entityWeightG,
 									  possibleForms,
 									  nutrition,
+									  onEdit,
 								  }: IngredientDetailsProps) {
 	return (
 		<div>
-			<h2>{name}</h2>
+			<div className="ingredient-details-header">
+				<h2>{name}</h2>
+				<button onClick={onEdit}>Modifier</button>
+			</div>
 			<p>Type : {type}</p>
 			<p>Rayon : {shopSection}</p>
 			{densityGMl != null && <p>Densité : {densityGMl} g/mL</p>}

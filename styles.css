@@ -185,3 +185,24 @@
 	margin-bottom: 1rem;
 	font-size: 0.85rem;
 }
+
+.ingredient-details-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.ingredient-form-actions {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.ingredient-form-errors {
+	background: var(--background-modifier-error);
+	color: var(--text-error);
+	border-radius: 4px;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+}

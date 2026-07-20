@@ -3,7 +3,7 @@
 ## Project overview
 
 - Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
-- Entry point: `src/main.ts` compiled to `main.js` and loaded by Obsidian.
+- Entry point: `src/main.tsx` compiled to `main.js` and loaded by Obsidian.
 - Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
 
 ## Environment & tooling
@@ -41,12 +41,12 @@ npm run build
 
 ## File & folder conventions
 
-- **Organize code into multiple files**: Split functionality across separate modules rather than putting everything in `main.ts`.
-- Source lives in `src/`. Keep `main.ts` small and focused on plugin lifecycle (loading, unloading, registering commands).
+- **Organize code into multiple files**: Split functionality across separate modules rather than putting everything in `main.tsx`.
+- Source lives in `src/`. Keep `main.tsx` small and focused on plugin lifecycle (loading, unloading, registering commands).
 - **Example file structure**:
     ```
     src/
-      main.ts           # Plugin entry point, lifecycle management
+      main.tsx           # Plugin entry point, lifecycle management
       settings.ts       # Settings interface and defaults
       commands/         # Command implementations
         command1.ts
@@ -130,7 +130,7 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
 ## Coding conventions
 
 - TypeScript with `"strict": true` preferred.
-- **Keep `main.ts` minimal**: Focus only on plugin lifecycle (onload, onunload, addCommand calls). Delegate all feature logic to separate modules.
+- **Keep `main.tsx` minimal**: Focus only on plugin lifecycle (onload, onunload, addCommand calls). Delegate all feature logic to separate modules.
 - **Split large files**: If any file exceeds ~200-300 lines, consider breaking it into smaller, focused modules.
 - **Use clear module boundaries**: Each file should have a single, well-defined responsibility.
 - Bundle everything into `main.js` (no unbundled runtime deps).
@@ -162,7 +162,7 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
 
 ### Organize code across multiple files
 
-**main.ts** (minimal, lifecycle only):
+**main.tsx** (minimal, lifecycle only):
 
 ```ts
 import { Plugin } from 'obsidian';

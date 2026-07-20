@@ -1,8 +1,187 @@
-/*
+.workspace-leaf-content[data-type="ingredient-view"] .view-header-title {
+	display: none;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.workspace-leaf-content[data-type="ingredient-view"] table {
+	border-collapse: collapse;
+	width: 100%;
+}
 
-If your plugin does not need CSS, delete this file.
+.workspace-leaf-content[data-type="ingredient-view"] table td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 4px 8px;
+}
 
-*/
+.ingredient-form {
+	max-width: 640px;
+	padding: 1rem;
+}
+
+.ingredient-form-section {
+	margin-bottom: 1.5rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.ingredient-form-section h4 {
+	margin-bottom: 0.75rem;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.ingredient-form-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.75rem 1rem;
+}
+
+.ingredient-form-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 0.75rem;
+}
+
+.ingredient-form-field label {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+}
+
+.ingredient-form-field input,
+.ingredient-form-field select {
+	padding: 0.4rem 0.6rem;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.ingredient-form-submit {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 4px;
+	padding: 0.6rem 1.2rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ingredient-form-submit:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.usda-search-wrapper {
+	position: relative;
+}
+.usda-popup {
+	margin-top: 4px;
+}
+
+.usda-popup-summary {
+	width: 100%;
+	text-align: left;
+	padding: 0.4rem 0.6rem;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	cursor: pointer;
+}
+
+.usda-popup-summary:hover {
+	background: var(--background-modifier-hover);
+}
+
+.usda-popup-empty {
+	display: block;
+	padding: 0.4rem 0.6rem;
+	color: var(--text-faint);
+	font-style: italic;
+	font-size: 0.85rem;
+}
+
+.usda-popup-list {
+	list-style: none;
+	margin: 2px 0 0 0;
+	padding: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+.usda-popup-list li {
+	padding: 0.4rem 0.6rem;
+	cursor: pointer;
+}
+
+.usda-popup-list li:hover {
+	background: var(--background-modifier-hover);
+}
+
+.ingredient-form-grid-nutrition {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.5rem 0.75rem;
+}
+
+.usda-search-row {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.usda-search-row input {
+	flex: 1;
+}
+
+.usda-search-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.2rem;
+	height: 2.2rem;
+	flex-shrink: 0;
+	padding: 0;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	cursor: pointer;
+}
+
+.usda-search-button:hover {
+	background: var(--background-modifier-hover);
+}
+
+.usda-search-button:disabled {
+	cursor: default;
+	opacity: 0.7;
+}
+
+.usda-spinner {
+	width: 14px;
+	height: 14px;
+	border: 2px solid var(--background-modifier-border);
+	border-top-color: var(--interactive-accent);
+	border-radius: 50%;
+	animation: usda-spin 0.6s linear infinite;
+}
+
+@keyframes usda-spin {
+	to { transform: rotate(360deg); }
+}
+
+
+.ingredient-validation-error {
+	color: var(--text-error);
+}
+
+.ingredient-validation-warnings {
+	background: var(--background-modifier-error-hover);
+	border-radius: 4px;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+	font-size: 0.85rem;
+}

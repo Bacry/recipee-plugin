@@ -345,3 +345,8 @@
 	font-size: 1.3rem;
 	font-weight: 700;
 }
+
+.recipe-servings-input {
+	width: 4rem;
+	text-align: center;
+}

@@ -8,6 +8,7 @@ export interface MyPluginSettings {
 	usdaApiKey: string;
 	shoppingListPath: string; // path to the single "Courses" note
 	otherItemsNotePath: string; // single note listing non-ingredient item names, used for autocomplete
+	recipesFolder: string; // folder where recipe notes are stored
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	usdaApiKey: '',
 	shoppingListPath: 'Courses.md',
 	otherItemsNotePath: 'Autres.md',
+	recipesFolder: 'Recettes',
 };
 export class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
@@ -39,6 +41,19 @@ export class SampleSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.ingredientsFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.ingredientsFolder = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Recipes folder')
+			.setDesc('Folder where your recipe notes are stored')
+			.addText((text) =>
+				text
+					.setPlaceholder('Recettes')
+					.setValue(this.plugin.settings.recipesFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.recipesFolder = value;
 						await this.plugin.saveSettings();
 					}),
 			);

@@ -7,6 +7,7 @@ import {
 import { IngredientView, INGREDIENT_VIEW_TYPE } from './views/IngredientView';
 import { NewIngredientView, NEW_INGREDIENT_VIEW_TYPE } from './views/NewIngredientView';
 import { ShoppingListView, SHOPPING_LIST_VIEW_TYPE } from './views/ShoppingListView';
+import { RecipeView, RECIPE_VIEW_TYPE } from './views/RecipeView';
 
 export default class MyPlugin extends Plugin {
 	settings!: MyPluginSettings;
@@ -23,6 +24,28 @@ export default class MyPlugin extends Plugin {
 			NEW_INGREDIENT_VIEW_TYPE,
 			(leaf: WorkspaceLeaf) => new NewIngredientView(leaf, this),
 		);
+
+		this.registerView(
+			RECIPE_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new RecipeView(leaf, this),
+		);
+
+		this.addCommand({
+			id: 'open-recipe-view',
+			name: 'Open recipe view for current note',
+			checkCallback: (checking: boolean) => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file) return false;
+
+				const folder = this.settings.recipesFolder;
+				if (!file.path.startsWith(folder + '/')) return false;
+
+				if (!checking) {
+					this.activateRecipeView(file.path);
+				}
+				return true;
+			},
+		});
 
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
@@ -89,6 +112,23 @@ export default class MyPlugin extends Plugin {
 			leaf = workspace.getLeaf(true);
 			await leaf.setViewState({ type: NEW_INGREDIENT_VIEW_TYPE, active: true });
 		}
+
+		workspace.revealLeaf(leaf);
+	}
+
+	async activateRecipeView(filePath: string) {
+		const { workspace } = this.app;
+		let leaf = workspace.getLeavesOfType(RECIPE_VIEW_TYPE)[0];
+
+		if (!leaf) {
+			leaf = workspace.getLeaf(true);
+		}
+
+		await leaf.setViewState({
+			type: RECIPE_VIEW_TYPE,
+			active: true,
+			state: { filePath },
+		});
 
 		workspace.revealLeaf(leaf);
 	}

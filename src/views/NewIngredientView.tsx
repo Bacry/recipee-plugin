@@ -3,6 +3,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { IngredientForm, IngredientFormValues } from '../components/IngredientForm';
 import { buildIngredientMarkdown } from '../models/buildIngredientMarkdown';
 import type MyPlugin from '../main';
+import { lowerFirstLetter } from '../models/textNormalize';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -44,24 +45,26 @@ export class NewIngredientView extends ItemView {
 	}
 
 	async handleSubmit(values: IngredientFormValues) {
-		if (values.name.trim() === '') {
+		const normalizedName = lowerFirstLetter(values.name.trim());
+
+		if (normalizedName === '') {
 			new Notice('Le nom est obligatoire.');
 			return;
 		}
 
 		const folder = this.plugin.settings.ingredientsFolder;
-		const path = `${folder}/${values.name}.md`;
+		const path = `${folder}/${normalizedName}.md`;
 
 		const existing = this.app.vault.getAbstractFileByPath(path);
 		if (existing) {
-			new Notice(`Un ingrédient "${values.name}" existe déjà.`);
+			new Notice(`Un ingrédient "${normalizedName}" existe déjà.`);
 			return;
 		}
 
-		const content = buildIngredientMarkdown(values);
+		const content = buildIngredientMarkdown({ ...values, name: normalizedName });
 		await this.app.vault.create(path, content);
 
-		new Notice(`Ingrédient "${values.name}" créé.`);
+		new Notice(`Ingrédient "${normalizedName}" créé.`);
 		this.leaf.detach();
 	}
 

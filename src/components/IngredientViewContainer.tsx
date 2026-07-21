@@ -79,6 +79,7 @@ export function IngredientViewContainer({
 				shopSection={ingredient.shop_section}
 				densityGMl={ingredient.density_g_ml}
 				entityWeightG={ingredient.entity_weight_g}
+				brand={ingredient.brand}
 				possibleForms={ingredient.possible_forms}
 				nutrition={ingredient.nutrition_per_100g}
 				onEdit={() => setIsEditing(true)}

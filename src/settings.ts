@@ -6,6 +6,8 @@ export interface MyPluginSettings {
 	shopSections: string[];
 	ingredientsFolder: string;
 	usdaApiKey: string;
+	shoppingListPath: string; // path to the single "Courses" note
+	otherItemsNotePath: string; // single note listing non-ingredient item names, used for autocomplete
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -13,6 +15,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	shopSections: ['dairy', 'fresh', 'frozen', 'bakery', 'pantry', 'produce', 'meat_fish', 'beverages', 'other'],
 	ingredientsFolder: 'Ingredients',
 	usdaApiKey: '',
+	shoppingListPath: 'Courses.md',
+	otherItemsNotePath: 'Autres.md',
 };
 export class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
@@ -72,6 +76,31 @@ export class SampleSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.usdaApiKey)
 					.onChange(async (value) => {
 						this.plugin.settings.usdaApiKey = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Shopping list note path')
+			.setDesc('Path to the single note used as your shopping list')
+			.addText((text) =>
+				text
+					.setPlaceholder('Courses.md')
+					.setValue(this.plugin.settings.shoppingListPath)
+					.onChange(async (value) => {
+						this.plugin.settings.shoppingListPath = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+		new Setting(containerEl)
+			.setName('Other items note path')
+			.setDesc('Single note listing non-ingredient item names, used to grow autocomplete over time')
+			.addText((text) =>
+				text
+					.setPlaceholder('Autres.md')
+					.setValue(this.plugin.settings.otherItemsNotePath)
+					.onChange(async (value) => {
+						this.plugin.settings.otherItemsNotePath = value;
 						await this.plugin.saveSettings();
 					}),
 			);

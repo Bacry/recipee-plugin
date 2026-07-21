@@ -12,6 +12,7 @@ export function ingredientToFormValues(ingredient: Ingredient): IngredientFormVa
 		densityGMl: ingredient.density_g_ml?.toString() ?? '',
 		entityWeightG: ingredient.entity_weight_g?.toString() ?? '',
 		possibleForms: ingredient.possible_forms?.join(', ') ?? '',
+		brand: ingredient.brand ?? '',
 		nutrition: ingredient.nutrition_per_100g,
 	};
 }

@@ -206,3 +206,142 @@
 	padding: 0.5rem 1rem;
 	margin-bottom: 1rem;
 }
+
+.shopping-list {
+	padding: 1rem; /* margin from the edges of the entire view */
+}
+
+.smart-shopping-input {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.5rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	margin-bottom: 1rem;
+}
+
+.smart-shopping-input input {
+	flex: 1;
+	border: none;
+	background: transparent;
+	color: var(--text-normal);
+}
+
+.smart-shopping-input {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.5rem 0.75rem;
+	background: var(--background-secondary); /* dark grey fill, adapts to the active theme */
+	border: 1px solid var(--background-modifier-border-hover); /* slightly lighter than the fill */
+	border-radius: 8px; /* rounded corners */
+	margin-bottom: 1rem;
+	line-height: 1.4;
+}
+.smart-shopping-input input,
+.smart-shopping-input span {
+	font: inherit; /* force the same font-size/line-height on both the input and the committed tokens,
+	                  so the box doesn't grow when a token appears next to the input */
+}
+
+.smart-shopping-input input {
+	flex: 1;
+	border: none;
+	background: transparent;
+	color: var(--text-normal);
+	padding: 0; /* remove default browser input padding, another common source of size mismatch */
+}
+
+.smart-shopping-input-wrapper {
+	position: relative;
+}
+
+.smart-shopping-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 100;
+	margin: 2px 0 0 0;
+	padding: 0;
+	list-style: none;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	box-shadow: var(--shadow-s);
+	max-height: 220px; /* roughly 10 items before scrolling kicks in */
+	overflow-y: auto;
+}
+
+.smart-shopping-suggestions li {
+	padding: 0.4rem 0.6rem;
+	cursor: pointer;
+}
+
+.smart-shopping-suggestion-highlighted {
+	background: var(--background-modifier-hover);
+}
+
+.shopping-list-section ul {
+	margin: 0 1rem 0rem 1rem; /* top: space below the section title, left: indent the items */
+	list-style: none;
+	padding: 0;
+}
+
+.shopping-list-section li {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end; /*  aligns text and buttons on their text baseline instead of vertical center */
+	gap: 0.5rem;
+	padding: 0.05rem 0; /* space above/below each line — increase for more air */
+	line-height: 1.1; /* height of the line itself — increase for taller lines */
+}
+
+.shopping-list-item-checked .shopping-list-item-text {
+	text-decoration: line-through;
+	color: var(--text-faint);
+}
+
+.shopping-list-item-text {
+	font-size: 1rem; /* size of the ingredient name/quantity text */
+	font-weight: 300; /* 400 = normal, 600 = semi-bold, 700 = bold */
+	color: var(--text-normal); /* or a fixed color like #ffffff */
+}
+
+.shopping-list-item-actions {
+	display: flex;
+	gap: 0.55rem;
+	flex-shrink: 0;
+}
+
+.shopping-list-item-actions button {
+	padding: 0rem 0.75rem; /* increase for bigger buttons, decrease for smaller */
+	font-size: 0.75rem; /* add this line to control the icon/text size inside */
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	cursor: pointer;
+	height: 1.2rem; /* explicitly override Obsidian's default button height */
+	min-height: unset; /* remove any inherited min-height that padding alone can't overcome */
+	border-radius: 4px;
+}
+
+.shopping-list-section h4 {
+	margin-bottom: .4rem; /* space between the section name and its list below */
+	line-height: 1.1; /* forces a tighter line height, independent of the browser's def
+	font-size: 1rem; /* adjust size here */
+	font-style: italic;
+	font-weight: 800; /* adjust boldness here */
+	color: #4db74d; /* adjust color here — try --text-muted for a softer look */
+}
+
+.shopping-list-section {
+	margin: 0rem;
+	margin-bottom: 1.2rem; /* space between one shop section block and the next */
+}
+
+.workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
+	font-size: 1.3rem;
+	font-weight: 700;
+}

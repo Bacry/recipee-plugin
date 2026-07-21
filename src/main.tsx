@@ -6,6 +6,7 @@ import {
 } from './settings';
 import { IngredientView, INGREDIENT_VIEW_TYPE } from './views/IngredientView';
 import { NewIngredientView, NEW_INGREDIENT_VIEW_TYPE } from './views/NewIngredientView';
+import { ShoppingListView, SHOPPING_LIST_VIEW_TYPE } from './views/ShoppingListView';
 
 export default class MyPlugin extends Plugin {
 	settings!: MyPluginSettings;
@@ -49,6 +50,19 @@ export default class MyPlugin extends Plugin {
 				this.activateNewIngredientView();
 			},
 		});
+
+		this.registerView(
+			SHOPPING_LIST_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new ShoppingListView(leaf, this),
+		);
+
+		this.addCommand({
+			id: 'open-shopping-list',
+			name: 'Open shopping list',
+			callback: () => {
+				this.activateShoppingListView();
+			},
+		});
 	}
 	async activateIngredientView(filePath: string) {
 		const { workspace } = this.app;
@@ -74,6 +88,18 @@ export default class MyPlugin extends Plugin {
 		if (!leaf) {
 			leaf = workspace.getLeaf(true);
 			await leaf.setViewState({ type: NEW_INGREDIENT_VIEW_TYPE, active: true });
+		}
+
+		workspace.revealLeaf(leaf);
+	}
+
+	async activateShoppingListView() {
+		const { workspace } = this.app;
+		let leaf = workspace.getLeavesOfType(SHOPPING_LIST_VIEW_TYPE)[0];
+
+		if (!leaf) {
+			leaf = workspace.getLeaf(true);
+			await leaf.setViewState({ type: SHOPPING_LIST_VIEW_TYPE, active: true });
 		}
 
 		workspace.revealLeaf(leaf);

@@ -42,12 +42,6 @@ export class IngredientView extends ItemView {
 		return { filePath: this.filePath };
 	}
 
-	async onOpen() {
-		const container = this.containerEl.children[1];
-		this.root = createRoot(container);
-		this.render();
-	}
-
 	render() {
 		if (!this.root) return;
 

@@ -1,0 +1,153 @@
+import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
+import { createRoot, Root } from 'react-dom/client';
+import { parseShoppingList } from '../models/parseShoppingList';
+import type MyPlugin from '../main';
+import { SmartShoppingInput } from '../components/SmartShoppingInput';
+import { addShoppingListItem } from '../models/addShoppingListItem';
+import { SmartInputResult } from '../components/SmartShoppingInput';
+import { ShoppingListDisplay, ResolvedItem } from '../components/ShoppingListDisplay';
+import { aggregateContributions } from '../models/aggregateContributions';
+import { resolveShopSection, getIngredientDensityInfo } from '../models/resolveShopSection';
+import { toggleShoppingListItemChecked, deleteShoppingListItem } from '../models/updateShoppingListItem';
+import { setOtherItemShopSection } from '../models/otherItemsNote';
+import { ShoppingListItem } from '../models/ShoppingList';
+import { showShopSectionMenu } from '../components/showShopSectionMenu';
+
+export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
+
+export class ShoppingListView extends ItemView {
+	private plugin: MyPlugin;
+	private root: Root | null = null;
+	private currentItems: ShoppingListItem[] = []; // kept in sync on every render, so action handlers (like handleSetSection) can look up an item by id
+
+	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
+		super(leaf);
+		this.plugin = plugin;
+	}
+
+	getViewType(): string {
+		return SHOPPING_LIST_VIEW_TYPE;
+	}
+
+	getDisplayText(): string {
+		return 'Courses';
+	}
+
+	async onOpen() {
+		const container = this.containerEl.children[1];
+		this.root = createRoot(container);
+
+		// Make sure the shopping list note exists before we try to read it.
+		const path = this.plugin.settings.shoppingListPath;
+		let file = this.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile)) {
+			file = await this.app.vault.create(path, '---\nitems: []\n---\n');
+		}
+
+		// Re-render whenever the shopping list note is modified elsewhere
+		// (e.g. once we wire in the add-item form later).
+		this.registerEvent(
+			this.app.metadataCache.on('changed', (changedFile) => {
+				const shoppingListPath = this.plugin.settings.shoppingListPath;
+				const otherItemsPath = this.plugin.settings.otherItemsNotePath;
+
+				// Re-render on changes to either file: the shopping list itself,
+				// or the "Autres" note (e.g. after tagging a shop section via the menu).
+				if (changedFile.path === shoppingListPath || changedFile.path === otherItemsPath) {
+					this.render();
+				}
+			})
+		);
+
+		this.render();
+	}
+	async handleAddItem(entry: SmartInputResult) {
+		await addShoppingListItem(this.app, this.plugin.settings.shoppingListPath, entry);
+		// No manual render() call needed here — the metadataCache 'changed' listener
+		// registered in onOpen() will pick up the file modification and refresh the view.
+	}
+	async handleToggleChecked(itemId: string) {
+		await toggleShoppingListItemChecked(this.app, this.plugin.settings.shoppingListPath, itemId);
+	}
+
+	async handleDelete(itemId: string) {
+		await deleteShoppingListItem(this.app, this.plugin.settings.shoppingListPath, itemId);
+	}
+
+// Placeholder — actual "set section" popup logic
+	handleSetSection(itemId: string, event: React.MouseEvent) {
+		const item = this.currentItems.find((i) => i.id === itemId);
+		if (!item) return;
+
+		showShopSectionMenu(event.nativeEvent, this.plugin.settings.shopSections, async (section) => {
+			await setOtherItemShopSection(this.app, this.plugin.settings.otherItemsNotePath, item.name, section);
+		});
+	}
+
+	async render() {
+		if (!this.root) return;
+
+		const path = this.plugin.settings.shoppingListPath;
+		const file = this.app.vault.getAbstractFileByPath(path);
+
+		if (!(file instanceof TFile)) {
+			this.root.render(<p>Fichier de liste de courses introuvable.</p>);
+			return;
+		}
+
+		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const { list, warnings } = parseShoppingList(frontmatter);
+
+		this.currentItems = list.items;
+
+		// Resolve each item's shop section before rendering, since resolution
+		// now involves reading the "Autres" note (async) in addition to
+		// checking ingredient files.
+		const resolvedItems: ResolvedItem[] = await Promise.all(
+			list.items.map(async (item) => {
+				const shopSection = await resolveShopSection(
+					this.app,
+					this.plugin.settings.ingredientsFolder,
+					this.plugin.settings.otherItemsNotePath,
+					item.name
+				);
+
+				const densityInfo = getIngredientDensityInfo(this.app, this.plugin.settings.ingredientsFolder, item.name);
+				const aggregation = aggregateContributions(item.contributions, densityInfo);
+
+				const ingredientPath = `${this.plugin.settings.ingredientsFolder}/${item.name}.md`;
+				const isKnownIngredient = this.app.vault.getAbstractFileByPath(ingredientPath) instanceof TFile;
+
+				return { item, shopSection, aggregation, isKnownIngredient };
+			})
+		);
+
+		this.root.render(
+			<div>
+				{warnings.length > 0 && (
+					<ul className="ingredient-validation-warnings">
+						{warnings.map((warning, index) => (
+							<li key={index}>{warning}</li>
+						))}
+					</ul>
+				)}
+				<SmartShoppingInput
+					app={this.app}
+					ingredientsFolder={this.plugin.settings.ingredientsFolder}
+					otherItemsNotePath={this.plugin.settings.otherItemsNotePath}
+					onAdd={(result) => this.handleAddItem(result)}
+				/>
+				<ShoppingListDisplay
+					resolvedItems={resolvedItems}
+					onToggleChecked={(id) => this.handleToggleChecked(id)}
+					onDelete={(id) => this.handleDelete(id)}
+					onSetSection={(id, event) => this.handleSetSection(id, event)}
+				/>
+			</div>
+		);
+	}
+
+	async onClose() {
+		this.root?.unmount();
+	}
+}

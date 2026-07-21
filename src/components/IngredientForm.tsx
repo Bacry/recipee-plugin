@@ -4,6 +4,7 @@ import { searchUsda, UsdaResult } from '../services/usda';
 import { translateToEnglish } from '../services/translate';
 import { ErrorModal } from './ErrorModal';
 import { App } from 'obsidian';
+import { sortAlphabetically } from '../models/textNormalize';
 
 export interface IngredientFormValues {
 	name: string;
@@ -13,6 +14,7 @@ export interface IngredientFormValues {
 	densityGMl: string;
 	entityWeightG: string;
 	possibleForms: string;
+	brand: string;
 	nutrition: NutritionPer100g;
 }
 
@@ -80,6 +82,7 @@ export function IngredientForm({
 	const [type, setType] = useState(initialValues?.type ?? '');
 	const [shopSection, setShopSection] = useState(initialValues?.shopSection ?? '');
 	const [densityGMl, setDensityGMl] = useState(initialValues?.densityGMl ?? '');
+	const [brand, setBrand] = useState(initialValues?.brand ?? '');
 	const [entityWeightG, setEntityWeightG] = useState(initialValues?.entityWeightG ?? '');
 	const [possibleForms, setPossibleForms] = useState(initialValues?.possibleForms ?? '');
 	const [nutritionInputs, setNutritionInputs] = useState<Record<keyof NutritionPer100g, string>>(
@@ -125,7 +128,7 @@ export function IngredientForm({
 			return;
 		}
 
-		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, possibleForms, nutrition: parsedNutrition });
+		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, possibleForms, nutrition: parsedNutrition });
 	}
 
 	async function runSearch(query: string) {
@@ -287,7 +290,7 @@ export function IngredientForm({
 						<label>Type</label>
 						<select value={type} onChange={(e) => setType(e.target.value)}>
 							<option value="">-- Choisir --</option>
-							{ingredientTypes.map((t) => (
+							{sortAlphabetically(ingredientTypes).map((t) => (
 								<option key={t} value={t}>{t}</option>
 							))}
 						</select>
@@ -297,7 +300,7 @@ export function IngredientForm({
 						<label>Rayon</label>
 						<select value={shopSection} onChange={(e) => setShopSection(e.target.value)}>
 							<option value="">-- Choisir --</option>
-							{shopSections.map((s) => (
+							{sortAlphabetically(shopSections).map((s) => (
 								<option key={s} value={s}>{s}</option>
 							))}
 						</select>
@@ -311,6 +314,11 @@ export function IngredientForm({
 					<div className="ingredient-form-field">
 						<label>Poids unitaire (g)</label>
 						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />					</div>
+				</div>
+
+				<div className="ingredient-form-field">
+					<label>Marque</label>
+					<input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="ex : Kikkoman" />
 				</div>
 
 				<div className="ingredient-form-field">

@@ -17,6 +17,7 @@ export interface Ingredient {
 	entity_weight_g?: number;
 	shop_section: string; // validé dynamiquement contre PluginSettings.shopSections
 	source?: string;
+	brand?: string; // optional — only meaningful for processed foods where brand affects nutrition (e.g. low-sodium soy sauce)
 	possible_forms?: string[];
 	nutrition_per_100g: NutritionPer100g;
 }

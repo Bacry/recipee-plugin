@@ -75,6 +75,15 @@ export function parseIngredientFromFrontmatter(
 		}
 	}
 
+	let brand: string | undefined;
+	if (frontmatter.brand !== undefined && frontmatter.brand !== null) {
+		if (typeof frontmatter.brand !== 'string') {
+			errors.push('"brand" est présent mais n\'est pas un texte valide.');
+		} else {
+			brand = frontmatter.brand;
+		}
+	}
+
 	let source: string | undefined;
 	if (frontmatter.source !== undefined && frontmatter.source !== null) {
 		if (typeof frontmatter.source !== 'string') {
@@ -104,6 +113,7 @@ export function parseIngredientFromFrontmatter(
 		density_g_ml: densityGMl,
 		entity_weight_g: entityWeightG,
 		source,
+		brand,
 		possible_forms: possibleForms,
 		nutrition_per_100g: parsedNutrition,
 	};

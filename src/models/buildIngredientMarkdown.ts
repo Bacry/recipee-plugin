@@ -15,6 +15,10 @@ export function buildIngredientMarkdown(values: IngredientFormValues): string {
 		lines.push(`entity_weight_g: ${entityWeight}`);
 	}
 
+	if (values.brand.trim() !== '') {
+		lines.push(`brand: ${values.brand.trim()}`);
+	}
+
 	lines.push(`shop_section: ${values.shopSection}`);
 
 	const forms = values.possibleForms

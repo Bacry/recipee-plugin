@@ -2,21 +2,21 @@ import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { IngredientForm, IngredientFormValues } from '../components/IngredientForm';
 import { buildIngredientMarkdown } from '../models/buildIngredientMarkdown';
-import type MyPlugin from '../main';
 import { lowerFirstLetter } from '../models/textNormalize';
+import type MyPlugin from '../main';
+import { NavigableViewState, NavigationEntry, closeOrGoBack } from '../navigation';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
-interface NewIngredientViewState {
-	prefilledName?: string;
-	returnToPath?: string;
+interface NewIngredientViewState extends NavigableViewState {
+	prefilledName?: string; // set when opened from a "create missing ingredient" link, e.g. from a recipe
 }
 
 export class NewIngredientView extends ItemView {
 	private root: Root | null = null;
 	private plugin: MyPlugin;
 	private prefilledName?: string;
-	private returnToPath?: string;
+	private history: NavigationEntry[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -33,13 +33,13 @@ export class NewIngredientView extends ItemView {
 
 	async setState(state: NewIngredientViewState, result: unknown) {
 		this.prefilledName = state.prefilledName;
-		this.returnToPath = state.returnToPath;
+		this.history = state.history ?? [];
 		this.render();
 		return super.setState(state, result as never);
 	}
 
 	getState(): NewIngredientViewState {
-		return { prefilledName: this.prefilledName, returnToPath: this.returnToPath };
+		return { prefilledName: this.prefilledName, history: this.history };
 	}
 
 	async onOpen() {
@@ -48,24 +48,19 @@ export class NewIngredientView extends ItemView {
 		this.render();
 	}
 
-	// Navigates back to the originating recipe if there is one, otherwise closes the tab.
+	// Same pattern as IngredientView: go back if we navigated here from
+	// another screen, otherwise there's nothing to return to — just close.
 	handleClose() {
-		if (this.returnToPath) {
-			this.plugin.activateRecipeView(this.returnToPath);
-		} else {
-			this.leaf.detach();
-		}
+		closeOrGoBack(this.leaf, this.history);
 	}
-
 	render() {
 		if (!this.root) return;
 
 		this.root.render(
 			<IngredientForm
-				// Forces React to fully remount IngredientForm whenever the prefilled name
-				// changes, instead of reusing a previous instance. Without this, useState's
-				// initial value (read from initialValues) would be "stuck" from the first
-				// mount, and a new prefilledName would never actually update the form.
+				// Forces a full remount whenever the prefilled name changes — see
+				// the comment in the previous version for why this is necessary
+				// (useState's initial value is only read on first mount).
 				key={this.prefilledName ?? 'empty'}
 				app={this.app}
 				onSubmit={(values) => this.handleSubmit(values)}
@@ -73,6 +68,7 @@ export class NewIngredientView extends ItemView {
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
+				autoSearchOnMount={!!this.prefilledName}
 				initialValues={
 					this.prefilledName
 						? {
@@ -116,7 +112,7 @@ export class NewIngredientView extends ItemView {
 		await this.app.vault.create(path, content);
 
 		new Notice(`Ingrédient "${normalizedName}" créé.`);
-		this.handleClose(); // returns to the recipe if opened from one, otherwise closes the tab
+		this.handleClose(); // returns to the previous screen if there is one, otherwise closes the tab
 	}
 
 	async onClose() {

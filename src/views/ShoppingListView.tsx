@@ -12,13 +12,21 @@ import { toggleShoppingListItemChecked, deleteShoppingListItem } from '../models
 import { setOtherItemShopSection } from '../models/otherItemsNote';
 import { ShoppingListItem } from '../models/ShoppingList';
 import { showShopSectionMenu } from '../components/showShopSectionMenu';
+import { NavigableViewState, NavigationEntry } from '../navigation';
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
+
+// ShoppingListView doesn't currently navigate to/from other views, but it
+// still implements NavigableViewState for consistency — harmless now, and
+// ready if it ever needs to participate in navigation later (e.g. a future
+// "view this ingredient's shopping entry" link).
+interface ShoppingListViewState extends NavigableViewState {}
 
 export class ShoppingListView extends ItemView {
 	private plugin: MyPlugin;
 	private root: Root | null = null;
-	private currentItems: ShoppingListItem[] = []; // kept in sync on every render, so action handlers (like handleSetSection) can look up an item by id
+	private currentItems: ShoppingListItem[] = [];
+	private history: NavigationEntry[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -31,6 +39,15 @@ export class ShoppingListView extends ItemView {
 
 	getDisplayText(): string {
 		return 'Courses';
+	}
+
+	async setState(state: ShoppingListViewState, result: unknown) {
+		this.history = state.history ?? [];
+		return super.setState(state, result as never);
+	}
+
+	getState(): ShoppingListViewState {
+		return { history: this.history };
 	}
 
 	async onOpen() {

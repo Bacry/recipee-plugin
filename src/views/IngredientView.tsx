@@ -3,17 +3,20 @@ import { createRoot, Root } from 'react-dom/client';
 import { IngredientViewContainer } from '../components/IngredientViewContainer';
 import { parseIngredientFromFrontmatter } from '../models/parseIngredientFromFrontmatter';
 import type MyPlugin from '../main';
+import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
 
 export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
-interface IngredientViewState {
+// This view's state now includes `history` (via NavigableViewState), on top
+// of its own specific field (filePath). See navigation.ts for the full
+// explanation of how back-navigation works across all our views.
+interface IngredientViewState extends NavigableViewState {
 	filePath?: string;
-	returnToPath?: string; // set when opened from a recipe's ingredient link — used by the close button
 }
 
 export class IngredientView extends ItemView {
 	private filePath?: string;
-	private returnToPath?: string;
+	private history: NavigationEntry[] = [];
 	private root: Root | null = null;
 	private plugin: MyPlugin;
 
@@ -34,14 +37,14 @@ export class IngredientView extends ItemView {
 
 	async setState(state: IngredientViewState, result: unknown) {
 		this.filePath = state.filePath;
-		this.returnToPath = state.returnToPath;
+		this.history = state.history ?? [];
 		this.leaf.updateHeader();
 		this.render();
 		return super.setState(state, result as never);
 	}
 
 	getState(): IngredientViewState {
-		return { filePath: this.filePath, returnToPath: this.returnToPath };
+		return { filePath: this.filePath, history: this.history };
 	}
 
 	async onOpen() {
@@ -59,16 +62,12 @@ export class IngredientView extends ItemView {
 		this.render();
 	}
 
-	// Closes back to the originating recipe if there is one, otherwise
-	// just closes this tab — simulates browser-style "back" navigation.
+	// If we got here by navigating from another view (history is non-empty),
+	// go back to that view. Otherwise (opened fresh, e.g. via command), just
+	// close this leaf — there's nothing in our navigation stack to return to.
 	handleClose() {
-		if (this.returnToPath) {
-			this.plugin.activateRecipeView(this.returnToPath);
-		} else {
-			this.leaf.detach();
-		}
+		closeOrGoBack(this.leaf, this.history);
 	}
-
 	render() {
 		if (!this.root) return;
 
@@ -115,7 +114,11 @@ export class IngredientView extends ItemView {
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
-				readOnly={this.returnToPath !== undefined} // no editing when viewed from a recipe link
+				// Reusing canNavigateBack as our "read-only" signal: if we navigated
+				// here from another screen (e.g. a recipe's ingredient link), we're
+				// just viewing — editing is reserved for direct access (e.g. via
+				// the command palette, which starts with an empty history).
+				readOnly={canNavigateBack({ history: this.history })}
 				onClose={() => this.handleClose()}
 			/>
 		);

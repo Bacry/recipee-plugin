@@ -5,6 +5,7 @@ import { translateToEnglish } from '../services/translate';
 import { ErrorModal } from './ErrorModal';
 import { App } from 'obsidian';
 import { sortAlphabetically } from '../models/textNormalize';
+import { useEffect, useRef, useState } from 'react';
 
 export interface IngredientFormValues {
 	name: string;
@@ -28,6 +29,12 @@ interface IngredientFormProps {
 	initialValues?: IngredientFormValues;
 	submitLabel?: string;
 	onCancel?: () => void;
+	// When true, automatically triggers the EN translation + USDA search on
+	// mount (as if the user had blurred the "Nom" field) — used when opening
+	// this form with a prefilled name from a recipe's missing-ingredient link,
+	// so the user doesn't have to click into the field manually. Never set
+	// this for the edit-existing-ingredient flow (IngredientViewContainer).
+	autoSearchOnMount?: boolean;
 
 }
 
@@ -79,6 +86,7 @@ export function IngredientForm({
 								   initialValues,
 								   submitLabel = 'Créer l\'ingrédient',
 								   onCancel,
+								   autoSearchOnMount,
 							   }: IngredientFormProps) {
 	const [name, setName] = useState(initialValues?.name ?? '');
 	const [nameEn, setNameEn] = useState(initialValues?.nameEn ?? '');
@@ -172,6 +180,18 @@ export function IngredientForm({
 		setNameEn(translated);
 		runSearch(translated);
 	}
+
+	// Auto-triggers the same translation + USDA search that normally happens
+// when the user blurs the "Nom" field — but only once, right after mount,
+// and only when explicitly requested (see autoSearchOnMount prop docs).
+// handleNameBlur already guards against overwriting a non-empty nameEn,
+// so this is safe to call unconditionally here.
+	useEffect(() => {
+		if (autoSearchOnMount && name.trim() !== '') {
+			handleNameBlur();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // run exactly once, on mount
 
 	function handleNameKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
 		if (e.key === 'Tab') {

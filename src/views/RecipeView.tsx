@@ -1,14 +1,22 @@
 import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
-import { RecipeDetails } from '../components/RecipeDetails';
-import type MyPlugin from '../main';
 import { buildRecipeMarkdown } from '../models/buildRecipeMarkdown';
+import { RecipeDetails } from '../components/RecipeDetails';
+import { INGREDIENT_VIEW_TYPE } from './IngredientView';
+import { NEW_INGREDIENT_VIEW_TYPE } from './NewIngredientView';
+import { NavigableViewState, NavigationEntry, navigateTo } from '../navigation';
+import type MyPlugin from '../main';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
+interface RecipeViewState extends NavigableViewState {
+	filePath?: string;
+}
+
 export class RecipeView extends ItemView {
 	private filePath?: string;
+	private history: NavigationEntry[] = [];
 	private root: Root | null = null;
 	private plugin: MyPlugin;
 
@@ -25,14 +33,15 @@ export class RecipeView extends ItemView {
 		return 'Recette';
 	}
 
-	async setState(state: { filePath?: string }, result: unknown) {
+	async setState(state: RecipeViewState, result: unknown) {
 		this.filePath = state.filePath;
+		this.history = state.history ?? [];
 		this.render();
 		return super.setState(state, result as never);
 	}
 
-	getState(): { filePath?: string } {
-		return { filePath: this.filePath };
+	getState(): RecipeViewState {
+		return { filePath: this.filePath, history: this.history };
 	}
 
 	async onOpen() {
@@ -40,13 +49,11 @@ export class RecipeView extends ItemView {
 		this.root = createRoot(container);
 
 		// Recipe images always live in a fixed "Images" subfolder inside the
-		// configurable recipes folder — e.g. "Recettes/Images" if recipesFolder
-		// is "Recettes". Created automatically if missing.
+		// configurable recipes folder — created automatically if missing.
 		const imagesFolder = `${this.plugin.settings.recipesFolder}/Images`;
 		if (!this.app.vault.getAbstractFileByPath(imagesFolder)) {
 			await this.app.vault.createFolder(imagesFolder);
 		}
-		this.render();
 
 		this.registerEvent(
 			this.app.metadataCache.on('changed', (file) => {
@@ -55,16 +62,22 @@ export class RecipeView extends ItemView {
 				}
 			})
 		);
+
+		this.render();
 	}
 
+	// Navigates to an ingredient's view (existing fiche, read-only since we're
+	// coming FROM a recipe) or to the ingredient creation form (missing fiche,
+	// prefilled with the clicked name) — using the shared navigation stack so
+	// a back button can return here afterwards.
 	handleIngredientClick(ingredientName: string) {
 		const path = `${this.plugin.settings.ingredientsFolder}/${ingredientName}.md`;
 		const existing = this.app.vault.getAbstractFileByPath(path);
 
 		if (existing) {
-			this.plugin.activateIngredientView(path, this.filePath);
+			navigateTo(this.leaf, INGREDIENT_VIEW_TYPE, { filePath: path });
 		} else {
-			this.plugin.activateNewIngredientView(ingredientName, this.filePath);
+			navigateTo(this.leaf, NEW_INGREDIENT_VIEW_TYPE, { prefilledName: ingredientName });
 		}
 	}
 
@@ -73,9 +86,6 @@ export class RecipeView extends ItemView {
 		return this.app.vault.getAbstractFileByPath(path) !== null;
 	}
 
-	// Rewrites the recipe note with one instruction section's content updated.
-// Reads the current recipe fresh (not from a stale render-time variable),
-// so concurrent edits to other fields aren't accidentally overwritten.
 	async handleSaveInstructionSection(sectionIndex: number, newContent: string) {
 		if (!this.filePath) return;
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
@@ -83,7 +93,7 @@ export class RecipeView extends ItemView {
 
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 		const { recipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
-		if (!recipe) return; // shouldn't happen if the view is already displaying this recipe successfully
+		if (!recipe) return;
 
 		const updatedInstructions = recipe.instructions.map((section, index) =>
 			index === sectionIndex ? { ...section, content: newContent } : section

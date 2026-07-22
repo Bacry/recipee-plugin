@@ -30,6 +30,11 @@ export default class MyPlugin extends Plugin {
 			(leaf: WorkspaceLeaf) => new RecipeView(leaf, this),
 		);
 
+		this.registerView(
+			SHOPPING_LIST_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new ShoppingListView(leaf, this),
+		);
+
 		this.addCommand({
 			id: 'open-recipe-view',
 			name: 'Open recipe view for current note',
@@ -47,20 +52,18 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
 		this.addCommand({
 			id: 'open-ingredient-view',
 			name: 'Open ingredient view for current note',
 			checkCallback: (checking: boolean) => {
 				const file = this.app.workspace.getActiveFile();
-				if (!file) return false; // pas de note ouverte → commande indisponible
+				if (!file) return false;
 
 				const folder = this.settings.ingredientsFolder;
-				if (!file.path.startsWith(folder + '/')) return false; // note pas dans Ingredients/ → indisponible
+				if (!file.path.startsWith(folder + '/')) return false;
 
 				if (!checking) {
-					this.activateIngredientView(file.path); // exécution réelle, seulement si ce n'est pas juste une vérification
+					this.activateIngredientView(file.path);
 				}
 				return true;
 			},
@@ -74,11 +77,6 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 
-		this.registerView(
-			SHOPPING_LIST_VIEW_TYPE,
-			(leaf: WorkspaceLeaf) => new ShoppingListView(leaf, this),
-		);
-
 		this.addCommand({
 			id: 'open-shopping-list',
 			name: 'Open shopping list',
@@ -86,68 +84,70 @@ export default class MyPlugin extends Plugin {
 				this.activateShoppingListView();
 			},
 		});
+
+		this.addSettingTab(new SampleSettingTab(this.app, this));
 	}
 
-	async activateIngredientView(filePath: string, returnToPath?: string) {
+	// Opens IngredientView by transforming the CURRENTLY ACTIVE leaf in place
+	// (rather than reusing/creating a dedicated IngredientView leaf elsewhere).
+	// This is what allows multiple independent tabs: if the user has two notes
+	// open in two tabs and runs this command on each, they get two separate
+	// IngredientView instances, each with its own leaf and its own history.
+	// Started with an empty history since this is a fresh, direct open — not a
+	// navigation from another one of our views (see navigation.ts for that case).
+	async activateIngredientView(filePath: string) {
 		const { workspace } = this.app;
-		let leaf = workspace.getLeavesOfType(INGREDIENT_VIEW_TYPE)[0];
-
-		if (!leaf) {
-			leaf = workspace.getLeaf(true);
-		}
+		const leaf = workspace.getLeaf(false);
 
 		await leaf.setViewState({
 			type: INGREDIENT_VIEW_TYPE,
 			active: true,
-			state: { filePath, returnToPath },
+			state: { filePath, history: [] },
 		});
 
 		workspace.revealLeaf(leaf);
 	}
 
-	async activateNewIngredientView(prefilledName?: string, returnToPath?: string) {
+	// Same "transform active leaf, fresh history" pattern as activateIngredientView.
+	async activateNewIngredientView(prefilledName?: string) {
 		const { workspace } = this.app;
-		let leaf = workspace.getLeavesOfType(NEW_INGREDIENT_VIEW_TYPE)[0];
-
-		if (!leaf) {
-			leaf = workspace.getLeaf(true);
-		}
+		const leaf = workspace.getLeaf(false);
 
 		await leaf.setViewState({
 			type: NEW_INGREDIENT_VIEW_TYPE,
 			active: true,
-			state: { prefilledName, returnToPath },
+			state: { prefilledName, history: [] },
 		});
 
 		workspace.revealLeaf(leaf);
 	}
 
+	// Same pattern again.
 	async activateRecipeView(filePath: string) {
 		const { workspace } = this.app;
-		let leaf = workspace.getLeavesOfType(RECIPE_VIEW_TYPE)[0];
-
-		if (!leaf) {
-			leaf = workspace.getLeaf(true);
-		}
+		const leaf = workspace.getLeaf(false);
 
 		await leaf.setViewState({
 			type: RECIPE_VIEW_TYPE,
 			active: true,
-			state: { filePath },
+			state: { filePath, history: [] },
 		});
 
 		workspace.revealLeaf(leaf);
 	}
 
-
+	// ShoppingListView doesn't currently navigate to/from other views, but it
+	// still gets an empty history for consistency with NavigableViewState —
+	// harmless now, and ready if it ever needs to participate in navigation later.
 	async activateShoppingListView() {
 		const { workspace } = this.app;
-		let leaf = workspace.getLeavesOfType(SHOPPING_LIST_VIEW_TYPE)[0];
+		const leaf = workspace.getLeaf(false);
 
-		if (!leaf) {
-			leaf = workspace.getLeaf(true);
-			await leaf.setViewState({ type: SHOPPING_LIST_VIEW_TYPE, active: true });
-		}
+		await leaf.setViewState({
+			type: SHOPPING_LIST_VIEW_TYPE,
+			active: true,
+			state: { history: [] },
+		});
 
 		workspace.revealLeaf(leaf);
 	}

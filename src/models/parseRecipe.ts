@@ -1,9 +1,9 @@
-import { Recipe, RecipeIngredientEntry, RecipeInstructionSection } from './Recipe';
+import { Recipe, RecipeIngredientEntry, RecipeBaseRecipeEntry } from './recipe';
 
 export interface RecipeParseResult {
 	recipe: Recipe | null;
-	errors: string[]; // blocking — recipe is null if any of these exist
-	warnings: string[]; // non-blocking — e.g. a malformed ingredient entry, skipped
+	errors: string[];
+	warnings: string[];
 }
 
 export function parseRecipeFromFrontmatter(
@@ -27,7 +27,6 @@ export function parseRecipeFromFrontmatter(
 		errors.push('"servings_label" est manquant ou n\'est pas un texte valide.');
 	}
 
-	// Optional duration fields — validated only if present.
 	let preparationDurationMin: number | undefined;
 	if (frontmatter.preparation_duration_min !== undefined && frontmatter.preparation_duration_min !== null) {
 		if (typeof frontmatter.preparation_duration_min !== 'number') {
@@ -46,7 +45,6 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
-	// Optional notes field — a single free-form markdown block, validated only if present.
 	let notes: string | undefined;
 	if (frontmatter.notes !== undefined && frontmatter.notes !== null) {
 		if (typeof frontmatter.notes !== 'string') {
@@ -56,7 +54,6 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
-	// Optional source field — free text, or a URL.
 	let source: string | undefined;
 	if (frontmatter.source !== undefined && frontmatter.source !== null) {
 		if (typeof frontmatter.source !== 'string') {
@@ -66,8 +63,6 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
-	// Optional image field — the filename of a vault attachment, resolved to a
-// real path at display time via app.vault.getResourcePath.
 	let image: string | undefined;
 	if (frontmatter.image !== undefined && frontmatter.image !== null) {
 		if (typeof frontmatter.image !== 'string') {
@@ -77,8 +72,6 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
-	// Tags — always an array; malformed entries are silently dropped rather than
-// blocking the whole recipe, since they're purely decorative/organizational.
 	let tags: string[] = [];
 	if (frontmatter.tags !== undefined && frontmatter.tags !== null) {
 		if (!Array.isArray(frontmatter.tags)) {
@@ -88,8 +81,15 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
-	// Ingredients: malformed entries are skipped individually (warning),
-	// not treated as a blocking error for the whole recipe.
+	let instructions = '';
+	if (frontmatter.instructions !== undefined && frontmatter.instructions !== null) {
+		if (typeof frontmatter.instructions !== 'string') {
+			errors.push('"instructions" est présent mais n\'est pas un texte valide.');
+		} else {
+			instructions = frontmatter.instructions;
+		}
+	}
+
 	const ingredients: RecipeIngredientEntry[] = [];
 	if (!Array.isArray(frontmatter.ingredients)) {
 		errors.push('"ingredients" est manquant ou n\'est pas une liste.');
@@ -104,18 +104,22 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
-	// Instructions: same approach — malformed sections are skipped with a warning.
-	const instructions: RecipeInstructionSection[] = [];
-	if (!Array.isArray(frontmatter.instructions)) {
-		errors.push('"instructions" est manquant ou n\'est pas une liste.');
-	} else {
-		for (const raw of frontmatter.instructions) {
-			const parsed = parseInstructionSection(raw);
-			if (parsed === null) {
-				warnings.push(`Une section d'instructions est mal formée et a été ignorée : ${JSON.stringify(raw)}`);
-				continue;
+	// base_recipes: optional — absent entirely means "no base recipes used".
+	// Malformed entries are skipped individually with a warning, same
+	// approach as ingredients.
+	const baseRecipes: RecipeBaseRecipeEntry[] = [];
+	if (frontmatter.base_recipes !== undefined && frontmatter.base_recipes !== null) {
+		if (!Array.isArray(frontmatter.base_recipes)) {
+			errors.push('"base_recipes" est présent mais n\'est pas une liste.');
+		} else {
+			for (const raw of frontmatter.base_recipes) {
+				const parsed = parseBaseRecipeEntry(raw);
+				if (parsed === null) {
+					warnings.push(`Une recette de base est mal formée et a été ignorée : ${JSON.stringify(raw)}`);
+					continue;
+				}
+				baseRecipes.push(parsed);
 			}
-			instructions.push(parsed);
 		}
 	}
 
@@ -130,6 +134,7 @@ export function parseRecipeFromFrontmatter(
 		preparationDurationMin,
 		cookingDurationMin,
 		ingredients,
+		baseRecipes,
 		instructions,
 		notes,
 		source,
@@ -147,7 +152,6 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 	if (typeof obj.ingredient_name !== 'string' || obj.ingredient_name.trim() === '') return null;
 	if (typeof obj.unit !== 'string') return null;
 
-	// quantity can be a number, or null/undefined (meaning "no specific amount")
 	let quantity: number | null = null;
 	if (obj.quantity !== undefined && obj.quantity !== null) {
 		if (typeof obj.quantity !== 'number' || Number.isNaN(obj.quantity)) return null;
@@ -163,15 +167,15 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 	return { ingredientName: obj.ingredient_name, quantity, unit: obj.unit, form };
 }
 
-// Parses one instruction section: a title plus a single free-form markdown
-// block (not a list of steps anymore — the user writes bullets/formatting
-// themselves directly in the content string).
-function parseInstructionSection(raw: unknown): RecipeInstructionSection | null {
+// Unlike ingredients, quantity is required here (no null case) — a base
+// recipe reference without an amount doesn't make sense.
+function parseBaseRecipeEntry(raw: unknown): RecipeBaseRecipeEntry | null {
 	if (typeof raw !== 'object' || raw === null) return null;
 	const obj = raw as Record<string, unknown>;
 
-	if (typeof obj.title !== 'string' || obj.title.trim() === '') return null;
-	if (typeof obj.content !== 'string') return null;
+	if (typeof obj.recipe_name !== 'string' || obj.recipe_name.trim() === '') return null;
+	if (typeof obj.unit !== 'string') return null;
+	if (typeof obj.quantity !== 'number' || Number.isNaN(obj.quantity)) return null;
 
-	return { title: obj.title, content: obj.content };
+	return { recipeName: obj.recipe_name, quantity: obj.quantity, unit: obj.unit };
 }

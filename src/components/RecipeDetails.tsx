@@ -1,15 +1,21 @@
-import { useState } from 'react';
-import { App } from 'obsidian';
-import { Recipe } from '../models/Recipe';
+import { useEffect, useRef, useState } from 'react';
+import { App, Component, MarkdownRenderer } from 'obsidian';
+import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
 
 interface RecipeDetailsProps {
 	app: App;
 	recipe: Recipe;
+	initialServings?: number; // used when opened as a base recipe, to reflect the quantity used by the parent recipe
 	onIngredientClick: (ingredientName: string) => void;
 	ingredientExists: (ingredientName: string) => boolean;
-	onSaveInstructionSection: (sectionIndex: number, newContent: string) => void;
+	// Passes the scaled quantity + unit at click time (not the stored base
+	// value), so the opened base recipe view can reflect exactly how much of
+	// it is actually being used here.
+	onBaseRecipeClick: (recipeName: string, scaledQuantity: number, unit: string) => void;
 	onSaveNotes: (newContent: string) => void;
+	onEdit?: () => void; // undefined = read-only (opened from another recipe), no "Modifier" button
+	onClose: () => void;
 }
 
 function formatDuration(minutes: number): string {
@@ -25,38 +31,61 @@ function formatScaledQuantity(quantity: number, unit: string, factor: number): s
 	return Number(scaled.toFixed(2)).toString();
 }
 
-// Simple heuristic: treat the source as a URL if it starts with http(s)://
-// Anything else (a book title, "fait maison", etc.) displays as plain text.
 function isUrl(text: string): boolean {
 	return /^https?:\/\//.test(text.trim());
 }
 
-// Resolves an attachment filename to a displayable image URL. Searches the
-// whole vault by basename (not just a specific folder), since attachments
-// can live anywhere depending on the user's Obsidian settings.
 function resolveImagePath(app: App, filename: string): string | null {
 	const file = app.vault.getFiles().find((f) => f.name === filename);
 	if (!file) return null;
 	return app.vault.getResourcePath(file);
 }
 
+function InstructionsPreview({ app, content }: { app: App; content: string }) {
+	const previewRef = useRef<HTMLDivElement>(null);
+	const componentRef = useRef(new Component());
+
+	useEffect(() => {
+		if (!previewRef.current) return;
+		previewRef.current.empty();
+		MarkdownRenderer.render(app, content, previewRef.current, '', componentRef.current);
+	}, [content, app]);
+
+	return <div ref={previewRef} />;
+}
+
 export function RecipeDetails({
 								  app,
 								  recipe,
+								  initialServings,
 								  onIngredientClick,
 								  ingredientExists,
-								  onSaveInstructionSection,
+								  onBaseRecipeClick,
 								  onSaveNotes,
+								  onEdit,
+								  onClose,
 							  }: RecipeDetailsProps) {
-	const [servingsInput, setServingsInput] = useState(recipe.baseServings.toString());
+	const [servingsInput, setServingsInput] = useState((initialServings ?? recipe.baseServings).toString());
+
+	// Re-syncs the displayed servings input when the recipe's baseServings
+	// actually CHANGES from what it was (e.g. after editing via NewRecipeView)
+	// — but not on first mount, so it doesn't clobber initialServings (used
+	// when this view was opened as a base recipe, scaled to the quantity used).
+	const prevBaseServingsRef = useRef(recipe.baseServings);
+	useEffect(() => {
+		if (recipe.baseServings !== prevBaseServingsRef.current) {
+			setServingsInput(recipe.baseServings.toString());
+			prevBaseServingsRef.current = recipe.baseServings;
+		}
+	}, [recipe.baseServings]);
+
 	const servings = Number(servingsInput) || recipe.baseServings;
 	const factor = servings / recipe.baseServings;
 
 	const totalDuration = (recipe.preparationDurationMin ?? 0) + (recipe.cookingDurationMin ?? 0);
+
 	return (
 		<div>
-			<h2>{recipe.name}</h2>
-
 			{recipe.tags.length > 0 && (
 				<div className="recipe-tags">
 					{recipe.tags.map((tag) => (
@@ -65,6 +94,13 @@ export function RecipeDetails({
 				</div>
 			)}
 
+			<div className="ingredient-details-header">
+				<h2>{recipe.name}</h2>
+				<div className="ingredient-details-header-actions">
+					{onEdit && <button onClick={onEdit}>Modifier</button>}
+					<button onClick={onClose} title="Fermer">✕</button>
+				</div>
+			</div>
 
 			<MarkdownEditableBlock
 				app={app}
@@ -97,15 +133,12 @@ export function RecipeDetails({
 							<p>
 								Source :{' '}
 								{isUrl(recipe.source) ? (
-									<a href={recipe.source} target="_blank" rel="noopener noreferrer">
-										web
-									</a>
+									<a href={recipe.source} target="_blank" rel="noopener noreferrer">web</a>
 								) : (
 									recipe.source
 								)}
 							</p>
 						)}
-						{/* Placeholder for now — adding this recipe's ingredients to the shopping list is deferred. */}
 						<button disabled title="Bientôt disponible">Shop</button>
 					</div>
 					{recipe.image &&
@@ -139,38 +172,69 @@ export function RecipeDetails({
 				/>{' '}
 				{recipe.servingsLabel})
 			</h4>
+			{(() => {
+				// Unified list: base recipes first, then regular ingredients — a single
+				// <ul> instead of two separate sections, with "(recette de base)"
+				// appended to distinguish the two kinds of entries.
+				type UnifiedEntry =
+					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string }
+					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string };
 
-			<ul>
-				{recipe.ingredients.map((entry, index) => {
-					const showAsLink = entry.quantity != null || ingredientExists(entry.ingredientName);
+				const unifiedEntries: UnifiedEntry[] = [
+					...recipe.baseRecipes.map((entry): UnifiedEntry => ({ kind: 'baseRecipe', ...entry })),
+					...recipe.ingredients.map((entry): UnifiedEntry => ({ kind: 'ingredient', ...entry })),
+				];
 
-					return (
-						<li key={index}>
-							{entry.quantity != null
-								? formatScaledQuantity(entry.quantity, entry.unit, factor) + entry.unit + (entry.unit ? ' de ' : ' ')
-								: ''}
-							{showAsLink ? (
-								<a href="#" onClick={(e) => { e.preventDefault(); onIngredientClick(entry.ingredientName); }}>
+				return (
+					<ul>
+						{unifiedEntries.map((entry, index) => {
+							if (entry.kind === 'baseRecipe') {
+								const scaled = entry.quantity * factor;
+								return (
+									<li key={index}>
+										{formatScaledQuantity(entry.quantity, entry.unit, factor)}{entry.unit} de{' '}
+									<a
+										href="#"
+										onClick={(e) => {
+										e.preventDefault();
+										onBaseRecipeClick(entry.recipeName, scaled, entry.unit);
+									}}
+										>
+										{entry.recipeName}
+									</a>
+								{' (recette de base)'}
+							</li>
+							);
+							}
+
+							const exists = ingredientExists(entry.ingredientName);
+							const showAsLink = entry.quantity != null || exists;
+
+							return (
+								<li key={index}>
+									{entry.quantity != null
+										? formatScaledQuantity(entry.quantity, entry.unit, factor) + entry.unit + (entry.unit ? ' de ' : ' ')
+										: ''}
+									{showAsLink ? (
+										<a
+											href="#"
+										className={exists ? '' : 'recipe-ingredient-missing'}
+										onClick={(e) => { e.preventDefault(); onIngredientClick(entry.ingredientName); }}
+										>
 									{entry.ingredientName}
-								</a>
-							) : (
-								<span>{entry.ingredientName}</span>
+										</a>
+										) : (
+										<span>{entry.ingredientName}</span>
 							)}
-							{entry.form ? ' (' + entry.form + ')' : ''}
-						</li>
-					);
-				})}
-			</ul>
-
-			{recipe.instructions.map((section, index) => (
-				<MarkdownEditableBlock
-					key={index}
-					app={app}
-					title={section.title}
-					content={section.content}
-					onSave={(newContent) => onSaveInstructionSection(index, newContent)}
-				/>
-			))}
+						{entry.form ? ' (' + entry.form + ')' : ''}
+							</li>
+							);
+						})}
+		</ul>
+	);
+})()}
+			<h4>Instructions</h4>
+			<InstructionsPreview app={app} content={recipe.instructions} />
 		</div>
 	);
 }

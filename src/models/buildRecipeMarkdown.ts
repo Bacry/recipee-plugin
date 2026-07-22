@@ -1,9 +1,5 @@
-import { Recipe } from './Recipe';
+import { Recipe } from './recipe';
 
-// Serializes a Recipe back into the YAML frontmatter of its note.
-// Multiline content (instruction sections, notes) uses YAML's literal block
-// scalar syntax ("|"), which preserves line breaks exactly as typed —
-// necessary since content now holds free-form markdown, not a simple string.
 export function buildRecipeMarkdown(recipe: Recipe): string {
 	const lines: string[] = ['---'];
 
@@ -31,26 +27,21 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 		}
 	}
 
-	if (recipe.instructions.length === 0) {
-		lines.push('instructions: []');
-	} else {
-		lines.push('instructions:');
-		for (const section of recipe.instructions) {
-			lines.push(`  - title: ${escapeYamlString(section.title)}`);
-			lines.push('    content: |');
-			for (const contentLine of section.content.split('\n')) {
-				lines.push(`      ${contentLine}`);
-			}
+	// base_recipes: only written if non-empty, since it's an optional feature
+	// most recipes won't use.
+	if (recipe.baseRecipes.length > 0) {
+		lines.push('base_recipes:');
+		for (const entry of recipe.baseRecipes) {
+			lines.push(`  - recipe_name: ${escapeYamlString(entry.recipeName)}`);
+			lines.push(`    quantity: ${entry.quantity}`);
+			lines.push(`    unit: ${escapeYamlString(entry.unit)}`);
 		}
 	}
 
-	if (recipe.tags.length > 0) {
-		lines.push('tags:');
-		for (const tag of recipe.tags) {
-			lines.push(`  - ${escapeYamlString(tag)}`);
-		}
+	lines.push('instructions: |');
+	for (const line of recipe.instructions.split('\n')) {
+		lines.push(`  ${line}`);
 	}
-
 
 	if (recipe.notes) {
 		lines.push('notes: |');
@@ -67,6 +58,12 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 		lines.push(`image: ${escapeYamlString(recipe.image)}`);
 	}
 
+	if (recipe.tags.length > 0) {
+		lines.push('tags:');
+		for (const tag of recipe.tags) {
+			lines.push(`  - ${escapeYamlString(tag)}`);
+		}
+	}
 
 	lines.push('---');
 	lines.push('');
@@ -74,9 +71,6 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 	return lines.join('\n');
 }
 
-// Wraps a string in double quotes only if needed (contains special YAML
-// characters like ":" or "#"), and escapes embedded quotes. Kept simple:
-// wraps everything in quotes for safety, consistent with buildIngredientMarkdown.
 function escapeYamlString(value: string): string {
 	return `"${value.replace(/"/g, '\\"')}"`;
 }

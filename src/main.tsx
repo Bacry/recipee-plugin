@@ -8,6 +8,7 @@ import { IngredientView, INGREDIENT_VIEW_TYPE } from './views/IngredientView';
 import { NewIngredientView, NEW_INGREDIENT_VIEW_TYPE } from './views/NewIngredientView';
 import { ShoppingListView, SHOPPING_LIST_VIEW_TYPE } from './views/ShoppingListView';
 import { RecipeView, RECIPE_VIEW_TYPE } from './views/RecipeView';
+import { NewRecipeView, NEW_RECIPE_VIEW_TYPE } from './views/NewRecipeView';
 
 export default class MyPlugin extends Plugin {
 	settings!: MyPluginSettings;
@@ -34,6 +35,19 @@ export default class MyPlugin extends Plugin {
 			SHOPPING_LIST_VIEW_TYPE,
 			(leaf: WorkspaceLeaf) => new ShoppingListView(leaf, this),
 		);
+
+		this.registerView(
+			NEW_RECIPE_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new NewRecipeView(leaf, this),
+		);
+
+		this.addCommand({
+			id: 'create-new-recipe',
+			name: 'Create new recipe',
+			callback: () => {
+				this.activateNewRecipeView();
+			},
+		});
 
 		this.addCommand({
 			id: 'open-recipe-view',
@@ -145,6 +159,22 @@ export default class MyPlugin extends Plugin {
 
 		await leaf.setViewState({
 			type: SHOPPING_LIST_VIEW_TYPE,
+			active: true,
+			state: { history: [] },
+		});
+
+		workspace.revealLeaf(leaf);
+	}
+
+	// Opens NewRecipeView in creation mode (no editFilePath), transforming the
+// active leaf. Fresh history since this is a direct open, not a navigation
+// from another one of our views.
+	async activateNewRecipeView() {
+		const { workspace } = this.app;
+		const leaf = workspace.getLeaf(false);
+
+		await leaf.setViewState({
+			type: NEW_RECIPE_VIEW_TYPE,
 			active: true,
 			state: { history: [] },
 		});

@@ -8,10 +8,12 @@ export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
 interface IngredientViewState {
 	filePath?: string;
+	returnToPath?: string; // set when opened from a recipe's ingredient link — used by the close button
 }
 
 export class IngredientView extends ItemView {
 	private filePath?: string;
+	private returnToPath?: string;
 	private root: Root | null = null;
 	private plugin: MyPlugin;
 
@@ -25,7 +27,6 @@ export class IngredientView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		// Dynamic tab title: show the file name once we know it, fallback otherwise.
 		if (!this.filePath) return 'Ingredient';
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
 		return file instanceof TFile ? file.basename : 'Ingredient';
@@ -33,13 +34,39 @@ export class IngredientView extends ItemView {
 
 	async setState(state: IngredientViewState, result: unknown) {
 		this.filePath = state.filePath;
-		this.leaf.updateHeader(); // force Obsidian to re-call getDisplayText()
+		this.returnToPath = state.returnToPath;
+		this.leaf.updateHeader();
 		this.render();
 		return super.setState(state, result as never);
 	}
 
 	getState(): IngredientViewState {
-		return { filePath: this.filePath };
+		return { filePath: this.filePath, returnToPath: this.returnToPath };
+	}
+
+	async onOpen() {
+		const container = this.containerEl.children[1];
+		this.root = createRoot(container);
+
+		this.registerEvent(
+			this.app.metadataCache.on('changed', (file) => {
+				if (file.path === this.filePath) {
+					this.render();
+				}
+			})
+		);
+
+		this.render();
+	}
+
+	// Closes back to the originating recipe if there is one, otherwise
+	// just closes this tab — simulates browser-style "back" navigation.
+	handleClose() {
+		if (this.returnToPath) {
+			this.plugin.activateRecipeView(this.returnToPath);
+		} else {
+			this.leaf.detach();
+		}
 	}
 
 	render() {
@@ -58,8 +85,6 @@ export class IngredientView extends ItemView {
 
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 
-		// Validate + parse raw frontmatter into a typed, trustworthy Ingredient object.
-		// If errors is non-empty, ingredient is guaranteed to be null (see parseIngredientFromFrontmatter contract).
 		const { ingredient, errors, warnings } = parseIngredientFromFrontmatter(
 			frontmatter,
 			file.basename,
@@ -68,7 +93,6 @@ export class IngredientView extends ItemView {
 		);
 
 		if (errors.length > 0) {
-			// Blocking errors: never attempt to render IngredientDetails with invalid data.
 			this.root.render(
 				<div>
 					<h4>Cette note contient des erreurs :</h4>
@@ -91,24 +115,9 @@ export class IngredientView extends ItemView {
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
+				readOnly={this.returnToPath !== undefined} // no editing when viewed from a recipe link
+				onClose={() => this.handleClose()}
 			/>
-		);
-	}
-
-	async onOpen() {
-		const container = this.containerEl.children[1];
-		this.root = createRoot(container);
-		this.render();
-
-		// Re-render whenever Obsidian finishes re-parsing a file's metadata —
-		// this fires after app.vault.modify() completes and the cache is truly up to date,
-		// which is more reliable than calling render() immediately after modify().
-		this.registerEvent(
-			this.app.metadataCache.on('changed', (file) => {
-				if (file.path === this.filePath) {
-					this.render();
-				}
-			})
 		);
 	}
 
@@ -116,5 +125,3 @@ export class IngredientView extends ItemView {
 		this.root?.unmount();
 	}
 }
-
-

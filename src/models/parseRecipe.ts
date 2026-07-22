@@ -1,4 +1,4 @@
-import { Recipe, RecipeIngredientEntry, RecipeInstructionSection } from './recipe';
+import { Recipe, RecipeIngredientEntry, RecipeInstructionSection } from './Recipe';
 
 export interface RecipeParseResult {
 	recipe: Recipe | null;
@@ -46,6 +46,48 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
+	// Optional notes field — a single free-form markdown block, validated only if present.
+	let notes: string | undefined;
+	if (frontmatter.notes !== undefined && frontmatter.notes !== null) {
+		if (typeof frontmatter.notes !== 'string') {
+			errors.push('"notes" est présent mais n\'est pas un texte valide.');
+		} else {
+			notes = frontmatter.notes;
+		}
+	}
+
+	// Optional source field — free text, or a URL.
+	let source: string | undefined;
+	if (frontmatter.source !== undefined && frontmatter.source !== null) {
+		if (typeof frontmatter.source !== 'string') {
+			errors.push('"source" est présent mais n\'est pas un texte valide.');
+		} else {
+			source = frontmatter.source;
+		}
+	}
+
+	// Optional image field — the filename of a vault attachment, resolved to a
+// real path at display time via app.vault.getResourcePath.
+	let image: string | undefined;
+	if (frontmatter.image !== undefined && frontmatter.image !== null) {
+		if (typeof frontmatter.image !== 'string') {
+			errors.push('"image" est présent mais n\'est pas un texte valide.');
+		} else {
+			image = frontmatter.image;
+		}
+	}
+
+	// Tags — always an array; malformed entries are silently dropped rather than
+// blocking the whole recipe, since they're purely decorative/organizational.
+	let tags: string[] = [];
+	if (frontmatter.tags !== undefined && frontmatter.tags !== null) {
+		if (!Array.isArray(frontmatter.tags)) {
+			errors.push('"tags" est présent mais n\'est pas une liste.');
+		} else {
+			tags = frontmatter.tags.filter((t): t is string => typeof t === 'string');
+		}
+	}
+
 	// Ingredients: malformed entries are skipped individually (warning),
 	// not treated as a blocking error for the whole recipe.
 	const ingredients: RecipeIngredientEntry[] = [];
@@ -89,6 +131,10 @@ export function parseRecipeFromFrontmatter(
 		cookingDurationMin,
 		ingredients,
 		instructions,
+		notes,
+		source,
+		image,
+		tags,
 	};
 
 	return { recipe, errors: [], warnings };
@@ -117,12 +163,15 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 	return { ingredientName: obj.ingredient_name, quantity, unit: obj.unit, form };
 }
 
+// Parses one instruction section: a title plus a single free-form markdown
+// block (not a list of steps anymore — the user writes bullets/formatting
+// themselves directly in the content string).
 function parseInstructionSection(raw: unknown): RecipeInstructionSection | null {
 	if (typeof raw !== 'object' || raw === null) return null;
 	const obj = raw as Record<string, unknown>;
 
 	if (typeof obj.title !== 'string' || obj.title.trim() === '') return null;
-	if (!Array.isArray(obj.steps) || !obj.steps.every((s) => typeof s === 'string')) return null;
+	if (typeof obj.content !== 'string') return null;
 
-	return { title: obj.title, steps: obj.steps as string[] };
+	return { title: obj.title, content: obj.content };
 }

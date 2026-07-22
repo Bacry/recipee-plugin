@@ -9,7 +9,8 @@ interface IngredientDetailsProps {
 	possibleForms?: string[];
 	nutrition: NutritionPer100g;
 	brand?: string;
-	onEdit: () => void; // renders the "Modifier" button next to the name
+	onEdit?: () => void; // undefined = read-only, no "Modifier" button rendered
+	onClose: () => void;
 }
 
 export function IngredientDetails({
@@ -22,12 +23,16 @@ export function IngredientDetails({
 									  possibleForms,
 									  nutrition,
 									  onEdit,
+									  onClose,
 								  }: IngredientDetailsProps) {
 	return (
 		<div>
 			<div className="ingredient-details-header">
 				<h2>{name}</h2>
-				<button onClick={onEdit}>Modifier</button>
+				<div className="ingredient-details-header-actions">
+					{onEdit && <button onClick={onEdit}>Modifier</button>}
+					<button onClick={onClose} title="Fermer">✕</button>
+				</div>
 			</div>
 			<p>Type : {type}</p>
 			<p>Rayon : {shopSection}</p>

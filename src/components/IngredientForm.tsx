@@ -21,12 +21,14 @@ export interface IngredientFormValues {
 interface IngredientFormProps {
 	app: App; // needed to open the native Obsidian error modal
 	onSubmit: (values: IngredientFormValues) => void;
+	onClose?: () => void; // optional close/back button next to the title
 	ingredientTypes: string[];
 	shopSections: string[];
 	usdaApiKey: string;
 	initialValues?: IngredientFormValues;
 	submitLabel?: string;
 	onCancel?: () => void;
+
 }
 
 const emptyNutrition: NutritionPer100g = {
@@ -70,6 +72,7 @@ function nutritionToStrings(nutrition: NutritionPer100g): Record<keyof Nutrition
 export function IngredientForm({
 								   app,
 								   onSubmit,
+								   onClose,
 								   ingredientTypes,
 								   shopSections,
 								   usdaApiKey,
@@ -217,7 +220,10 @@ export function IngredientForm({
 
 	return (
 		<div className="ingredient-form">
-			<h3>Nouvel ingrédient</h3>
+			<div className="ingredient-details-header">
+				<h3>Nouvel ingrédient</h3>
+				{onClose && <button onClick={onClose} title="Fermer">✕</button>}
+			</div>
 
 			<section className="ingredient-form-section">
 				<h4>Informations générales</h4>

@@ -14,6 +14,8 @@ interface IngredientViewContainerProps {
 	ingredientTypes: string[];
 	shopSections: string[];
 	usdaApiKey: string;
+	readOnly: boolean; // when true, hides the "Modifier" button entirely
+	onClose: () => void; // renders a close/back button next to the name
 }
 
 // This component owns the read/edit toggle for a single ingredient note.
@@ -26,7 +28,9 @@ export function IngredientViewContainer({
 											warnings,
 											ingredientTypes,
 											shopSections,
-											usdaApiKey
+											usdaApiKey,
+											readOnly,
+											onClose,
 										}: IngredientViewContainerProps) {
 	const [isEditing, setIsEditing] = useState(false);
 
@@ -82,7 +86,8 @@ export function IngredientViewContainer({
 				brand={ingredient.brand}
 				possibleForms={ingredient.possible_forms}
 				nutrition={ingredient.nutrition_per_100g}
-				onEdit={() => setIsEditing(true)}
+				onEdit={readOnly ? undefined : () => setIsEditing(true)}
+				onClose={onClose}
 			/>
 		</div>
 	);

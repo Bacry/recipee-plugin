@@ -87,7 +87,8 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 	}
-	async activateIngredientView(filePath: string) {
+
+	async activateIngredientView(filePath: string, returnToPath?: string) {
 		const { workspace } = this.app;
 		let leaf = workspace.getLeavesOfType(INGREDIENT_VIEW_TYPE)[0];
 
@@ -98,20 +99,25 @@ export default class MyPlugin extends Plugin {
 		await leaf.setViewState({
 			type: INGREDIENT_VIEW_TYPE,
 			active: true,
-			state: { filePath },
+			state: { filePath, returnToPath },
 		});
 
 		workspace.revealLeaf(leaf);
 	}
 
-	async activateNewIngredientView() {
+	async activateNewIngredientView(prefilledName?: string, returnToPath?: string) {
 		const { workspace } = this.app;
 		let leaf = workspace.getLeavesOfType(NEW_INGREDIENT_VIEW_TYPE)[0];
 
 		if (!leaf) {
 			leaf = workspace.getLeaf(true);
-			await leaf.setViewState({ type: NEW_INGREDIENT_VIEW_TYPE, active: true });
 		}
+
+		await leaf.setViewState({
+			type: NEW_INGREDIENT_VIEW_TYPE,
+			active: true,
+			state: { prefilledName, returnToPath },
+		});
 
 		workspace.revealLeaf(leaf);
 	}
@@ -132,6 +138,7 @@ export default class MyPlugin extends Plugin {
 
 		workspace.revealLeaf(leaf);
 	}
+
 
 	async activateShoppingListView() {
 		const { workspace } = this.app;

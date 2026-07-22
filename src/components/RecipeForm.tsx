@@ -22,6 +22,7 @@ export interface RecipeFormValues {
 	source: string;
 	image: string;
 	tags: string; // comma-separated in the form, split into an array on submit — same convention as possibleForms in IngredientForm
+	totalWeightG: string;
 }
 
 interface RecipeFormProps {
@@ -56,6 +57,7 @@ function emptyValues(defaultInstructions: string, overrides?: Partial<RecipeForm
 		source: '',
 		image: '',
 		tags: '',
+		totalWeightG: '',
 		...overrides,
 	};
 }
@@ -83,6 +85,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstr
 	const [tags, setTags] = useState(base.tags);
 	const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 	const [tagHighlightedIndex, setTagHighlightedIndex] = useState<number>(-1);
+	const [totalWeightG, setTotalWeightG] = useState(base.totalWeightG);
 
 	function handleSubmit() {
 		onSubmit({
@@ -98,6 +101,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstr
 			source,
 			image,
 			tags,
+			totalWeightG,
 		});
 	}
 
@@ -217,6 +221,14 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstr
 						<input
 							value={cookingDurationMin}
 							onChange={(e) => setCookingDurationMin(sanitizeNumericInput(e.target.value))}
+						/>
+					</div>
+					<div className="ingredient-form-field">
+						<label>Poids total mesuré (g, optionnel)</label>
+						<input
+							value={totalWeightG}
+							onChange={(e) => setTotalWeightG(sanitizeNumericInput(e.target.value))}
+							placeholder="ex : 240"
 						/>
 					</div>
 				</div>

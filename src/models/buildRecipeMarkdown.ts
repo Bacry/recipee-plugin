@@ -64,6 +64,10 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 		lines.push(`image: ${escapeYamlString(recipe.image)}`);
 	}
 
+	if (recipe.totalWeightG != null) {
+		lines.push(`total_weight_g: ${recipe.totalWeightG}`);
+	}
+
 	if (recipe.tags.length > 0) {
 		lines.push('tags:');
 		for (const tag of recipe.tags) {

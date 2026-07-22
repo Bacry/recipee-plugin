@@ -32,4 +32,6 @@ export interface Recipe {
 	source?: string;
 	image?: string;
 	tags: string[];
+	totalWeightG?: number; // experimentally measured final weight in grams — if absent, computed as the sum of ingredient weights instead
+
 }

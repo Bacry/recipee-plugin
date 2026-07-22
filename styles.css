@@ -2,15 +2,23 @@
 	display: none;
 }
 
-.workspace-leaf-content[data-type="ingredient-view"] table {
+.workspace-leaf-content[data-type="ingredient-view"] table,
+.workspace-leaf-content[data-type="recipe-view"] table {
 	border-collapse: collapse;
 	width: 100%;
-	max-width: 400px;
+	max-width: 600px;
 }
 
-.workspace-leaf-content[data-type="ingredient-view"] table td {
+.workspace-leaf-content[data-type="ingredient-view"] table td,
+.workspace-leaf-content[data-type="recipe-view"] table td {
 	border: 1px solid var(--background-modifier-border);
 	padding: 4px 8px;
+}
+
+.workspace-leaf-content[data-type="recipe-view"] table th {
+	border: 1px solid var(--background-modifier-border);
+	padding: 4px 8px;
+	text-align: left;
 }
 
 .ingredient-form {

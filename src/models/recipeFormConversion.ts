@@ -15,6 +15,7 @@ export function recipeToFormValues(recipe: Recipe): RecipeFormValues {
 		source: recipe.source ?? '',
 		image: recipe.image ?? '',
 		tags: recipe.tags.join(', '),
+		totalWeightG: recipe.totalWeightG?.toString() ?? '',
 	};
 }
 
@@ -40,6 +41,16 @@ export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe |
 			errors.push('"Préparation (min)" n\'est pas un nombre valide.');
 		} else {
 			preparationDurationMin = parsed;
+		}
+	}
+
+	let totalWeightG: number | undefined;
+	if (values.totalWeightG.trim() !== '') {
+		const parsed = Number(values.totalWeightG);
+		if (Number.isNaN(parsed)) {
+			errors.push('"Poids total mesuré" n\'est pas un nombre valide.');
+		} else {
+			totalWeightG = parsed;
 		}
 	}
 
@@ -75,6 +86,7 @@ export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe |
 		source: values.source.trim() || undefined,
 		image: values.image.trim() || undefined,
 		tags,
+		totalWeightG,
 	};
 
 	return { recipe, errors: [] };

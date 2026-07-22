@@ -72,6 +72,15 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
+	let totalWeightG: number | undefined;
+	if (frontmatter.total_weight_g !== undefined && frontmatter.total_weight_g !== null) {
+		if (typeof frontmatter.total_weight_g !== 'number' || Number.isNaN(frontmatter.total_weight_g)) {
+			errors.push('"total_weight_g" est présent mais n\'est pas un nombre valide.');
+		} else {
+			totalWeightG = frontmatter.total_weight_g;
+		}
+	}
+
 	let tags: string[] = [];
 	if (frontmatter.tags !== undefined && frontmatter.tags !== null) {
 		if (!Array.isArray(frontmatter.tags)) {
@@ -140,6 +149,7 @@ export function parseRecipeFromFrontmatter(
 		source,
 		image,
 		tags,
+		totalWeightG,
 	};
 
 	return { recipe, errors: [], warnings };

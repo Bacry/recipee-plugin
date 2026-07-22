@@ -3,10 +3,14 @@ import { App, Component, MarkdownRenderer } from 'obsidian';
 import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
 import { upperFirstLetter } from '../models/textNormalize';
+import { computeRecipeNutrition } from '../models/computeRecipeNutrition';
+import { NutritionTable } from './NutritionTable';
 
 interface RecipeDetailsProps {
 	app: App;
 	recipe: Recipe;
+	ingredientsFolder: string;
+	recipesFolder: string;
 	initialServings?: number; // used when opened as a base recipe, to reflect the quantity used by the parent recipe
 	onIngredientClick: (ingredientName: string) => void;
 	ingredientExists: (ingredientName: string) => boolean;
@@ -58,6 +62,8 @@ function InstructionsPreview({ app, content }: { app: App; content: string }) {
 export function RecipeDetails({
 								  app,
 								  recipe,
+								  ingredientsFolder,
+								  recipesFolder,
 								  initialServings,
 								  onIngredientClick,
 								  ingredientExists,
@@ -82,6 +88,20 @@ export function RecipeDetails({
 
 	const servings = Number(servingsInput) || recipe.baseServings;
 	const factor = servings / recipe.baseServings;
+
+	const nutritionResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, recipe);
+
+	const scaledTotal = { ...nutritionResult.totalNutrition };
+	for (const key of Object.keys(scaledTotal) as (keyof typeof scaledTotal)[]) {
+		scaledTotal[key] *= factor;
+	}
+	const scaledTotalWeightG = nutritionResult.totalWeightG * factor;
+
+	const per100g = { ...nutritionResult.totalNutrition };
+	for (const key of Object.keys(per100g) as (keyof typeof per100g)[]) {
+		per100g[key] = nutritionResult.totalWeightG > 0 ? nutritionResult.totalNutrition[key] / (nutritionResult.totalWeightG / 100) : 0;
+	}
+
 
 	const totalDuration = (recipe.preparationDurationMin ?? 0) + (recipe.cookingDurationMin ?? 0);
 
@@ -126,9 +146,10 @@ export function RecipeDetails({
 								{totalDuration > 0 && <li>Total : {formatDuration(totalDuration)}</li>}
 							</ul>
 						</div>
+
 					)}
 				</div>
-
+				{recipe.totalWeightG != null && <p>Poids total mesuré : {recipe.totalWeightG}g</p>}
 				<div className="recipe-top-row-column">
 					<div className="recipe-source-row">
 						{recipe.source && (
@@ -174,6 +195,7 @@ export function RecipeDetails({
 				/>{' '}
 				{recipe.servingsLabel})
 			</h4>
+
 			{(() => {
 				// Unified list: base recipes first, then regular ingredients — a single
 				// <ul> instead of two separate sections, with "(recette de base)"
@@ -236,8 +258,17 @@ export function RecipeDetails({
 		</ul>
 	);
 })()}
-			<h4>Instructions</h4>
 			<InstructionsPreview app={app} content={recipe.instructions} />
+
+			<NutritionTable
+				per100g={per100g}
+				total={scaledTotal}
+				totalWeightG={scaledTotalWeightG}
+				perServing={nutritionResult.perServingNutrition}
+				servingsLabel={recipe.servingsLabel}
+				warnings={nutritionResult.warnings}
+			/>
+
 		</div>
 	);
 }

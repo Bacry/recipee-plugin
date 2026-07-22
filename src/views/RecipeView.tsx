@@ -179,6 +179,8 @@ export class RecipeView extends ItemView {
 					key={`${this.filePath}-${this.initialServings ?? ''}`}
 					app={this.app}
 					recipe={recipe!}
+					ingredientsFolder={this.plugin.settings.ingredientsFolder}
+					recipesFolder={this.plugin.settings.recipesFolder}
 					initialServings={this.initialServings}
 					onIngredientClick={(name) => this.handleIngredientClick(name)}
 					ingredientExists={(name) => this.ingredientExists(name)}

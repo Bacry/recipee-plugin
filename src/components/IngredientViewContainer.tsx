@@ -15,6 +15,8 @@ interface IngredientViewContainerProps {
 	shopSections: string[];
 	usdaApiKey: string;
 	readOnly: boolean; // when true, hides the "Modifier" button entirely
+	usedInRecipes: string[];
+	onRecipeClick: (recipeName: string) => void;
 	onClose: () => void; // renders a close/back button next to the name
 }
 
@@ -30,6 +32,8 @@ export function IngredientViewContainer({
 											shopSections,
 											usdaApiKey,
 											readOnly,
+											usedInRecipes,
+											onRecipeClick,
 											onClose,
 										}: IngredientViewContainerProps) {
 	const [isEditing, setIsEditing] = useState(false);
@@ -86,6 +90,8 @@ export function IngredientViewContainer({
 				brand={ingredient.brand}
 				possibleForms={ingredient.possible_forms}
 				nutrition={ingredient.nutrition_per_100g}
+				usedInRecipes={usedInRecipes}
+				onRecipeClick={onRecipeClick}
 				onEdit={readOnly ? undefined : () => setIsEditing(true)}
 				onClose={onClose}
 			/>

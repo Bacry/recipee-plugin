@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { App, Component, MarkdownRenderer } from 'obsidian';
 import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
+import { upperFirstLetter } from '../models/textNormalize';
 
 interface RecipeDetailsProps {
 	app: App;
@@ -86,6 +87,14 @@ export function RecipeDetails({
 
 	return (
 		<div>
+			<div className="ingredient-details-header">
+				<h2>{upperFirstLetter(recipe.name)}</h2>
+				<div className="ingredient-details-header-actions">
+					{onEdit && <button onClick={onEdit}>Modifier</button>}
+					<button onClick={onClose} title="Fermer">✕</button>
+				</div>
+			</div>
+
 			{recipe.tags.length > 0 && (
 				<div className="recipe-tags">
 					{recipe.tags.map((tag) => (
@@ -94,13 +103,6 @@ export function RecipeDetails({
 				</div>
 			)}
 
-			<div className="ingredient-details-header">
-				<h2>{recipe.name}</h2>
-				<div className="ingredient-details-header-actions">
-					{onEdit && <button onClick={onEdit}>Modifier</button>}
-					<button onClick={onClose} title="Fermer">✕</button>
-				</div>
-			</div>
 
 			<MarkdownEditableBlock
 				app={app}
@@ -226,6 +228,7 @@ export function RecipeDetails({
 										) : (
 										<span>{entry.ingredientName}</span>
 							)}
+									{entry.complement ? ' (' + entry.complement + ')' : ''}
 						{entry.form ? ' (' + entry.form + ')' : ''}
 							</li>
 							);

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { App } from 'obsidian';
 import { parseQuantityString, ParsedQuantity } from '../models/units';
 import { searchIngredientNames } from '../models/searchIngredientNames';
@@ -10,23 +10,26 @@ interface SmartRecipeIngredientInputProps {
 	onAdd: (entry: RecipeIngredientEntry) => void;
 }
 
-// Same two-step pattern as SmartShoppingInput, but without the "complement"
-// step — recipe ingredients only need a name and an optional quantity+unit,
-// never a free-text detail like a brand.
-type Step = 'name' | 'quantity';
+// Same pattern as SmartShoppingInput: after the name, the next typed value
+// is tried FIRST as a quantity — if it parses, the entry is finalized right
+// there (no complement). Only if it doesn't parse as a quantity is it kept
+// as a free-text complement, moving to a final quantity step. This avoids
+// forcing a complement step when the user just wants to type a quantity.
+type Step = 'name' | 'complement-or-quantity' | 'quantity';
 
 export function SmartRecipeIngredientInput({ app, ingredientsFolder, onAdd }: SmartRecipeIngredientInputProps) {
 	const [step, setStep] = useState<Step>('name');
 	const [name, setName] = useState('');
+	const [complement, setComplement] = useState('');
 	const [currentInput, setCurrentInput] = useState('');
 
 	const [suggestions, setSuggestions] = useState<string[]>([]);
 	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
-	const searchRequestId = useRef(0);
 
 	function reset() {
 		setStep('name');
 		setName('');
+		setComplement('');
 		setCurrentInput('');
 		setSuggestions([]);
 		setHighlightedIndex(-1);
@@ -51,14 +54,13 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, onAdd }: Sm
 		setCurrentInput('');
 		setSuggestions([]);
 		setHighlightedIndex(-1);
-		setStep('quantity');
+		setStep('complement-or-quantity');
 	}
 
-	// Finalizes the entry, whether a quantity was typed or the field was
-	// left empty (meaning "no specific amount", like vanille in the example recipe).
-	function finalize(parsedQuantity: ParsedQuantity | null) {
+	function finalize(complementValue: string, parsedQuantity: ParsedQuantity | null) {
 		onAdd({
 			ingredientName: name,
+			complement: complementValue.trim() || undefined,
 			quantity: parsedQuantity?.quantity ?? null,
 			unit: parsedQuantity?.unit?.name ?? '',
 		});
@@ -66,13 +68,22 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, onAdd }: Sm
 	}
 
 	function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-		// Backspace on an empty input steps back to the name step, restoring
-		// its text so it can be edited again — same convenience as SmartShoppingInput.
+		// Backspace on an empty input steps back one stage, restoring its
+		// text so it can be edited again — same convenience as SmartShoppingInput.
 		if (e.key === 'Backspace' && currentInput === '') {
 			if (step === 'quantity') {
+				setCurrentInput(complement);
+				setComplement('');
+				setStep('complement-or-quantity');
+				return;
+			}
+			if (step === 'complement-or-quantity') {
 				setCurrentInput(name);
 				setName('');
+				setSuggestions([]);
+				setHighlightedIndex(-1);
 				setStep('name');
+				return;
 			}
 			return;
 		}
@@ -99,27 +110,55 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, onAdd }: Sm
 			return;
 		}
 
-		// step === 'quantity'
 		if (e.key !== 'Enter') return;
 
+		if (step === 'complement-or-quantity') {
+			// Empty Return here means "no complement, no quantity" — finalize now.
+			if (currentInput.trim() === '') {
+				finalize('', null);
+				return;
+			}
+
+			// Try reading the typed text as a quantity+unit BEFORE treating it
+			// as a complement — this is the fix: quantity is tried first.
+			const parsed = parseQuantityString(currentInput);
+			if (parsed) {
+				finalize('', parsed);
+				return;
+			}
+
+			// Not a valid quantity: treat as a free-text complement, move on.
+			setComplement(currentInput.trim());
+			setCurrentInput('');
+			setStep('quantity');
+			return;
+		}
+
+		// step === 'quantity'
 		if (currentInput.trim() === '') {
-			finalize(null); // no quantity specified
+			finalize(complement, null);
 			return;
 		}
 
 		const parsed = parseQuantityString(currentInput);
 		if (parsed) {
-			finalize(parsed);
+			finalize(complement, parsed);
 		}
 		// Non-empty but invalid: block on purpose, no state change.
 	}
 
-	const placeholder = step === 'name' ? "Nom de l'ingrédient" : 'Quantité (optionnel)';
+	const placeholder =
+		step === 'name'
+			? "Nom de l'ingrédient"
+			: step === 'complement-or-quantity'
+				? 'Complément ou quantité (optionnel)'
+				: 'Quantité (optionnel)';
 
 	return (
 		<div className="smart-shopping-input-wrapper">
 			<div className="smart-shopping-input">
 				{name && <span>{name}, </span>}
+				{complement && <span>{complement}, </span>}
 				<input
 					value={currentInput}
 					onChange={(e) =>

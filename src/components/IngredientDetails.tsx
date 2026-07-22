@@ -1,4 +1,5 @@
 import { NutritionPer100g } from '../models/Ingredient';
+import {upperFirstLetter} from '../models/textNormalize'
 
 interface IngredientDetailsProps {
 	name: string;
@@ -9,6 +10,8 @@ interface IngredientDetailsProps {
 	possibleForms?: string[];
 	nutrition: NutritionPer100g;
 	brand?: string;
+	usedInRecipes: string[];
+	onRecipeClick: (recipeName: string) => void;
 	onEdit?: () => void; // undefined = read-only, no "Modifier" button rendered
 	onClose: () => void;
 }
@@ -22,13 +25,15 @@ export function IngredientDetails({
 									  brand,
 									  possibleForms,
 									  nutrition,
+									  usedInRecipes,
+									  onRecipeClick,
 									  onEdit,
 									  onClose,
 								  }: IngredientDetailsProps) {
 	return (
 		<div>
 			<div className="ingredient-details-header">
-				<h2>{name}</h2>
+				<h2>{upperFirstLetter(name)}</h2>
 				<div className="ingredient-details-header-actions">
 					{onEdit && <button onClick={onEdit}>Modifier</button>}
 					<button onClick={onClose} title="Fermer">✕</button>
@@ -57,6 +62,20 @@ export function IngredientDetails({
 				<tr><td>Cholestérol</td><td>{nutrition.cholesterol} mg</td></tr>
 				</tbody>
 			</table>
+
+			{usedInRecipes.length > 0 && (
+				<p>
+					Utilisé dans :{' '}
+					{usedInRecipes.map((recipeName, index) => (
+						<span key={recipeName}>
+							<a href="#" onClick={(e) => { e.preventDefault(); onRecipeClick(recipeName); }}>
+								{recipeName}
+							</a>
+							{index < usedInRecipes.length - 1 ? ', ' : ''}
+						</span>
+					))}
+				</p>
+			)}
 		</div>
 	);
 }

@@ -14,12 +14,14 @@ export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
 interface NewRecipeViewState extends NavigableViewState {
 	editFilePath?: string;
+	isCocktail?: boolean; // set when opened via "Create new cocktail" — affects the instructions template used
 }
 
 export class NewRecipeView extends ItemView {
 	private plugin: MyPlugin;
 	private root: Root | null = null;
 	private editFilePath?: string;
+	private isCocktail = false;
 	private history: NavigationEntry[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
@@ -37,13 +39,14 @@ export class NewRecipeView extends ItemView {
 
 	async setState(state: NewRecipeViewState, result: unknown) {
 		this.editFilePath = state.editFilePath;
+		this.isCocktail = state.isCocktail ?? false;
 		this.history = state.history ?? [];
 		this.render();
 		return super.setState(state, result as never);
 	}
 
 	getState(): NewRecipeViewState {
-		return { editFilePath: this.editFilePath, history: this.history };
+		return { editFilePath: this.editFilePath, isCocktail: this.isCocktail, history: this.history };
 	}
 
 	async onOpen() {
@@ -59,7 +62,6 @@ export class NewRecipeView extends ItemView {
 	render() {
 		if (!this.root) return;
 
-		// Edit mode: read the existing recipe from disk to prefill the form.
 		let initialValues: RecipeFormValues | undefined;
 		if (this.editFilePath) {
 			const file = this.app.vault.getAbstractFileByPath(this.editFilePath);
@@ -72,12 +74,29 @@ export class NewRecipeView extends ItemView {
 			}
 		}
 
+		const defaultInstructions = this.isCocktail
+			? this.plugin.settings.cocktailInstructionsTemplate
+			: this.plugin.settings.recipeInstructionsTemplate;
+
+		// Prefills specific to the "Create new cocktail" flow — only applied
+		// when creating fresh (editFilePath undefined) and isCocktail is true.
+		const defaultValueOverrides = this.isCocktail && !this.editFilePath
+			? {
+				baseServings: '1',
+				servingsLabel: 'verre',
+				preparationDurationMin: '10',
+				tags: 'cocktail',
+			}
+			: undefined;
+
 		this.root.render(
 			<RecipeForm
-				key={this.editFilePath ?? 'new'}
+				key={`${this.editFilePath ?? 'new'}-${this.isCocktail}`}
 				app={this.app}
 				recipesFolder={this.plugin.settings.recipesFolder}
 				ingredientsFolder={this.plugin.settings.ingredientsFolder}
+				defaultInstructions={defaultInstructions}
+				defaultValueOverrides={defaultValueOverrides}
 				onSubmit={(values) => this.handleSubmit(values)}
 				onClose={() => this.handleClose()}
 				initialValues={initialValues}

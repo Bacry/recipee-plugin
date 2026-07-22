@@ -9,6 +9,8 @@ export interface MyPluginSettings {
 	shoppingListPath: string; // path to the single "Courses" note
 	otherItemsNotePath: string; // single note listing non-ingredient item names, used for autocomplete
 	recipesFolder: string; // folder where recipe notes are stored
+	recipeInstructionsTemplate: string;
+	cocktailInstructionsTemplate: string;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -19,6 +21,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	shoppingListPath: 'Courses.md',
 	otherItemsNotePath: 'Autres.md',
 	recipesFolder: 'Recettes',
+	recipeInstructionsTemplate: '#### Préparation\n\n\n#### Cuisson\n\n',
+	cocktailInstructionsTemplate: '#### Préparation\n\n\n#### Shaking',
 };
 export class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
@@ -57,6 +61,32 @@ export class SampleSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}),
 			);
+
+		new Setting(containerEl)
+			.setName('Recipe instructions template')
+			.setDesc('Default markdown prefilled in the instructions field when creating a new recipe')
+			.addTextArea((text) =>
+				text
+					.setValue(this.plugin.settings.recipeInstructionsTemplate)
+					.onChange(async (value) => {
+						this.plugin.settings.recipeInstructionsTemplate = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+		new Setting(containerEl).setName('Cocktails').setHeading();
+
+		new Setting(containerEl)
+			.setName('Cocktail instructions template')
+			.setDesc('Default markdown prefilled in the instructions field when creating a new cocktail')
+			.addTextArea((text) =>
+				text
+					.setValue(this.plugin.settings.cocktailInstructionsTemplate)
+					.onChange(async (value) => {
+						this.plugin.settings.cocktailInstructionsTemplate = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
 
 		new Setting(containerEl)
 			.setName('Ingredient types')

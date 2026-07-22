@@ -43,14 +43,14 @@ export function MarkdownEditableBlock({ app, title, content, onSave }: MarkdownE
 	return (
 		<div className="markdown-editable-block">
 			<div className="markdown-editable-header">
-				{title && <h4>{title}</h4>}
-				<button
-					className="markdown-editable-toggle"
-					onClick={handleToggle}
-					title={isEditing ? 'Enregistrer' : 'Modifier'}
-				>
-					{isEditing ? '💾' : '✏️'}
-				</button>
+				{title && (
+					<h4 onClick={handleToggle} className="markdown-editable-title-clickable">
+						{title}
+					</h4>
+				)}
+				{isEditing && (
+					<button className="markdown-editable-toggle" onClick={handleToggle} title="Enregistrer">💾</button>
+				)}
 			</div>
 
 			{isEditing ? (

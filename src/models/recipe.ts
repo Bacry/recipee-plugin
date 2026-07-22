@@ -1,8 +1,11 @@
+import { Recipe, RecipeIngredientEntry, RecipeBaseRecipeEntry } from '../models/recipe';
+
 export interface RecipeIngredientEntry {
 	ingredientName: string;
 	quantity: number | null;
 	unit: string;
 	form?: string;
+	complement?: string; // free text, e.g. a specific brand ("Gordon's") — not used to identify the ingredient itself
 }
 
 // A reference to another recipe (tagged "base") used as a component of this
@@ -30,5 +33,3 @@ export interface Recipe {
 	image?: string;
 	tags: string[];
 }
-
-export const DEFAULT_INSTRUCTIONS_TEMPLATE = '## Préparation\n\n\n## Cuisson\n\n';

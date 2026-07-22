@@ -19,8 +19,14 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 		lines.push('ingredients:');
 		for (const entry of recipe.ingredients) {
 			lines.push(`  - ingredient_name: ${escapeYamlString(entry.ingredientName)}`);
+			if (entry.complement) {
+				lines.push(`    complement: ${escapeYamlString(entry.complement)}`);
+			}
 			lines.push(`    quantity: ${entry.quantity ?? ''}`);
 			lines.push(`    unit: ${escapeYamlString(entry.unit)}`);
+			if (entry.form) {
+				lines.push(`    form: ${escapeYamlString(entry.form)}`);
+			}
 			if (entry.form) {
 				lines.push(`    form: ${escapeYamlString(entry.form)}`);
 			}

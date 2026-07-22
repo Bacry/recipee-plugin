@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Recipe, RecipeIngredientEntry, DEFAULT_INSTRUCTIONS_TEMPLATE } from '../models/recipe';
 import { App } from 'obsidian';
+import { Recipe, RecipeIngredientEntry, RecipeBaseRecipeEntry } from '../models/recipe';
 import { searchRecipeTags } from '../models/searchRecipeTags';
 import { SmartRecipeIngredientInput } from './SmartRecipeIngredientInput';
-import { RecipeIngredientEntry, RecipeBaseRecipeEntry, DEFAULT_INSTRUCTIONS_TEMPLATE } from '../models/recipe';
 import { SmartBaseRecipeInput } from './SmartBaseRecipeInput';
+
 
 // The shape of data this form works with — mirrors Recipe, but numeric/list
 // fields that need free-text editing are kept as strings until submit,
@@ -25,9 +25,11 @@ export interface RecipeFormValues {
 }
 
 interface RecipeFormProps {
-	app: App;app: App;
+	app: App;
 	recipesFolder: string;
 	ingredientsFolder: string;
+	defaultInstructions: string;
+	defaultValueOverrides?: Partial<RecipeFormValues>;
 	onSubmit: (values: RecipeFormValues) => void;
 	onClose?: () => void;
 	initialValues?: RecipeFormValues;
@@ -37,7 +39,10 @@ interface RecipeFormProps {
 // Builds a blank form state for creating a brand new recipe — instructions
 // starts prefilled with the default template rather than empty, so the user
 // has a starting skeleton to work from.
-function emptyValues(): RecipeFormValues {
+// Partial overrides applied on top of the blank defaults — used by the
+// "Create new cocktail" command to prefill baseServings, servingsLabel,
+// preparationDurationMin, and tags, while everything else starts empty.
+function emptyValues(defaultInstructions: string, overrides?: Partial<RecipeFormValues>): RecipeFormValues {
 	return {
 		name: '',
 		baseServings: '4',
@@ -46,11 +51,12 @@ function emptyValues(): RecipeFormValues {
 		cookingDurationMin: '',
 		ingredients: [],
 		baseRecipes: [],
-		instructions: DEFAULT_INSTRUCTIONS_TEMPLATE,
+		instructions: defaultInstructions,
 		notes: '',
 		source: '',
 		image: '',
 		tags: '',
+		...overrides,
 	};
 }
 
@@ -61,8 +67,8 @@ function sanitizeNumericInput(value: string): string {
 	return value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
 }
 
-export function RecipeForm({ app, recipesFolder, ingredientsFolder, onSubmit, onClose, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {
-	const base = initialValues ?? emptyValues();
+export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstructions, defaultValueOverrides, onSubmit, onClose, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {
+	const base = initialValues ?? emptyValues(defaultInstructions, defaultValueOverrides);
 	const [name, setName] = useState(base.name);
 	const [baseServings, setBaseServings] = useState(base.baseServings);
 	const [servingsLabel, setServingsLabel] = useState(base.servingsLabel);
@@ -76,6 +82,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, onSubmit, on
 	const [image, setImage] = useState(base.image);
 	const [tags, setTags] = useState(base.tags);
 	const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+	const [tagHighlightedIndex, setTagHighlightedIndex] = useState<number>(-1);
 
 	function handleSubmit() {
 		onSubmit({
@@ -94,17 +101,35 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, onSubmit, on
 		});
 	}
 
+	function handleTagsChange(value: string) {
+		setTags(value);
+		const fragment = getCurrentTagFragment(value);
+		setTagSuggestions(fragment.length >= 1 ? searchRecipeTags(app, recipesFolder, fragment) : []);
+		setTagHighlightedIndex(-1);
+	}
+
+	function handleTagsKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+		if (e.key === 'ArrowDown' && tagSuggestions.length > 0) {
+			e.preventDefault();
+			setTagHighlightedIndex((prev) => Math.min(prev + 1, tagSuggestions.length - 1));
+			return;
+		}
+		if (e.key === 'ArrowUp' && tagSuggestions.length > 0) {
+			e.preventDefault();
+			setTagHighlightedIndex((prev) => Math.max(prev - 1, -1));
+			return;
+		}
+		if (e.key === 'Enter' && tagHighlightedIndex >= 0 && tagSuggestions[tagHighlightedIndex]) {
+			e.preventDefault();
+			applyTagSuggestion(tagSuggestions[tagHighlightedIndex]);
+		}
+	}
+
 	// Extracts the tag currently being typed (the text after the last comma),
 // so autocomplete searches only that partial word, not the whole field.
 	function getCurrentTagFragment(value: string): string {
 		const parts = value.split(',');
 		return parts[parts.length - 1].trim();
-	}
-
-	function handleTagsChange(value: string) {
-		setTags(value);
-		const fragment = getCurrentTagFragment(value);
-		setTagSuggestions(fragment.length >= 2 ? searchRecipeTags(app, recipesFolder, fragment) : []);
 	}
 
 // Replaces the in-progress tag fragment with the picked suggestion, keeping
@@ -225,12 +250,18 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, onSubmit, on
 					<input
 						value={tags}
 						onChange={(e) => handleTagsChange(e.target.value)}
+						onKeyDown={handleTagsKeyDown}
 						placeholder="ex : dessert, sans gluten"
 					/>
 					{tagSuggestions.length > 0 && (
 						<ul className="smart-shopping-suggestions">
-							{tagSuggestions.map((suggestion) => (
-								<li key={suggestion} onClick={() => applyTagSuggestion(suggestion)}>
+							{tagSuggestions.map((suggestion, index) => (
+								<li
+									key={suggestion}
+									className={index === tagHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
+									onMouseEnter={() => setTagHighlightedIndex(index)}
+									onClick={() => applyTagSuggestion(suggestion)}
+								>
 									{suggestion}
 								</li>
 							))}
@@ -269,6 +300,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, onSubmit, on
 							<li key={index}>
 	<span>
 		{entry.ingredientName}
+		{entry.complement ? ` (${entry.complement})` : ''}
 		{entry.quantity != null ? ` — ${entry.quantity}${entry.unit}` : ''}
 	</span>
 								<button type="button" onClick={() => handleRemoveIngredient(index)} title="Retirer" className="recipe-ingredient-remove">✕</button>

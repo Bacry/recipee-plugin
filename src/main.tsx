@@ -99,6 +99,14 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: 'create-new-cocktail',
+			name: 'Create new cocktail',
+			callback: () => {
+				this.activateNewRecipeView(true);
+			},
+		});
+
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 	}
 
@@ -169,18 +177,19 @@ export default class MyPlugin extends Plugin {
 	// Opens NewRecipeView in creation mode (no editFilePath), transforming the
 // active leaf. Fresh history since this is a direct open, not a navigation
 // from another one of our views.
-	async activateNewRecipeView() {
+	async activateNewRecipeView(isCocktail = false) {
 		const { workspace } = this.app;
 		const leaf = workspace.getLeaf(false);
 
 		await leaf.setViewState({
 			type: NEW_RECIPE_VIEW_TYPE,
 			active: true,
-			state: { history: [] },
+			state: { isCocktail, history: [] },
 		});
 
 		workspace.revealLeaf(leaf);
 	}
+
 
 	onunload() {}
 

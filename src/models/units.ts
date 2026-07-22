@@ -16,6 +16,7 @@ export const UNITS: Unit[] = [
 	{ name: 'ml', ratioToBaseline: 1, isVolume: true },
 	{ name: 'cs', ratioToBaseline: 15, isVolume: true }, // cuillère à soupe
 	{ name: 'cc', ratioToBaseline: 5, isVolume: true }, // cuillère à café
+	{ name: 'dash', ratioToBaseline: 0.9, isVolume: true }, // bartending convention: ~0.9mL, varies by bottle/pourer
 ];
 
 // Looks up a unit by its exact name (case-insensitive). Returns null if unknown —

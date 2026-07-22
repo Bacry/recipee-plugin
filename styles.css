@@ -5,6 +5,7 @@
 .workspace-leaf-content[data-type="ingredient-view"] table {
 	border-collapse: collapse;
 	width: 100%;
+	max-width: 400px;
 }
 
 .workspace-leaf-content[data-type="ingredient-view"] table td {
@@ -125,6 +126,7 @@
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 0.5rem 0.75rem;
+	max-width: 500px;
 }
 
 .usda-search-row {
@@ -459,4 +461,12 @@
 	background: var(--background-secondary);
 	cursor: pointer;
 	flex-shrink: 0;
+}
+
+.markdown-editable-title-clickable {
+	cursor: pointer;
+}
+
+.markdown-editable-title-clickable:hover {
+	text-decoration: underline;
 }

@@ -164,7 +164,13 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 		form = obj.form;
 	}
 
-	return { ingredientName: obj.ingredient_name, quantity, unit: obj.unit, form };
+	let complement: string | undefined;
+	if (obj.complement !== undefined && obj.complement !== null) {
+		if (typeof obj.complement !== 'string') return null;
+		complement = obj.complement;
+	}
+
+	return { ingredientName: obj.ingredient_name, complement, quantity, unit: obj.unit, form };
 }
 
 // Unlike ingredients, quantity is required here (no null case) — a base

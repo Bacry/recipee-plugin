@@ -22,3 +22,11 @@ export function lowerFirstLetter(text: string): string {
 export function sortAlphabetically(items: string[]): string[] {
 	return [...items].sort((a, b) => a.localeCompare(b));
 }
+
+// Capitalizes only the first character for display purposes — the reverse
+// of lowerFirstLetter, used everywhere a name is shown to the user (titles,
+// links), while file names/identity keys stay lowercase everywhere else.
+export function upperFirstLetter(text: string): string {
+	if (text.length === 0) return text;
+	return text.charAt(0).toUpperCase() + text.slice(1);
+}

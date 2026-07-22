@@ -3,7 +3,10 @@ import { createRoot, Root } from 'react-dom/client';
 import { IngredientViewContainer } from '../components/IngredientViewContainer';
 import { parseIngredientFromFrontmatter } from '../models/parseIngredientFromFrontmatter';
 import type MyPlugin from '../main';
-import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
+import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack, navigateTo } from '../navigation';
+import { upperFirstLetter } from '../models/textNormalize';
+import { findRecipesUsingIngredient } from '../models/findRecipesUsingIngredient';
+import { RECIPE_VIEW_TYPE } from './RecipeView';
 
 export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
@@ -32,7 +35,7 @@ export class IngredientView extends ItemView {
 	getDisplayText(): string {
 		if (!this.filePath) return 'Ingredient';
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
-		return file instanceof TFile ? file.basename : 'Ingredient';
+		return file instanceof TFile ? upperFirstLetter(file.basename) : 'Ingredient';
 	}
 
 	async setState(state: IngredientViewState, result: unknown) {
@@ -60,6 +63,11 @@ export class IngredientView extends ItemView {
 		);
 
 		this.render();
+	}
+
+	handleRecipeClick(recipeName: string) {
+		const path = `${this.plugin.settings.recipesFolder}/${recipeName}.md`;
+		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: path });
 	}
 
 	// If we got here by navigating from another view (history is non-empty),
@@ -114,11 +122,9 @@ export class IngredientView extends ItemView {
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
-				// Reusing canNavigateBack as our "read-only" signal: if we navigated
-				// here from another screen (e.g. a recipe's ingredient link), we're
-				// just viewing — editing is reserved for direct access (e.g. via
-				// the command palette, which starts with an empty history).
 				readOnly={canNavigateBack({ history: this.history })}
+				usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
+				onRecipeClick={(name) => this.handleRecipeClick(name)}
 				onClose={() => this.handleClose()}
 			/>
 		);

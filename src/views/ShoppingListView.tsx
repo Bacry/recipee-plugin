@@ -79,9 +79,13 @@ export class ShoppingListView extends ItemView {
 		this.render();
 	}
 	async handleAddItem(entry: SmartInputResult) {
-		await addShoppingListItem(this.app, this.plugin.settings.shoppingListPath, entry);
-		// No manual render() call needed here — the metadataCache 'changed' listener
-		// registered in onOpen() will pick up the file modification and refresh the view.
+		await addShoppingListItem(
+			this.app,
+			this.plugin.settings.shoppingListPath,
+			this.plugin.settings.ingredientsFolder,
+			this.plugin.settings.otherItemsNotePath,
+			entry
+		);
 	}
 	async handleToggleChecked(itemId: string) {
 		await toggleShoppingListItemChecked(this.app, this.plugin.settings.shoppingListPath, itemId);
@@ -156,9 +160,11 @@ export class ShoppingListView extends ItemView {
 				/>
 				<ShoppingListDisplay
 					resolvedItems={resolvedItems}
+					recipeEntries={list.recipes}
 					onToggleChecked={(id) => this.handleToggleChecked(id)}
 					onDelete={(id) => this.handleDelete(id)}
 					onSetSection={(id, event) => this.handleSetSection(id, event)}
+					onRemoveRecipe={(id) => console.log('TODO: remove recipe', id)}
 				/>
 			</div>
 		);

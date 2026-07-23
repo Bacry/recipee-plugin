@@ -26,6 +26,17 @@ export function buildShoppingListMarkdown(list: ShoppingList): string {
 		}
 	}
 
+	if (list.recipes.length === 0) {
+		lines.push('recipes: []');
+	} else {
+		lines.push('recipes:');
+		for (const entry of list.recipes) {
+			lines.push(`  - id: "${entry.id}"`);
+			lines.push(`    recipe_name: "${escapeYamlString(entry.recipeName)}"`);
+			lines.push(`    servings: ${entry.servings}`);
+		}
+	}
+
 	lines.push('---');
 	lines.push('');
 

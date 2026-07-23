@@ -21,6 +21,7 @@ interface RecipeDetailsProps {
 	onSaveNotes: (newContent: string) => void;
 	onEdit?: () => void; // undefined = read-only (opened from another recipe), no "Modifier" button
 	onClose: () => void;
+	onShop: (servings: number) => void;
 }
 
 function formatDuration(minutes: number): string {
@@ -69,6 +70,7 @@ export function RecipeDetails({
 								  ingredientExists,
 								  onBaseRecipeClick,
 								  onSaveNotes,
+								  onShop,
 								  onEdit,
 								  onClose,
 							  }: RecipeDetailsProps) {
@@ -162,7 +164,7 @@ export function RecipeDetails({
 								)}
 							</p>
 						)}
-						<button disabled title="Bientôt disponible">Shop</button>
+						<button onClick={() => onShop(servings)}>Shop</button>
 					</div>
 					{recipe.image &&
 						(() => {

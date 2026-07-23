@@ -1,4 +1,4 @@
-import { ShoppingList, ShoppingListItem, ShoppingListContribution } from './ShoppingList';
+import { ShoppingList, ShoppingListItem, ShoppingListContribution, ShoppingListRecipeEntry } from './ShoppingList';
 
 export interface ShoppingListParseResult {
 	list: ShoppingList;
@@ -14,7 +14,7 @@ export function parseShoppingList(
 	const warnings: string[] = [];
 
 	if (!frontmatter || !Array.isArray(frontmatter.items)) {
-		return { list: { items: [] }, warnings: [] };
+		return { list: { items: [], recipes: [] }, warnings: [] };
 	}
 
 	const items: ShoppingListItem[] = [];
@@ -28,7 +28,19 @@ export function parseShoppingList(
 		items.push(parsed);
 	}
 
-	return { list: { items }, warnings };
+	const recipes: ShoppingListRecipeEntry[] = [];
+	if (Array.isArray(frontmatter.recipes)) {
+		for (const raw of frontmatter.recipes) {
+			const parsed = parseRecipeEntry(raw);
+			if (parsed === null) {
+				warnings.push(`Une entrée de recette est mal formée et a été ignorée : ${JSON.stringify(raw)}`);
+				continue;
+			}
+			recipes.push(parsed);
+		}
+	}
+
+	return { list: { items, recipes }, warnings };
 }
 
 function parseItem(raw: unknown): ShoppingListItem | null {
@@ -55,6 +67,17 @@ function parseItem(raw: unknown): ShoppingListItem | null {
 		checked: obj.checked,
 		contributions,
 	};
+}
+
+function parseRecipeEntry(raw: unknown): ShoppingListRecipeEntry | null {
+	if (typeof raw !== 'object' || raw === null) return null;
+	const obj = raw as Record<string, unknown>;
+
+	if (typeof obj.id !== 'string' || obj.id.trim() === '') return null;
+	if (typeof obj.recipe_name !== 'string' || obj.recipe_name.trim() === '') return null;
+	if (typeof obj.servings !== 'number' || Number.isNaN(obj.servings)) return null;
+
+	return { id: obj.id, recipeName: obj.recipe_name, servings: obj.servings };
 }
 
 function parseContribution(raw: unknown): ShoppingListContribution | null {

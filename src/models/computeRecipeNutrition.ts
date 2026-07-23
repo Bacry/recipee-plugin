@@ -25,7 +25,7 @@ function addNutrition(a: NutritionPer100g, b: NutritionPer100g, factor: number):
 // unlike parseIngredientFromFrontmatter (used for the ingredient view), this
 // doesn't validate type/shop_section against configured lists, since those
 // don't matter for a nutrition calculation.
-function readIngredientForCalc(
+export function readIngredientForCalc(
 	frontmatter: Record<string, unknown> | undefined
 ): { nutritionPer100g: NutritionPer100g; densityGMl?: number; entityWeightG?: number } | null {
 	if (!frontmatter) return null;
@@ -53,6 +53,51 @@ export interface RecipeNutritionResult {
 	totalNutrition: NutritionPer100g;
 	perServingNutrition: NutritionPer100g | null;
 	warnings: string[];
+}
+
+// Converts a single ingredient entry's quantity into grams, reading its
+// density/entity weight from its ingredient file. Returns null if the
+// ingredient has no sheet, is invalid, or can't be converted (e.g. missing
+// density for a volume unit). Shared by computeRecipeNutrition and
+// flattenRecipeIngredients, so both agree on exactly how weight is computed.
+export function convertIngredientEntryToGrams(
+	app: App,
+	ingredientsFolder: string,
+	entry: RecipeIngredientEntry
+): number | null {
+	if (entry.quantity == null) return null;
+
+	const path = `${ingredientsFolder}/${entry.ingredientName}.md`;
+	const file = app.vault.getAbstractFileByPath(path);
+	if (!(file instanceof TFile)) return null;
+
+	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
+	const ingredientData = readIngredientForCalc(frontmatter);
+	if (!ingredientData) return null;
+
+	const fromUnit = entry.unit === '' ? null : findUnit(entry.unit);
+	return convertQuantity(entry.quantity, fromUnit, findUnit('g'), {
+		densityGMl: ingredientData.densityGMl,
+		entityWeightG: ingredientData.entityWeightG,
+	});
+}
+
+// Sums a recipe's total ingredient weight in grams (NOT including base
+// recipes) — used as the fallback when a recipe has no explicit
+// total_weight_g. Ingredients that can't be converted are simply skipped
+// (their weight just isn't counted, consistent with computeRecipeNutrition's
+// own behavior for the same case).
+export function sumRecipeIngredientWeightsG(
+	app: App,
+	ingredientsFolder: string,
+	recipe: Recipe
+): number {
+	let total = 0;
+	for (const entry of recipe.ingredients) {
+		const grams = convertIngredientEntryToGrams(app, ingredientsFolder, entry);
+		if (grams !== null) total += grams;
+	}
+	return total;
 }
 
 // Recursively computes a recipe's total nutrition. `visiting` tracks recipe
@@ -86,12 +131,7 @@ export function computeRecipeNutrition(
 			continue;
 		}
 
-		const fromUnit = entry.unit === '' ? null : findUnit(entry.unit);
-		const grams = convertQuantity(entry.quantity, fromUnit, findUnit('g'), {
-			densityGMl: ingredientData.densityGMl,
-			entityWeightG: ingredientData.entityWeightG,
-		});
-
+		const grams = convertIngredientEntryToGrams(app, ingredientsFolder, entry);
 		if (grams === null) {
 			warnings.push(`Impossible de convertir "${entry.ingredientName}" en grammes (densité/poids unitaire manquant) — exclu du calcul.`);
 			continue;

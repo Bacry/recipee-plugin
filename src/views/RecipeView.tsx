@@ -9,6 +9,9 @@ import { NEW_RECIPE_VIEW_TYPE } from './NewRecipeView';
 import { findUnit, convertQuantity } from '../models/units';
 import { NavigableViewState, NavigationEntry, navigateTo, canNavigateBack, closeOrGoBack } from '../navigation';
 import type MyPlugin from '../main';
+import { addRecipeToShoppingList, isRecipeAlreadyInShoppingList } from '../models/addRecipeToShoppingList';
+import { SHOPPING_LIST_VIEW_TYPE } from './ShoppingListView';
+import { Recipe } from '../models/recipe';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -116,6 +119,71 @@ export class RecipeView extends ItemView {
 		navigateTo(this.leaf, NEW_RECIPE_VIEW_TYPE, { editFilePath: this.filePath });
 	}
 
+	async handleShop(servings: number) {
+		if (!this.filePath) return;
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		if (!(file instanceof TFile)) return;
+
+		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const { recipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
+		if (!recipe) return;
+
+		const shoppingListPath = this.plugin.settings.shoppingListPath;
+
+		// Make sure the shopping list note exists before checking/adding to it.
+		let shoppingListFile = this.app.vault.getAbstractFileByPath(shoppingListPath);
+		if (!(shoppingListFile instanceof TFile)) {
+			shoppingListFile = await this.app.vault.create(shoppingListPath, '---\nitems: []\nrecipes: []\n---\n');
+		}
+
+		const alreadyAdded = await isRecipeAlreadyInShoppingList(this.app, shoppingListPath, recipe.name);
+
+		if (alreadyAdded) {
+			new ConfirmModal(
+				this.app,
+				`"${recipe.name}" est déjà dans votre liste de courses. Ajouter quand même ?`,
+				async () => {
+					await this.performShop(recipe, servings, shoppingListPath);
+				}
+			).open();
+		} else {
+			await this.performShop(recipe, servings, shoppingListPath);
+		}
+	}
+
+	async performShop(recipe: Recipe, servings: number, shoppingListPath: string) {
+		const { warnings } = await addRecipeToShoppingList(
+			this.app,
+			shoppingListPath,
+			this.plugin.settings.ingredientsFolder,
+			this.plugin.settings.recipesFolder,
+			this.plugin.settings.otherItemsNotePath,
+			recipe,
+			servings
+		);
+
+		if (warnings.length > 0) {
+			new Notice(`Ajouté avec ${warnings.length} avertissement(s) — voir la console.`);
+			console.warn('Shop warnings:', warnings);
+		} else {
+			new Notice(`"${recipe.name}" ajouté à la liste de courses.`);
+		}
+
+		const { workspace } = this.app;
+		const existing = workspace.getLeavesOfType(SHOPPING_LIST_VIEW_TYPE)[0];
+		if (existing) {
+			workspace.revealLeaf(existing);
+		} else {
+			const leaf = workspace.getLeaf(false);
+			await leaf.setViewState({
+				type: SHOPPING_LIST_VIEW_TYPE,
+				active: true,
+				state: { history: [] },
+			});
+			workspace.revealLeaf(leaf);
+		}
+	}
+
 	handleClose() {
 		closeOrGoBack(this.leaf, this.history);
 	}
@@ -176,7 +244,6 @@ export class RecipeView extends ItemView {
 					</ul>
 				)}
 				<RecipeDetails
-					key={`${this.filePath}-${this.initialServings ?? ''}`}
 					app={this.app}
 					recipe={recipe!}
 					ingredientsFolder={this.plugin.settings.ingredientsFolder}
@@ -186,6 +253,7 @@ export class RecipeView extends ItemView {
 					ingredientExists={(name) => this.ingredientExists(name)}
 					onBaseRecipeClick={(name, qty, unit) => this.handleBaseRecipeClick(name, qty, unit)}
 					onSaveNotes={(content) => this.handleSaveNotes(content)}
+					onShop={(servings) => this.handleShop(servings)}
 					onEdit={readOnly ? undefined : () => this.handleEdit()}
 					onClose={() => this.handleClose()}
 				/>

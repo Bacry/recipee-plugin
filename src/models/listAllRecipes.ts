@@ -9,6 +9,7 @@ export interface RecipeSummary {
 	filePath: string;
 	tags: string[];
 	image?: string;
+	ingredientNames: string[]; // used to filter the recipe list by ingredient
 }
 
 // Lists every recipe in the vault (recursively, any subfolder under
@@ -31,6 +32,7 @@ export function listAllRecipes(app: App, recipesFolder: string): RecipeSummary[]
 			filePath: file.path,
 			tags: recipe.tags,
 			image: recipe.image,
+			ingredientNames: recipe.ingredients.map((e) => e.ingredientName),
 		});
 	}
 

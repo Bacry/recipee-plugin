@@ -478,3 +478,71 @@
 .markdown-editable-title-clickable:hover {
 	text-decoration: underline;
 }
+
+
+
+
+.recipe-list-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.recipe-list-row {
+	cursor: pointer;
+}
+
+.recipe-list-row:hover {
+	background: var(--background-modifier-hover);
+}
+
+.recipe-list-row td {
+	padding: 0.3rem 0.5rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+	vertical-align: middle;
+}
+
+.recipe-list-thumbnail-cell {
+	width: 32px;
+}
+
+.recipe-list-thumbnail,
+.recipe-list-thumbnail-placeholder {
+	width: 28px;
+	height: 28px;
+	border-radius: 4px;
+	object-fit: cover;
+	display: block;
+}
+
+.recipe-list-thumbnail-placeholder {
+	background: var(--background-secondary);
+}
+
+.recipe-list-name-cell {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.recipe-list-tags-cell {
+	width: 100%;
+}
+
+.recipe-list-ingredient-filter-wrapper {
+	position: relative;
+	margin-bottom: 0.75rem;
+}
+
+
+.recipe-list-search-row {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.recipe-list-search-row .recipe-list-search {
+	margin-bottom: 0;
+}
+
+.recipe-list-search-row .recipe-list-ingredient-filter-wrapper {
+	flex: 1;
+}

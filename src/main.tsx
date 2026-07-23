@@ -16,6 +16,7 @@ import { parseRecipeFromFrontmatter } from './models/parseRecipe';
 import { RecipeFormValues } from './components/RecipeForm';
 import { parseRecipeTemplate } from './models/parseRecipe';
 import { addIcon } from 'obsidian';
+import { RecipeListView, RECIPE_LIST_VIEW_TYPE } from './views/RecipeListView';
 
 
 
@@ -43,6 +44,11 @@ export default class MyPlugin extends Plugin {
 		this.registerView(
 			SHOPPING_LIST_VIEW_TYPE,
 			(leaf: WorkspaceLeaf) => new ShoppingListView(leaf, this),
+		);
+
+		this.registerView(
+			RECIPE_LIST_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new RecipeListView(leaf, this),
 		);
 
 		this.registerView(
@@ -108,9 +114,25 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: 'open-recipe-list',
+			name: 'Open recipe list',
+			callback: () => {
+				this.activateRecipeListView();
+			},
+		});
+
+
+		this.addRibbonIcon('book-open', 'Open recipe list', () => {
+			this.activateRecipeListView();
+		});
+
+
 		this.addRibbonIcon('shopping-cart', 'Open shopping list', () => {
 			this.activateShoppingListView();
 		});
+
+
 
 // Custom "chef hat with a plus" icon, since no built-in Lucide icon combines
 // both. Roughly traces a simple chef's hat shape, with a "+" badge overlaid
@@ -148,6 +170,28 @@ export default class MyPlugin extends Plugin {
 			this.activateNewIngredientView();
 		});
 		this.addSettingTab(new SampleSettingTab(this.app, this));
+	}
+
+
+
+	async activateRecipeListView() {
+		const { workspace } = this.app;
+
+		const existing = workspace.getLeavesOfType(RECIPE_LIST_VIEW_TYPE)[0];
+		if (existing) {
+			workspace.revealLeaf(existing);
+			return;
+		}
+
+		const leaf = workspace.getLeaf(false);
+
+		await leaf.setViewState({
+			type: RECIPE_LIST_VIEW_TYPE,
+			active: true,
+			state: { history: [] },
+		});
+
+		workspace.revealLeaf(leaf);
 	}
 
 	// Opens IngredientView by transforming the CURRENTLY ACTIVE leaf in place

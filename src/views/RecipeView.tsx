@@ -12,6 +12,7 @@ import type MyPlugin from '../main';
 import { addRecipeToShoppingList, isRecipeAlreadyInShoppingList } from '../models/addRecipeToShoppingList';
 import { SHOPPING_LIST_VIEW_TYPE } from './ShoppingListView';
 import { Recipe } from '../models/recipe';
+import { findRecipeFileByName } from '../models/findRecipeFile';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -96,11 +97,10 @@ export class RecipeView extends ItemView {
 	// Falls back to the base recipe's own baseServings if conversion fails
 	// for any reason (shouldn't happen — already validated at form-submit time).
 	handleBaseRecipeClick(recipeName: string, scaledQuantity: number, unit: string) {
-		const path = `${this.plugin.settings.recipesFolder}/${recipeName}.md`;
-		const file = this.app.vault.getAbstractFileByPath(path);
+		const file = findRecipeFileByName(this.app, this.plugin.settings.recipesFolder, recipeName);
 
 		let initialServings: number | undefined;
-		if (file instanceof TFile) {
+		if (file) {
 			const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 			const { recipe: baseRecipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
 			if (baseRecipe) {
@@ -113,7 +113,9 @@ export class RecipeView extends ItemView {
 			}
 		}
 
-		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: path, initialServings, readOnly: true });
+		if (!file) return; // recipe not found anywhere under recipesFolder — nothing to navigate to
+
+		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: file.path, initialServings, readOnly: true });
 	}
 
 	handleEdit() {

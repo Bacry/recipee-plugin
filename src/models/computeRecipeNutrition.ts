@@ -3,6 +3,7 @@ import { Recipe } from './recipe';
 import { NutritionPer100g } from './Ingredient';
 import { parseRecipeFromFrontmatter } from './parseRecipe';
 import { convertQuantity, findUnit } from './units';
+import { findRecipeFileByName } from './findRecipeFile';
 
 const NUTRITION_KEYS: (keyof NutritionPer100g)[] = [
 	'kcal', 'lipids', 'non_saturated_lipids', 'glucids',
@@ -147,13 +148,12 @@ export function computeRecipeNutrition(
 			continue;
 		}
 
-		const path = `${recipesFolder}/${entry.recipeName}.md`;
-		const file = app.vault.getAbstractFileByPath(path);
-		if (!(file instanceof TFile)) {
+		const file = findRecipeFileByName(app, recipesFolder, entry.recipeName);
+		if (!file) {
 			warnings.push(`Recette de base "${entry.recipeName}" introuvable — exclue du calcul.`);
 			continue;
 		}
-
+		
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const { recipe: baseRecipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
 		if (!baseRecipe) {

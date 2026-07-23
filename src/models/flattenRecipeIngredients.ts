@@ -3,6 +3,7 @@ import { Recipe } from './recipe';
 import { parseRecipeFromFrontmatter } from './parseRecipe';
 import { convertQuantity, findUnit } from './units';
 import { sumRecipeIngredientWeightsG } from './computeRecipeNutrition';
+import { findRecipeFileByName } from './findRecipeFile';
 
 export interface FlattenedIngredient {
 	ingredientName: string;
@@ -47,8 +48,8 @@ export function flattenRecipeIngredients(
 		}
 
 		const path = `${recipesFolder}/${entry.recipeName}.md`;
-		const file = app.vault.getAbstractFileByPath(path);
-		if (!(file instanceof TFile)) {
+		const file = findRecipeFileByName(app, recipesFolder, entry.recipeName);
+		if (!file) {
 			warnings.push(`Recette de base "${entry.recipeName}" introuvable — ignorée.`);
 			continue;
 		}

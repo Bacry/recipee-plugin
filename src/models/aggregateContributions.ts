@@ -3,11 +3,13 @@ import { convertQuantity, findUnit } from './units';
 
 export interface AggregationResult {
 	totalQuantity: number;
-	totalUnit: string; // matches the first contribution's unit — that's our merge target
-	// Contributions that couldn't be converted into totalUnit (e.g. mixing
-	// volume and mass without a known density) are kept separate here,
-	// rather than silently dropped or wrongly summed.
+	totalUnit: string;
 	unmerged: ShoppingListContribution[];
+	// True if alreadyOwned couldn't be converted into totalUnit — the
+	// subtraction was skipped in that case, so the displayed total doesn't
+	// actually reflect what the user marked as already owned. Surfaced so
+	// the UI can warn rather than silently showing a wrong number.
+	ownedSubtractionFailed: boolean;
 }
 
 export interface DensityInfo {
@@ -15,16 +17,13 @@ export interface DensityInfo {
 	entityWeightG?: number;
 }
 
-// Sums all contributions into a single quantity, expressed in the unit of
-// the FIRST contribution (as requested — no "smart" choice of best unit).
-// Any contribution that can't be converted (missing density/entity weight)
-// is left out of the sum and reported separately in `unmerged`.
 export function aggregateContributions(
 	contributions: ShoppingListContribution[],
-	density: DensityInfo = {}
+	density: DensityInfo = {},
+	alreadyOwned?: { quantity: number; unit: string }
 ): AggregationResult {
 	if (contributions.length === 0) {
-		return { totalQuantity: 0, totalUnit: '', unmerged: [] };
+		return { totalQuantity: 0, totalUnit: '', unmerged: [], ownedSubtractionFailed: false };
 	}
 
 	const targetUnitName = contributions[0].unit;
@@ -48,5 +47,21 @@ export function aggregateContributions(
 		}
 	}
 
-	return { totalQuantity: total, totalUnit: targetUnitName, unmerged };
+	let ownedSubtractionFailed = false;
+
+	if (alreadyOwned) {
+		const ownedFromUnit = alreadyOwned.unit === '' ? null : findUnit(alreadyOwned.unit);
+		const ownedConverted = convertQuantity(alreadyOwned.quantity, ownedFromUnit, targetUnit, {
+			densityGMl: density.densityGMl,
+			entityWeightG: density.entityWeightG,
+		});
+
+		if (ownedConverted === null) {
+			ownedSubtractionFailed = true;
+		} else {
+			total = Math.max(0, total - ownedConverted);
+		}
+	}
+
+	return { totalQuantity: total, totalUnit: targetUnitName, unmerged, ownedSubtractionFailed };
 }

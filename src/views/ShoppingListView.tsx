@@ -14,6 +14,7 @@ import { ShoppingListItem } from '../models/ShoppingList';
 import { showShopSectionMenu } from '../components/showShopSectionMenu';
 import { NavigableViewState, NavigationEntry } from '../navigation';
 import { removeRecipeFromShoppingList } from '../models/removeRecipeFromShoppingList';
+import { toggleShoppingListItemChecked, deleteShoppingListItem, setItemAlreadyOwned } from '../models/updateShoppingListItem';
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
 
@@ -92,6 +93,10 @@ export class ShoppingListView extends ItemView {
 		await toggleShoppingListItemChecked(this.app, this.plugin.settings.shoppingListPath, itemId);
 	}
 
+	async handleSetAlreadyOwned(itemId: string, owned: { quantity: number; unit: string } | null) {
+		await setItemAlreadyOwned(this.app, this.plugin.settings.shoppingListPath, itemId, owned);
+	}
+
 	async handleDelete(itemId: string) {
 		await deleteShoppingListItem(this.app, this.plugin.settings.shoppingListPath, itemId);
 	}
@@ -139,7 +144,7 @@ export class ShoppingListView extends ItemView {
 				);
 
 				const densityInfo = getIngredientDensityInfo(this.app, this.plugin.settings.ingredientsFolder, item.name);
-				const aggregation = aggregateContributions(item.contributions, densityInfo);
+				const aggregation = aggregateContributions(item.contributions, densityInfo, item.alreadyOwned);
 
 				const ingredientPath = `${this.plugin.settings.ingredientsFolder}/${item.name}.md`;
 				const isKnownIngredient = this.app.vault.getAbstractFileByPath(ingredientPath) instanceof TFile;
@@ -170,6 +175,7 @@ export class ShoppingListView extends ItemView {
 					onDelete={(id) => this.handleDelete(id)}
 					onSetSection={(id, event) => this.handleSetSection(id, event)}
 					onRemoveRecipe={(id) => this.handleRemoveRecipe(id)}
+					onSetAlreadyOwned={(id, owned) => this.handleSetAlreadyOwned(id, owned)}
 				/>
 			</div>
 		);

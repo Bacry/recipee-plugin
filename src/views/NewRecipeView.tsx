@@ -86,6 +86,8 @@ export class NewRecipeView extends ItemView {
 				recipesFolder={this.plugin.settings.recipesFolder}
 				ingredientsFolder={this.plugin.settings.ingredientsFolder}
 				recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
+				anthropicApiKey={this.plugin.settings.anthropicApiKey}
+				anthropicModel={this.plugin.settings.anthropicModel}
 				onSubmit={(values) => this.handleSubmit(values)}
 				onClose={() => this.handleClose()}
 				initialValues={initialValues}

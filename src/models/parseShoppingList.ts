@@ -60,12 +60,21 @@ function parseItem(raw: unknown): ShoppingListItem | null {
 		contributions.push(contribution);
 	}
 
+	let alreadyOwned: { quantity: number; unit: string } | undefined;
+	if (obj.already_owned !== undefined && obj.already_owned !== null) {
+		if (typeof obj.already_owned !== 'object') return null;
+		const owned = obj.already_owned as Record<string, unknown>;
+		if (typeof owned.quantity !== 'number' || typeof owned.unit !== 'string') return null;
+		alreadyOwned = { quantity: owned.quantity, unit: owned.unit };
+	}
+
 	return {
 		id: obj.id,
 		name: obj.name,
 		complement: obj.complement,
 		checked: obj.checked,
 		contributions,
+		alreadyOwned,
 	};
 }
 

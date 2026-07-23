@@ -47,3 +47,20 @@ export async function deleteShoppingListItem(
 		recipes: list.recipes,
 	}));
 }
+
+// Sets (or clears, if quantity is null) the "already owned" adjustment on
+// an item — clicking the item's name again with an empty value clears it.
+export async function setItemAlreadyOwned(
+	app: App,
+	shoppingListPath: string,
+	itemId: string,
+	owned: { quantity: number; unit: string } | null
+): Promise<void> {
+	await updateShoppingList(app, shoppingListPath, (list) => ({
+		items: list.items.map((item) =>
+			item.id === itemId ? { ...item, alreadyOwned: owned ?? undefined } : item
+		),
+		recipes: list.recipes,
+	}));
+}
+

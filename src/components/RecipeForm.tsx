@@ -5,7 +5,7 @@ import { searchRecipeTags } from '../models/searchRecipeTags';
 import { SmartRecipeIngredientInput } from './SmartRecipeIngredientInput';
 import { SmartBaseRecipeInput } from './SmartBaseRecipeInput';
 import { listRecipeSubfolders } from '../models/listRecipeSubfolders';
-
+import { ParseRecipeTextModal } from './ParseRecipeTextModal';
 
 // The shape of data this form works with — mirrors Recipe, but numeric/list
 // fields that need free-text editing are kept as strings until submit,
@@ -32,6 +32,8 @@ interface RecipeFormProps {
 	recipesFolder: string;
 	ingredientsFolder: string;
 	recipeImagesFolder: string;
+	anthropicApiKey: string;
+	anthropicModel: string;
 	onSubmit: (values: RecipeFormValues) => void;
 	onClose?: () => void;
 	initialValues?: RecipeFormValues;
@@ -67,7 +69,9 @@ function sanitizeNumericInput(value: string): string {
 	return value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
 }
 
-export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImagesFolder, onSubmit, onClose, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {	const base = initialValues ?? emptyValues();
+export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImagesFolder,
+							   anthropicApiKey,
+							   anthropicModel, onSubmit, onClose, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {	const base = initialValues ?? emptyValues();
 	const [name, setName] = useState(base.name);
 	const [baseServings, setBaseServings] = useState(base.baseServings);
 	const [servingsLabel, setServingsLabel] = useState(base.servingsLabel);
@@ -178,12 +182,42 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImages
 		setImage(candidateName);
 	}
 
+	// Applies a full RecipeFormValues object to every individual useState field —
+// used after Claude successfully extracts a recipe from pasted text, to
+// prefill the already-open form without having to remount the component.
+	function applyExtractedValues(values: RecipeFormValues) {
+		setName(values.name);
+		setBaseServings(values.baseServings);
+		setServingsLabel(values.servingsLabel);
+		setPreparationDurationMin(values.preparationDurationMin);
+		setCookingDurationMin(values.cookingDurationMin);
+		setIngredients(values.ingredients);
+		setBaseRecipes(values.baseRecipes);
+		setInstructions(values.instructions);
+		setNotes(values.notes);
+		setSource(values.source);
+		setImage(values.image);
+		setTags(values.tags);
+		setTotalWeightG(values.totalWeightG);
+//		setSubfolder(values.subfolder);
+	}
+
+	function openParseTextModal() {
+		new ParseRecipeTextModal(app, anthropicApiKey, anthropicModel, ingredientsFolder, (values) => {
+			applyExtractedValues(values);
+		}).open();
+	}
+
 	return (
 		<div className="ingredient-form">
 			<div className="ingredient-details-header">
 				<h3>{initialValues ? 'Modifier la recette' : 'Nouvelle recette'}</h3>
 				{onClose && <button onClick={onClose} title="Fermer">✕</button>}
 			</div>
+
+			<button type="button" onClick={openParseTextModal} className="ingredient-form-submit">
+				Extraire depuis un texte
+			</button>
 
 			<section className="ingredient-form-section">
 				<h4>Informations générales</h4>

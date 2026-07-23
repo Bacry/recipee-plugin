@@ -10,6 +10,7 @@ export interface ShoppingListItem {
 	complement: string;
 	checked: boolean;
 	contributions: ShoppingListContribution[];
+	alreadyOwned?: { quantity: number; unit: string }; // what the user already has, subtracted from the needed total at display time
 }
 
 // One "Shop" click on a recipe creates one entry here — tracks which recipe

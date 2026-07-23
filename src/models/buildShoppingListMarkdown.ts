@@ -23,6 +23,11 @@ export function buildShoppingListMarkdown(list: ShoppingList): string {
 					lines.push(`        source: "${escapeYamlString(contribution.source)}"`);
 				}
 			}
+			if (item.alreadyOwned) {
+				lines.push('    already_owned:');
+				lines.push(`      quantity: ${item.alreadyOwned.quantity}`);
+				lines.push(`      unit: "${escapeYamlString(item.alreadyOwned.unit)}"`);
+			}
 		}
 	}
 

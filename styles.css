@@ -546,3 +546,20 @@
 .recipe-list-search-row .recipe-list-ingredient-filter-wrapper {
 	flex: 1;
 }
+
+.shopping-list-item-name-clickable {
+	cursor: pointer;
+}
+
+.shopping-list-item-name-clickable:hover {
+	text-decoration: underline;
+}
+
+.shopping-list-owned-input {
+	width: 100px;
+	font: inherit;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 3px;
+	padding: 0 4px;
+}

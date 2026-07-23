@@ -11,6 +11,8 @@ export interface MyPluginSettings {
 	recipesFolder: string; // folder where recipe notes are stored
 	recipeTemplatesFolder: string;
 	recipeImagesFolder: string;
+	anthropicApiKey: string;
+	anthropicModel: string;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -21,6 +23,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	shoppingListPath: 'Courses.md',
 	otherItemsNotePath: 'Autres.md',
 	recipeImagesFolder: 'Images',
+	anthropicApiKey: '',
+	anthropicModel: 'claude-sonnet-5',
 };
 export class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
@@ -118,6 +122,34 @@ export class SampleSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.usdaApiKey)
 					.onChange(async (value) => {
 						this.plugin.settings.usdaApiKey = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Anthropic API key')
+			.setDesc('Your own Anthropic API key, used to extract structured recipes from pasted text')
+			.addText((text) =>
+				text
+					.setPlaceholder('sk-ant-...')
+					.setValue(this.plugin.settings.anthropicApiKey)
+					.onChange(async (value) => {
+						this.plugin.settings.anthropicApiKey = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Anthropic model')
+			.setDesc('Model used for recipe text extraction')
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption('claude-haiku-4-5-20251001', 'Claude Haiku 4.5 (fast, cheap)')
+					.addOption('claude-sonnet-5', 'Claude Sonnet 5 (balanced)')
+					.addOption('claude-opus-4-8', 'Claude Opus 4.8 (most capable)')
+					.setValue(this.plugin.settings.anthropicModel)
+					.onChange(async (value) => {
+						this.plugin.settings.anthropicModel = value;
 						await this.plugin.saveSettings();
 					}),
 			);

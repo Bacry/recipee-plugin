@@ -1,6 +1,7 @@
 import { App, TFile } from 'obsidian';
 import { parseRecipeFromFrontmatter } from './parseRecipe';
 import { normalizeForSearch } from './textNormalize';
+import { findRecipeFileByName } from './findRecipeFile';
 
 // Returns the basenames of recipe files tagged "base", matching the query
 // (accent/case-insensitive, "starts with" first) — used for autocomplete
@@ -48,9 +49,8 @@ export function getBaseRecipeServingsLabel(
 	recipesFolder: string,
 	recipeName: string
 ): string | null {
-	const path = `${recipesFolder}/${recipeName}.md`;
-	const file = app.vault.getAbstractFileByPath(path);
-	if (!(file instanceof TFile)) return null;
+	const file = findRecipeFileByName(app, recipesFolder, recipeName);
+	if (!file) return null;
 
 	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 	const { recipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);

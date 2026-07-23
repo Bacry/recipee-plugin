@@ -41,30 +41,52 @@ export function convertQuantity(
 	toUnit: Unit | null,
 	options: ConversionOptions = {}
 ): number | null {
-	if (fromUnit?.name === toUnit?.name) return quantity; // handles null === null too
+	if (fromUnit?.name === toUnit?.name) return quantity;
 
-	// Step 1: convert the source quantity into grams, our common baseline.
-	let grams: number;
+	// Step 1: convert the source quantity into a common baseline —
+	// grams if fromUnit is a mass unit, mL if it's a volume unit — WITHOUT
+	// involving density yet. Density is only ever needed when crossing
+	// between mass and volume, handled separately in step 3.
+	let baseline: number; // grams if mass, mL if volume
+	let baselineIsVolume: boolean;
+
 	if (fromUnit === null) {
 		if (options.entityWeightG == null) return null;
-		grams = quantity * options.entityWeightG;
-	} else if (!fromUnit.isVolume) {
-		grams = quantity * fromUnit.ratioToBaseline;
+		baseline = quantity * options.entityWeightG; // grams
+		baselineIsVolume = false;
 	} else {
-		if (options.densityGMl == null) return null;
-		grams = quantity * fromUnit.ratioToBaseline * options.densityGMl;
+		baseline = quantity * fromUnit.ratioToBaseline;
+		baselineIsVolume = fromUnit.isVolume;
 	}
 
-	// Step 2: convert grams into the target unit.
+	// Step 2: if converting to an entity, we need grams specifically —
+	// convert baseline to grams first if it's currently in mL (needs density).
 	if (toUnit === null) {
 		if (options.entityWeightG == null) return null;
+		let grams = baseline;
+		if (baselineIsVolume) {
+			if (options.densityGMl == null) return null;
+			grams = baseline * options.densityGMl;
+		}
 		return grams / options.entityWeightG;
 	}
-	if (!toUnit.isVolume) {
-		return grams / toUnit.ratioToBaseline;
+
+	// Step 3: convert baseline into the target unit's own family. Density is
+	// ONLY needed here if we're crossing between mass and volume — same
+	// family (volume->volume or mass->mass) never touches density at all.
+	if (baselineIsVolume === toUnit.isVolume) {
+		return baseline / toUnit.ratioToBaseline;
 	}
+
 	if (options.densityGMl == null) return null;
-	return grams / options.densityGMl / toUnit.ratioToBaseline;
+
+	if (baselineIsVolume && !toUnit.isVolume) {
+		// mL -> grams -> target mass unit
+		return (baseline * options.densityGMl) / toUnit.ratioToBaseline;
+	} else {
+		// grams -> mL -> target volume unit
+		return (baseline / options.densityGMl) / toUnit.ratioToBaseline;
+	}
 }
 
 export interface ParsedQuantity {

@@ -27,9 +27,6 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			if (entry.form) {
 				lines.push(`    form: ${escapeYamlString(entry.form)}`);
 			}
-			if (entry.form) {
-				lines.push(`    form: ${escapeYamlString(entry.form)}`);
-			}
 		}
 	}
 

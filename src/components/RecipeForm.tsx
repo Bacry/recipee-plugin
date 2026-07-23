@@ -4,6 +4,7 @@ import { Recipe, RecipeIngredientEntry, RecipeBaseRecipeEntry } from '../models/
 import { searchRecipeTags } from '../models/searchRecipeTags';
 import { SmartRecipeIngredientInput } from './SmartRecipeIngredientInput';
 import { SmartBaseRecipeInput } from './SmartBaseRecipeInput';
+import { listRecipeSubfolders } from '../models/listRecipeSubfolders';
 
 
 // The shape of data this form works with — mirrors Recipe, but numeric/list
@@ -23,42 +24,39 @@ export interface RecipeFormValues {
 	image: string;
 	tags: string; // comma-separated in the form, split into an array on submit — same convention as possibleForms in IngredientForm
 	totalWeightG: string;
+	subfolder: string; // relative path under recipesFolder, e.g. "Cocktails" — "" means the root of recipesFolder
 }
 
 interface RecipeFormProps {
 	app: App;
 	recipesFolder: string;
 	ingredientsFolder: string;
-	defaultInstructions: string;
-	defaultValueOverrides?: Partial<RecipeFormValues>;
+	recipeImagesFolder: string;
 	onSubmit: (values: RecipeFormValues) => void;
 	onClose?: () => void;
 	initialValues?: RecipeFormValues;
 	submitLabel?: string;
 }
 
-// Builds a blank form state for creating a brand new recipe — instructions
-// starts prefilled with the default template rather than empty, so the user
-// has a starting skeleton to work from.
-// Partial overrides applied on top of the blank defaults — used by the
-// "Create new cocktail" command to prefill baseServings, servingsLabel,
-// preparationDurationMin, and tags, while everything else starts empty.
-function emptyValues(defaultInstructions: string, overrides?: Partial<RecipeFormValues>): RecipeFormValues {
+// Builds a completely blank form state — used only when "Create new recipe"
+// is run with no templates available in the templates folder. When
+// templates DO exist, the user picks one via the fuzzy selector instead,
+// and this function is never called.
+function emptyValues(): RecipeFormValues {
 	return {
 		name: '',
-		baseServings: '4',
+		baseServings: '',
 		servingsLabel: '',
 		preparationDurationMin: '',
 		cookingDurationMin: '',
 		ingredients: [],
 		baseRecipes: [],
-		instructions: defaultInstructions,
+		instructions: '',
 		notes: '',
 		source: '',
 		image: '',
 		tags: '',
-		totalWeightG: '',
-		...overrides,
+		subfolder: '',
 	};
 }
 
@@ -69,8 +67,7 @@ function sanitizeNumericInput(value: string): string {
 	return value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
 }
 
-export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstructions, defaultValueOverrides, onSubmit, onClose, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {
-	const base = initialValues ?? emptyValues(defaultInstructions, defaultValueOverrides);
+export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImagesFolder, onSubmit, onClose, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {	const base = initialValues ?? emptyValues();
 	const [name, setName] = useState(base.name);
 	const [baseServings, setBaseServings] = useState(base.baseServings);
 	const [servingsLabel, setServingsLabel] = useState(base.servingsLabel);
@@ -86,6 +83,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstr
 	const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 	const [tagHighlightedIndex, setTagHighlightedIndex] = useState<number>(-1);
 	const [totalWeightG, setTotalWeightG] = useState(base.totalWeightG);
+	const [subfolder, setSubfolder] = useState(base.subfolder);
 
 	function handleSubmit() {
 		onSubmit({
@@ -102,6 +100,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstr
 			image,
 			tags,
 			totalWeightG,
+			subfolder,
 		});
 	}
 
@@ -162,7 +161,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstr
 // "Nom" field is still empty). Handles name collisions with a numeric suffix.
 	async function handleImageUpload(file: File) {
 		const buffer = await file.arrayBuffer();
-		const folder = `${recipesFolder}/Images`;
+		const folder = recipeImagesFolder;
 
 		const extensionIndex = file.name.lastIndexOf('.');
 		const extension = extensionIndex === -1 ? '' : file.name.slice(extensionIndex);
@@ -222,6 +221,15 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, defaultInstr
 							value={cookingDurationMin}
 							onChange={(e) => setCookingDurationMin(sanitizeNumericInput(e.target.value))}
 						/>
+					</div>
+					<div className="ingredient-form-field">
+						<label>Sous-dossier</label>
+						<select value={subfolder} onChange={(e) => setSubfolder(e.target.value)}>
+							<option value="">-- Racine --</option>
+							{listRecipeSubfolders(app, recipesFolder).map((folder) => (
+								<option key={folder} value={folder}>{folder}</option>
+							))}
+						</select>
 					</div>
 					<div className="ingredient-form-field">
 						<label>Poids total mesuré (g, optionnel)</label>

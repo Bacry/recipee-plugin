@@ -195,3 +195,72 @@ function parseBaseRecipeEntry(raw: unknown): RecipeBaseRecipeEntry | null {
 
 	return { recipeName: obj.recipe_name, quantity: obj.quantity, unit: obj.unit };
 }
+
+// Permissive reading of a template file — unlike parseRecipeFromFrontmatter,
+// missing/invalid fields are simply left empty/undefined rather than
+// rejecting the whole file. Templates are partial by design; any subset of
+// fields can be filled in.
+export function parseRecipeTemplate(
+	frontmatter: Record<string, unknown> | undefined,
+	fileName: string
+): Recipe {
+	const baseServings = typeof frontmatter?.base_servings === 'number' ? frontmatter.base_servings : 0;
+	const servingsLabel = typeof frontmatter?.servings_label === 'string' ? frontmatter.servings_label : '';
+
+	const preparationDurationMin = typeof frontmatter?.preparation_duration_min === 'number'
+		? frontmatter.preparation_duration_min : undefined;
+	const cookingDurationMin = typeof frontmatter?.cooking_duration_min === 'number'
+		? frontmatter.cooking_duration_min : undefined;
+
+	const notes = typeof frontmatter?.notes === 'string' ? frontmatter.notes : undefined;
+	const source = typeof frontmatter?.source === 'string' ? frontmatter.source : undefined;
+	const image = typeof frontmatter?.image === 'string' ? frontmatter.image : undefined;
+	const instructions = typeof frontmatter?.instructions === 'string' ? frontmatter.instructions : '';
+
+	const tags = Array.isArray(frontmatter?.tags)
+		? frontmatter.tags.filter((t): t is string => typeof t === 'string')
+		: [];
+
+	const ingredients = Array.isArray(frontmatter?.ingredients)
+		? frontmatter.ingredients
+			.map((raw: unknown) => {
+				if (typeof raw !== 'object' || raw === null) return null;
+				const obj = raw as Record<string, unknown>;
+				if (typeof obj.ingredient_name !== 'string') return null;
+				return {
+					ingredientName: obj.ingredient_name,
+					complement: typeof obj.complement === 'string' ? obj.complement : undefined,
+					quantity: typeof obj.quantity === 'number' ? obj.quantity : null,
+					unit: typeof obj.unit === 'string' ? obj.unit : '',
+					form: typeof obj.form === 'string' ? obj.form : undefined,
+				};
+			})
+			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+		: [];
+
+	const baseRecipes = Array.isArray(frontmatter?.base_recipes)
+		? frontmatter.base_recipes
+			.map((raw: unknown) => {
+				if (typeof raw !== 'object' || raw === null) return null;
+				const obj = raw as Record<string, unknown>;
+				if (typeof obj.recipe_name !== 'string' || typeof obj.quantity !== 'number' || typeof obj.unit !== 'string') return null;
+				return { recipeName: obj.recipe_name, quantity: obj.quantity, unit: obj.unit };
+			})
+			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+		: [];
+
+	return {
+		name: fileName,
+		baseServings,
+		servingsLabel,
+		preparationDurationMin,
+		cookingDurationMin,
+		ingredients,
+		baseRecipes,
+		instructions,
+		notes,
+		source,
+		image,
+		tags,
+	};
+}

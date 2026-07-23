@@ -53,7 +53,7 @@ export class RecipeView extends ItemView {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
 
-		const imagesFolder = `${this.plugin.settings.recipesFolder}/Images`;
+		const imagesFolder = this.plugin.settings.recipeImagesFolder;
 		if (!this.app.vault.getAbstractFileByPath(imagesFolder)) {
 			await this.app.vault.createFolder(imagesFolder);
 		}

@@ -1,7 +1,13 @@
 import { Recipe } from './recipe';
 import { RecipeFormValues } from '../components/RecipeForm';
 
-export function recipeToFormValues(recipe: Recipe): RecipeFormValues {
+export function recipeToFormValues(recipe: Recipe, filePath: string, recipesFolder: string): RecipeFormValues {
+	// Derives the subfolder from the file's actual path — e.g. if filePath is
+	// "Recettes/Cocktails/mojito.md" and recipesFolder is "Recettes", subfolder is "Cocktails".
+	const relativePath = filePath.startsWith(recipesFolder + '/') ? filePath.slice(recipesFolder.length + 1) : filePath;
+	const lastSlash = relativePath.lastIndexOf('/');
+	const subfolder = lastSlash === -1 ? '' : relativePath.slice(0, lastSlash);
+
 	return {
 		name: recipe.name,
 		baseServings: recipe.baseServings.toString(),
@@ -16,6 +22,7 @@ export function recipeToFormValues(recipe: Recipe): RecipeFormValues {
 		image: recipe.image ?? '',
 		tags: recipe.tags.join(', '),
 		totalWeightG: recipe.totalWeightG?.toString() ?? '',
+		subfolder,
 	};
 }
 

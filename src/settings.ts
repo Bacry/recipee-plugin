@@ -9,8 +9,8 @@ export interface MyPluginSettings {
 	shoppingListPath: string; // path to the single "Courses" note
 	otherItemsNotePath: string; // single note listing non-ingredient item names, used for autocomplete
 	recipesFolder: string; // folder where recipe notes are stored
-	recipeInstructionsTemplate: string;
-	cocktailInstructionsTemplate: string;
+	recipeTemplatesFolder: string;
+	recipeImagesFolder: string;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -20,9 +20,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	usdaApiKey: '',
 	shoppingListPath: 'Courses.md',
 	otherItemsNotePath: 'Autres.md',
-	recipesFolder: 'Recettes',
-	recipeInstructionsTemplate: '#### Préparation\n\n\n#### Cuisson\n\n',
-	cocktailInstructionsTemplate: '#### Préparation\n\n\n#### Shaking',
+	recipeImagesFolder: 'Images',
 };
 export class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
@@ -63,30 +61,29 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Recipe instructions template')
-			.setDesc('Default markdown prefilled in the instructions field when creating a new recipe')
-			.addTextArea((text) =>
+			.setName('Recipe templates folder')
+			.setDesc('Root-level folder containing recipe templates (e.g. a "Cocktail" template) — used by "Create new recipe from template"')
+			.addText((text) =>
 				text
-					.setValue(this.plugin.settings.recipeInstructionsTemplate)
+					.setPlaceholder('Templates')
+					.setValue(this.plugin.settings.recipeTemplatesFolder)
 					.onChange(async (value) => {
-						this.plugin.settings.recipeInstructionsTemplate = value;
+						this.plugin.settings.recipeTemplatesFolder = value;
 						await this.plugin.saveSettings();
 					}),
 			);
-		new Setting(containerEl).setName('Cocktails').setHeading();
 
 		new Setting(containerEl)
-			.setName('Cocktail instructions template')
-			.setDesc('Default markdown prefilled in the instructions field when creating a new cocktail')
-			.addTextArea((text) =>
+			.setName('Recipe images folder')
+			.setDesc('Folder where recipe images are stored — independent from the recipes folder, created automatically if missing')
+			.addText((text) =>
 				text
-					.setValue(this.plugin.settings.cocktailInstructionsTemplate)
+					.setValue(this.plugin.settings.recipeImagesFolder || DEFAULT_SETTINGS.recipeImagesFolder)
 					.onChange(async (value) => {
-						this.plugin.settings.cocktailInstructionsTemplate = value;
+						this.plugin.settings.recipeImagesFolder = value;
 						await this.plugin.saveSettings();
 					}),
 			);
-
 
 		new Setting(containerEl)
 			.setName('Ingredient types')

@@ -37,7 +37,7 @@ const context = await esbuild.context({
 	logLevel: 'info',
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
-	outfile: 'main.js',
+	outfile: '/Users/bacry1/Obsidian/Alimentation/.obsidian/plugins/recipee-plugin/main.js',
 	minify: prod,
 });
 

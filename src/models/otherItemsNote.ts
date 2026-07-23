@@ -112,3 +112,26 @@ export async function setOtherItemShopSection(
 
 	await app.vault.modify(file, updatedLines.join('\n'));
 }
+
+// Removes a line from the "Autres" note by name (case-insensitive) — used
+// when a real ingredient fiche is created for a name that was previously
+// only a plain "Autres" entry, to avoid the same name existing in both
+// places at once (which would confuse autocomplete and shop-section resolution).
+export async function removeOtherItemIfPresent(app: App, path: string, name: string): Promise<void> {
+	const file = await ensureOtherItemsNoteExists(app, path);
+	const content = await app.vault.read(file);
+	const lines = content.split('\n');
+
+	const filteredLines = lines.filter((line) => {
+		const lineMatch = line.match(/^- \[[ x]\] (.+)$/);
+		if (!lineMatch) return true; // not a checklist line, keep as-is
+
+		const fullText = lineMatch[1].trim();
+		const tagMatch = fullText.match(/#(\S+)/);
+		const lineName = tagMatch ? fullText.slice(0, tagMatch.index).trim() : fullText;
+
+		return lineName.toLowerCase() !== name.toLowerCase();
+	});
+
+	await app.vault.modify(file, filteredLines.join('\n'));
+}

@@ -18,6 +18,7 @@ export const RECIPE_VIEW_TYPE = 'recipe-view';
 interface RecipeViewState extends NavigableViewState {
 	filePath?: string;
 	initialServings?: number; // set when opened as a base recipe, scaled to the quantity used by the parent
+	readOnly?: boolean;
 }
 
 export class RecipeView extends ItemView {
@@ -26,6 +27,7 @@ export class RecipeView extends ItemView {
 	private history: NavigationEntry[] = [];
 	private root: Root | null = null;
 	private plugin: MyPlugin;
+	private readOnly = false;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -39,17 +41,17 @@ export class RecipeView extends ItemView {
 	getDisplayText(): string {
 		return 'Recette';
 	}
-
 	async setState(state: RecipeViewState, result: unknown) {
 		this.filePath = state.filePath;
 		this.initialServings = state.initialServings;
+		this.readOnly = state.readOnly ?? false;
 		this.history = state.history ?? [];
 		this.render();
 		return super.setState(state, result as never);
 	}
 
 	getState(): RecipeViewState {
-		return { filePath: this.filePath, initialServings: this.initialServings, history: this.history };
+		return { filePath: this.filePath, initialServings: this.initialServings, readOnly: this.readOnly, history: this.history };
 	}
 
 	async onOpen() {
@@ -111,7 +113,7 @@ export class RecipeView extends ItemView {
 			}
 		}
 
-		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: path, initialServings });
+		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: path, initialServings, readOnly: true });
 	}
 
 	handleEdit() {
@@ -232,7 +234,7 @@ export class RecipeView extends ItemView {
 			return;
 		}
 
-		const readOnly = canNavigateBack({ history: this.history });
+		const readOnly = this.readOnly;
 
 		this.root.render(
 			<div>

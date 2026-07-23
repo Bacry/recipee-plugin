@@ -13,6 +13,7 @@ import { setOtherItemShopSection } from '../models/otherItemsNote';
 import { ShoppingListItem } from '../models/ShoppingList';
 import { showShopSectionMenu } from '../components/showShopSectionMenu';
 import { NavigableViewState, NavigationEntry } from '../navigation';
+import { removeRecipeFromShoppingList } from '../models/removeRecipeFromShoppingList';
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
 
@@ -95,6 +96,10 @@ export class ShoppingListView extends ItemView {
 		await deleteShoppingListItem(this.app, this.plugin.settings.shoppingListPath, itemId);
 	}
 
+	async handleRemoveRecipe(recipeEntryId: string) {
+		await removeRecipeFromShoppingList(this.app, this.plugin.settings.shoppingListPath, recipeEntryId);
+	}
+
 // Placeholder — actual "set section" popup logic
 	handleSetSection(itemId: string, event: React.MouseEvent) {
 		const item = this.currentItems.find((i) => i.id === itemId);
@@ -164,7 +169,7 @@ export class ShoppingListView extends ItemView {
 					onToggleChecked={(id) => this.handleToggleChecked(id)}
 					onDelete={(id) => this.handleDelete(id)}
 					onSetSection={(id, event) => this.handleSetSection(id, event)}
-					onRemoveRecipe={(id) => console.log('TODO: remove recipe', id)}
+					onRemoveRecipe={(id) => this.handleRemoveRecipe(id)}
 				/>
 			</div>
 		);

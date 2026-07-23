@@ -5,6 +5,7 @@ import { buildIngredientMarkdown } from '../models/buildIngredientMarkdown';
 import { lowerFirstLetter } from '../models/textNormalize';
 import type MyPlugin from '../main';
 import { NavigableViewState, NavigationEntry, closeOrGoBack } from '../navigation';
+import { removeOtherItemIfPresent } from '../models/otherItemsNote';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -110,6 +111,8 @@ export class NewIngredientView extends ItemView {
 
 		const content = buildIngredientMarkdown({ ...values, name: normalizedName });
 		await this.app.vault.create(path, content);
+
+		await removeOtherItemIfPresent(this.app, this.plugin.settings.otherItemsNotePath, normalizedName);
 
 		new Notice(`Ingrédient "${normalizedName}" créé.`);
 		this.handleClose(); // returns to the previous screen if there is one, otherwise closes the tab

@@ -32,6 +32,7 @@ export async function toggleShoppingListItemChecked(
 		items: list.items.map((item) =>
 			item.id === itemId ? { ...item, checked: !item.checked } : item
 		),
+		recipes: list.recipes,
 	}));
 }
 
@@ -43,5 +44,6 @@ export async function deleteShoppingListItem(
 ): Promise<void> {
 	await updateShoppingList(app, shoppingListPath, (list) => ({
 		items: list.items.filter((item) => item.id !== itemId),
+		recipes: list.recipes,
 	}));
 }

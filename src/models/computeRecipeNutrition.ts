@@ -4,6 +4,7 @@ import { NutritionPer100g } from './Ingredient';
 import { parseRecipeFromFrontmatter } from './parseRecipe';
 import { convertQuantity, findUnit } from './units';
 import { findRecipeFileByName } from './findRecipeFile';
+import { findIngredientFileByName } from './findIngredientFile';
 
 const NUTRITION_KEYS: (keyof NutritionPer100g)[] = [
 	'kcal', 'lipids', 'non_saturated_lipids', 'glucids',
@@ -68,9 +69,8 @@ export function convertIngredientEntryToGrams(
 ): number | null {
 	if (entry.quantity == null) return null;
 
-	const path = `${ingredientsFolder}/${entry.ingredientName}.md`;
-	const file = app.vault.getAbstractFileByPath(path);
-	if (!(file instanceof TFile)) return null;
+	const file = findIngredientFileByName(app, ingredientsFolder, entry.ingredientName);
+	if (!file) return null;
 
 	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 	const ingredientData = readIngredientForCalc(frontmatter);

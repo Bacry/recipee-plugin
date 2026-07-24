@@ -1,3 +1,9 @@
+.workspace-leaf-content[data-type="shopping-list-view"] .view-content {
+	max-width: 600px;
+	margin: 0 auto;
+	display: block;
+}
+
 .workspace-leaf-content[data-type="ingredient-view"] .view-header-title {
 	display: none;
 }
@@ -6,7 +12,6 @@
 .workspace-leaf-content[data-type="recipe-view"] table {
 	border-collapse: collapse;
 	width: 100%;
-	max-width: 600px;
 }
 
 .workspace-leaf-content[data-type="ingredient-view"] table td,
@@ -134,7 +139,6 @@
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 0.5rem 0.75rem;
-	max-width: 500px;
 }
 
 .usda-search-row {
@@ -267,6 +271,7 @@
 	position: relative;
 }
 
+
 .smart-shopping-suggestions {
 	position: absolute;
 	top: 100%;
@@ -304,7 +309,7 @@
 	justify-content: space-between;
 	align-items: flex-end; /*  aligns text and buttons on their text baseline instead of vertical center */
 	gap: 0.5rem;
-	padding: 0.05rem 0; /* space above/below each line — increase for more air */
+	padding: 0.2rem 0rem; /* space above/below each line — increase first number for more vertical air */
 	line-height: 1.1; /* height of the line itself — increase for taller lines */
 }
 
@@ -326,13 +331,13 @@
 }
 
 .shopping-list-item-actions button {
-	padding: 0rem 0.75rem; /* increase for bigger buttons, decrease for smaller */
-	font-size: 0.75rem; /* add this line to control the icon/text size inside */
+	padding: 0.2rem 0.75rem; /* increase for bigger buttons, decrease for smaller */
+	font-size: 0.90rem; /* add this line to control the icon/text size inside */
 	border-radius: 4px;
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-secondary);
 	cursor: pointer;
-	height: 1.2rem; /* explicitly override Obsidian's default button height */
+	height: 1.5rem; /* explicitly override Obsidian's default button height */
 	min-height: unset; /* remove any inherited min-height that padding alone can't overcome */
 	border-radius: 4px;
 }
@@ -563,3 +568,6 @@
 	border-radius: 3px;
 	padding: 0 4px;
 }
+
+
+

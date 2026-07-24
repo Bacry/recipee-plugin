@@ -6,6 +6,8 @@ import { lowerFirstLetter } from '../models/textNormalize';
 import type MyPlugin from '../main';
 import { NavigableViewState, NavigationEntry, closeOrGoBack } from '../navigation';
 import { removeOtherItemIfPresent } from '../models/otherItemsNote';
+import { normalizeNameForFile } from '../models/textNormalize';
+import { findIngredientFileByName } from '../models/findIngredientFile';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -93,29 +95,35 @@ export class NewIngredientView extends ItemView {
 	}
 
 	async handleSubmit(values: IngredientFormValues) {
-		const normalizedName = lowerFirstLetter(values.name.trim());
+		const normalizedName = normalizeNameForFile(values.name);
 
 		if (normalizedName === '') {
 			new Notice('Le nom est obligatoire.');
 			return;
 		}
 
-		const folder = this.plugin.settings.ingredientsFolder;
-		const path = `${folder}/${normalizedName}.md`;
+		const folder = `${this.plugin.settings.ingredientsFolder}/${values.type}`;
+		if (!this.app.vault.getAbstractFileByPath(folder)) {
+			await this.app.vault.createFolder(folder);
+		}
 
-		const existing = this.app.vault.getAbstractFileByPath(path);
+// Search the WHOLE ingredients tree (not just the target subfolder, which
+// may have just been created and is empty) — a "farine" in another
+// subfolder should still count as an existing collision.
+		const existing = findIngredientFileByName(this.app, this.plugin.settings.ingredientsFolder, normalizedName);
 		if (existing) {
-			new Notice(`Un ingrédient "${normalizedName}" existe déjà.`);
+			new Notice(`Un ingrédient "${normalizedName}" existe déjà (${existing.path}).`);
 			return;
 		}
 
+		const path = `${folder}/${normalizedName}.md`;
 		const content = buildIngredientMarkdown({ ...values, name: normalizedName });
 		await this.app.vault.create(path, content);
 
 		await removeOtherItemIfPresent(this.app, this.plugin.settings.otherItemsNotePath, normalizedName);
 
 		new Notice(`Ingrédient "${normalizedName}" créé.`);
-		this.handleClose(); // returns to the previous screen if there is one, otherwise closes the tab
+		this.handleClose();
 	}
 
 	async onClose() {

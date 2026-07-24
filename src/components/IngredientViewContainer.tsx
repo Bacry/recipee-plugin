@@ -8,21 +8,19 @@ import { buildIngredientMarkdown } from '../models/buildIngredientMarkdown';
 
 interface IngredientViewContainerProps {
 	app: App;
-	file: TFile; // needed here now, to know which file to overwrite on save
+	file: TFile;
 	ingredient: Ingredient;
 	warnings: string[];
 	ingredientTypes: string[];
 	shopSections: string[];
 	usdaApiKey: string;
-	readOnly: boolean; // when true, hides the "Modifier" button entirely
+	ingredientsFolder: string;
+	readOnly: boolean;
 	usedInRecipes: string[];
 	onRecipeClick: (recipeName: string) => void;
-	onClose: () => void; // renders a close/back button next to the name
+	onClose: () => void;
 }
 
-// This component owns the read/edit toggle for a single ingredient note.
-// It's a real React function component (not a class), so it can use useState —
-// something the IngredientView class itself cannot do directly.
 export function IngredientViewContainer({
 											app,
 											file,
@@ -31,6 +29,7 @@ export function IngredientViewContainer({
 											ingredientTypes,
 											shopSections,
 											usdaApiKey,
+											ingredientsFolder,
 											readOnly,
 											usedInRecipes,
 											onRecipeClick,
@@ -38,22 +37,24 @@ export function IngredientViewContainer({
 										}: IngredientViewContainerProps) {
 	const [isEditing, setIsEditing] = useState(false);
 
+	// Called when the edit form is submitted: moves the file if its type (and
+	// thus its target subfolder) changed, then overwrites its content.
 	async function handleSave(values: IngredientFormValues) {
-		const content = buildIngredientMarkdown(values);
-		await app.vault.modify(file, content);
-		new Notice(`Ingrédient "${values.name}" mis à jour.`);
-		setIsEditing(false);
-	}
+		const targetFolder = `${ingredientsFolder}/${values.type}`;
+		if (!app.vault.getAbstractFileByPath(targetFolder)) {
+			await app.vault.createFolder(targetFolder);
+		}
 
-	// Called when the edit form is submitted: overwrite the existing file instead of creating a new one.
-	async function handleSave(values: IngredientFormValues) {
+		const newPath = `${targetFolder}/${file.basename}.md`;
+
+		if (newPath !== file.path) {
+			await app.vault.rename(file, newPath);
+		}
+
 		const content = buildIngredientMarkdown(values);
 		await app.vault.modify(file, content);
 		new Notice(`Ingrédient "${values.name}" mis à jour.`);
 		setIsEditing(false);
-		// Note: this component doesn't auto-refresh the "ingredient" prop after save —
-		// the parent view still holds the previously-parsed data until it's reopened
-		// or Obsidian's metadata cache triggers a re-render upstream.
 	}
 
 	if (isEditing) {

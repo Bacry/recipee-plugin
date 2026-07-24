@@ -9,7 +9,6 @@ export interface NutritionPer100g {
 	fibers: number;
 	cholesterol: number;
 }
-
 export interface Ingredient {
 	name: string; // dérivé du nom de fichier, pas du frontmatter
 	type: string; // validé dynamiquement contre PluginSettings.ingredientTypes

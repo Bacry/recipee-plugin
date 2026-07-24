@@ -3,6 +3,7 @@ import { App } from 'obsidian';
 import { parseQuantityString, findUnit, convertQuantity } from '../models/units';
 import { searchBaseRecipes, getBaseRecipeServingsLabel } from '../models/searchBaseRecipes';
 import { RecipeBaseRecipeEntry } from '../models/recipe';
+import { normalizeNameForFile } from '../models/textNormalize';
 
 interface SmartBaseRecipeInputProps {
 	app: App;
@@ -48,7 +49,7 @@ export function SmartBaseRecipeInput({ app, recipesFolder, onAdd }: SmartBaseRec
 	}
 
 	function commitName(chosenName: string) {
-		const trimmed = chosenName.trim();
+		const trimmed = normalizeNameForFile(chosenName);
 		if (trimmed === '') return;
 
 		// Must match an actual recipe tagged "base" — free text isn't allowed

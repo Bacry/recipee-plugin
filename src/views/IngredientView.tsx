@@ -122,6 +122,7 @@ export class IngredientView extends ItemView {
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
+				ingredientsFolder={this.plugin.settings.ingredientsFolder}
 				readOnly={canNavigateBack({ history: this.history })}
 				usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
 				onRecipeClick={(name) => this.handleRecipeClick(name)}

@@ -154,7 +154,7 @@ export class ShoppingListView extends ItemView {
 		);
 
 		this.root.render(
-			<div>
+			<div className="shopping-list-main-div">
 				{warnings.length > 0 && (
 					<ul className="ingredient-validation-warnings">
 						{warnings.map((warning, index) => (

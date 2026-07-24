@@ -1,11 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { App } from 'obsidian';
 import { NutritionPer100g } from '../models/Ingredient';
 import { searchUsda, UsdaResult } from '../services/usda';
 import { translateToEnglish } from '../services/translate';
 import { ErrorModal } from './ErrorModal';
-import { App } from 'obsidian';
 import { sortAlphabetically } from '../models/textNormalize';
-import { useEffect, useRef, useState } from 'react';
 
 export interface IngredientFormValues {
 	name: string;
@@ -20,22 +19,16 @@ export interface IngredientFormValues {
 }
 
 interface IngredientFormProps {
-	app: App; // needed to open the native Obsidian error modal
+	app: App;
 	onSubmit: (values: IngredientFormValues) => void;
-	onClose?: () => void; // optional close/back button next to the title
+	onClose?: () => void;
 	ingredientTypes: string[];
 	shopSections: string[];
 	usdaApiKey: string;
 	initialValues?: IngredientFormValues;
 	submitLabel?: string;
 	onCancel?: () => void;
-	// When true, automatically triggers the EN translation + USDA search on
-	// mount (as if the user had blurred the "Nom" field) — used when opening
-	// this form with a prefilled name from a recipe's missing-ingredient link,
-	// so the user doesn't have to click into the field manually. Never set
-	// this for the edit-existing-ingredient flow (IngredientViewContainer).
 	autoSearchOnMount?: boolean;
-
 }
 
 const emptyNutrition: NutritionPer100g = {
@@ -64,10 +57,6 @@ const nutritionLabels: Record<keyof NutritionPer100g, string> = {
 
 const NUTRITION_KEYS = Object.keys(emptyNutrition) as (keyof NutritionPer100g)[];
 
-// Nutrition fields are edited as strings (like densityGMl/entityWeightG),
-// and only converted to numbers on submit. This avoids the NaN trap:
-// typing a letter no longer corrupts the field, it's just an invalid string
-// that gets caught by validation before submit.
 function nutritionToStrings(nutrition: NutritionPer100g): Record<keyof NutritionPer100g, string> {
 	const result = {} as Record<keyof NutritionPer100g, string>;
 	for (const key of NUTRITION_KEYS) {
@@ -105,7 +94,6 @@ export function IngredientForm({
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	const searchRequestId = useRef(0);
 
-	// Just store the raw string as typed — no Number() conversion here anymore.
 	function updateNutritionField(field: keyof NutritionPer100g, value: string) {
 		setNutritionInputs((prev) => ({ ...prev, [field]: sanitizeNumericInput(value) }));
 	}
@@ -181,17 +169,12 @@ export function IngredientForm({
 		runSearch(translated);
 	}
 
-	// Auto-triggers the same translation + USDA search that normally happens
-// when the user blurs the "Nom" field — but only once, right after mount,
-// and only when explicitly requested (see autoSearchOnMount prop docs).
-// handleNameBlur already guards against overwriting a non-empty nameEn,
-// so this is safe to call unconditionally here.
 	useEffect(() => {
 		if (autoSearchOnMount && name.trim() !== '') {
 			handleNameBlur();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []); // run exactly once, on mount
+	}, []);
 
 	function handleNameKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
 		if (e.key === 'Tab') {
@@ -213,8 +196,6 @@ export function IngredientForm({
 		runSearch(nameEn);
 	}
 
-	// Fills nutrition fields from a USDA result — converts numbers to strings
-	// since nutritionInputs is now string-based.
 	function applyResult(index: number) {
 		const result = searchResults[index];
 		setNutritionInputs({
@@ -232,8 +213,6 @@ export function IngredientForm({
 		setIsPopupOpen(false);
 	}
 
-	// Strips any character that isn't a digit or a dot, so numeric fields
-// can never contain letters or invalid symbols while typing.
 	function sanitizeNumericInput(value: string): string {
 		return value.replace(/[^0-9.]/g, '');
 	}
@@ -339,7 +318,8 @@ export function IngredientForm({
 
 					<div className="ingredient-form-field">
 						<label>Poids unitaire (g)</label>
-						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />					</div>
+						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />
+					</div>
 				</div>
 
 				<div className="ingredient-form-field">
@@ -383,6 +363,7 @@ export function IngredientForm({
 				>
 					{submitLabel}
 				</button>
+				{onCancel && <button type="button" onClick={onCancel}>Annuler</button>}
 			</div>
 		</div>
 	);

@@ -31,7 +31,7 @@ Règles :
 - "quantity" est null uniquement si aucune quantité n'est précisée dans le texte (ex: "sel à volonté").
 - "instructions" est un bloc markdown unique, avec des tirets "-" pour les étapes, et éventuellement des titres "####" si le texte distingue plusieurs phases (préparation, cuisson...).
 - Si un nom d'ingrédient de la liste "ingrédients connus" fournie ci-dessous correspond clairement à un ingrédient du texte, réutilise EXACTEMENT ce nom (même orthographe, mêmes accents) plutôt que d'en inventer un autre.
-- "tags" : 1 à 3 tags pertinents en minuscule (ex: "dessert", "entrée", "végétarien").
+- "tags" : 1 à 3 tags pertinents en minuscule (ex: "dessert", "entrée", "plat", "patisserie", "asiatique", "apéro", "tarte", "soupe", "cocktail").
 - Les durées sont en minutes ; laisse à null si non précisées.`;
 
 export interface ExtractionResult {

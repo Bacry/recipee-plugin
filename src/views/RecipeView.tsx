@@ -13,6 +13,7 @@ import { addRecipeToShoppingList, isRecipeAlreadyInShoppingList } from '../model
 import { SHOPPING_LIST_VIEW_TYPE } from './ShoppingListView';
 import { Recipe } from '../models/recipe';
 import { findRecipeFileByName } from '../models/findRecipeFile';
+import { findIngredientFileByName } from '../models/findIngredientFile';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -76,19 +77,17 @@ export class RecipeView extends ItemView {
 	}
 
 	handleIngredientClick(ingredientName: string) {
-		const path = `${this.plugin.settings.ingredientsFolder}/${ingredientName}.md`;
-		const existing = this.app.vault.getAbstractFileByPath(path);
+		const file = findIngredientFileByName(this.app, this.plugin.settings.ingredientsFolder, ingredientName);
 
-		if (existing) {
-			navigateTo(this.leaf, INGREDIENT_VIEW_TYPE, { filePath: path });
+		if (file) {
+			navigateTo(this.leaf, INGREDIENT_VIEW_TYPE, { filePath: file.path });
 		} else {
 			navigateTo(this.leaf, NEW_INGREDIENT_VIEW_TYPE, { prefilledName: ingredientName });
 		}
 	}
 
 	ingredientExists(ingredientName: string): boolean {
-		const path = `${this.plugin.settings.ingredientsFolder}/${ingredientName}.md`;
-		return this.app.vault.getAbstractFileByPath(path) !== null;
+		return findIngredientFileByName(this.app, this.plugin.settings.ingredientsFolder, ingredientName) !== null;
 	}
 
 	// Navigates to a base recipe's view, converting the scaled quantity used

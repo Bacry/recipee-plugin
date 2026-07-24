@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 import { App } from 'obsidian';
 import { parseQuantityString, ParsedQuantity } from '../models/units';
-import { searchIngredientNames } from '../models/searchIngredientNames';
 import { searchAllItemNames } from '../models/searchAllItemNames';
 import { addOtherItemNameIfMissing } from '../models/otherItemsNote';
 import { lowerFirstLetter } from '../models/textNormalize';
+import { normalizeNameForFile } from '../models/textNormalize';
 
 export interface SmartInputResult {
 	name: string;
@@ -70,7 +70,7 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 // existing ingredient file, it's recorded in the "Autres" note so future
 // searches recognize it — this is what makes the "Autres" note grow on its own.
 	async function commitName(chosenName: string) {
-		const trimmed = lowerFirstLetter(chosenName.trim());
+		const trimmed = normalizeNameForFile(chosenName);
 		if (trimmed === '') return;
 
 		setName(trimmed);

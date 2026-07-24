@@ -1,6 +1,7 @@
 import { App, TFile } from 'obsidian';
 import { getOtherItemShopSection } from './otherItemsNote';
 import { DensityInfo } from './aggregateContributions';
+import { findIngredientFileByName } from './findIngredientFile';
 
 // Looks up the shop section for a shopping list item by name.
 // Priority order:
@@ -14,7 +15,7 @@ export async function resolveShopSection(
 	itemName: string
 ): Promise<string> {
 	const ingredientPath = `${ingredientsFolder}/${itemName}.md`;
-	const file = app.vault.getAbstractFileByPath(ingredientPath);
+	const file = findIngredientFileByName(app, ingredientsFolder, itemName);
 
 	if (file instanceof TFile) {
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
@@ -39,8 +40,7 @@ export function getIngredientDensityInfo(
 	ingredientsFolder: string,
 	itemName: string
 ): DensityInfo {
-	const path = `${ingredientsFolder}/${itemName}.md`;
-	const file = app.vault.getAbstractFileByPath(path);
+	const file = findIngredientFileByName(app, ingredientsFolder, itemName);
 
 	if (!(file instanceof TFile)) return {};
 

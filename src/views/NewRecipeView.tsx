@@ -9,6 +9,7 @@ import { lowerFirstLetter } from '../models/textNormalize';
 import { NavigableViewState, NavigationEntry, closeOrGoBack, navigateBack } from '../navigation';
 import { RECIPE_VIEW_TYPE } from './RecipeView';
 import type MyPlugin from '../main';
+import { normalizeNameForFile } from '../models/textNormalize';
 
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
@@ -110,7 +111,7 @@ export class NewRecipeView extends ItemView {
 			return;
 		}
 
-		const normalizedName = lowerFirstLetter(recipe!.name);
+		const normalizedName = normalizeNameForFile(recipe!.name);
 		const newPath = this.buildPath(normalizedName, values.subfolder);
 
 		if (this.editFilePath) {

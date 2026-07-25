@@ -21,13 +21,11 @@ export interface IngredientFormValues {
 interface IngredientFormProps {
 	app: App;
 	onSubmit: (values: IngredientFormValues) => void;
-	onClose?: () => void;
 	ingredientTypes: string[];
 	shopSections: string[];
 	usdaApiKey: string;
 	initialValues?: IngredientFormValues;
 	submitLabel?: string;
-	onCancel?: () => void;
 	autoSearchOnMount?: boolean;
 }
 
@@ -68,13 +66,11 @@ function nutritionToStrings(nutrition: NutritionPer100g): Record<keyof Nutrition
 export function IngredientForm({
 								   app,
 								   onSubmit,
-								   onClose,
 								   ingredientTypes,
 								   shopSections,
 								   usdaApiKey,
 								   initialValues,
 								   submitLabel = 'Créer l\'ingrédient',
-								   onCancel,
 								   autoSearchOnMount,
 							   }: IngredientFormProps) {
 	const [name, setName] = useState(initialValues?.name ?? '');
@@ -109,6 +105,14 @@ export function IngredientForm({
 		}
 		if (shopSection.trim() === '') {
 			errors.push('Le rayon est obligatoire.');
+		}
+		const d = Number(densityGMl)
+		if (densityGMl.trim() !== "" && (Number.isNaN(d) ||  d <= 0)) {
+			errors.push('La densité doit être un nombre strictement positif');
+		}
+		const e = Number(entityWeightG)
+		if (entityWeightG.trim() !== "" && (Number.isNaN(e) ||  e <= 0)) {
+			errors.push('Le poids unitaire doit être un nombre strictement positif');
 		}
 
 		const parsedNutrition = {} as NutritionPer100g;
@@ -219,16 +223,12 @@ export function IngredientForm({
 
 	return (
 		<div className="ingredient-form">
-			<div className="ingredient-details-header">
-				<h3>Nouvel ingrédient</h3>
-				{onClose && <button onClick={onClose} title="Fermer">✕</button>}
-			</div>
 
 			<section className="ingredient-form-section">
 				<h4>Informations générales</h4>
 
 				<div className="ingredient-form-field">
-					<label>Nom</label>
+					<label>Nom *</label>
 					<input
 						value={name}
 						onChange={(e) => setName(e.target.value)}
@@ -239,8 +239,8 @@ export function IngredientForm({
 				</div>
 
 				<div className="ingredient-form-field usda-search-wrapper">
-					<label>Nom en anglais (pour la recherche)</label>
-					<div className="usda-search-row">
+					<label>Nom en anglais (pour la recherche sur USDA)</label>
+					<div className="usda-search-input-row">
 						<input
 							value={nameEn}
 							onChange={(e) => handleNameEnChange(e.target.value)}
@@ -256,12 +256,12 @@ export function IngredientForm({
 						</button>
 					</div>
 
-					<div className="usda-popup">
+					<div className="usda-popup-wrapper">
 						{searchResults.length > 0 ? (
 							<>
 								<button
 									type="button"
-									className="usda-popup-summary"
+									className="usda-popup"
 									onClick={() => setIsPopupOpen((open) => !open)}
 								>
 									{(() => {
@@ -292,7 +292,7 @@ export function IngredientForm({
 
 				<div className="ingredient-form-grid">
 					<div className="ingredient-form-field">
-						<label>Type</label>
+						<label>Type *</label>
 						<select value={type} onChange={(e) => setType(e.target.value)}>
 							<option value="">-- Choisir --</option>
 							{sortAlphabetically(ingredientTypes).map((t) => (
@@ -302,7 +302,7 @@ export function IngredientForm({
 					</div>
 
 					<div className="ingredient-form-field">
-						<label>Rayon</label>
+						<label>Rayon *</label>
 						<select value={shopSection} onChange={(e) => setShopSection(e.target.value)}>
 							<option value="">-- Choisir --</option>
 							{sortAlphabetically(shopSections).map((s) => (
@@ -353,9 +353,9 @@ export function IngredientForm({
 				</div>
 			</section>
 
-			<div className="ingredient-form-actions">
+			<div className="ingredient-recipe-form-footer">
 				<button
-					className="ingredient-form-submit"
+					className="ingredient-recipe-form-submit"
 					onClick={(e) => {
 						handleSubmit();
 						e.currentTarget.blur();
@@ -363,7 +363,6 @@ export function IngredientForm({
 				>
 					{submitLabel}
 				</button>
-				{onCancel && <button type="button" onClick={onCancel}>Annuler</button>}
 			</div>
 		</div>
 	);

@@ -1,36 +1,100 @@
-.workspace-leaf-content[data-type="shopping-list-view"] .view-content {
-	max-width: 600px;
+
+/* ============================================================
+   SOME GLOBAL VARIABLES
+   ============================================================ */
+
+:root {
+	/* Left padding for all the views */
+	--recipee-plugin-left-padding: 1rem;
+
+	/* small max wdith for some views */
+	--recipee-plugin-small-width: 600px;
+
+	/* Large max width for some views */
+	--recipee-plugin-large-width: 800px;
+
+	/* Font size of the header title */
+	--recipee-plugin-title-size: 1.3rem;
+}
+
+/* ============================================================
+   Generic css for both IngredientView.tsx and RecipeView.tsx
+   ============================================================ */
+
+/* The close and modifier action button */
+.ingredient-recipe-view-actions {
+	background: var(--background-secondary);
+	border-radius: 4px;
+	padding: 0.2rem 0.4rem;
+}
+.ingredient-recipe--view-actions.is-disabled {
+	opacity: 0.35;
+	pointer-events: none;
+}
+.ingredient-recipe--view-actions:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* Error when displaying an ingredient */
+.ingredient-recipe-validation-error {
+	color: var(--text-error);
+}
+
+
+/* ============================================================
+   Generic css for both NewIngredientView.tsx and NewRecipeView.tsx
+   ============================================================ */
+
+/* The close button in both NewIngredientView.tsx and NewRecipeView.tsx*/
+.new-ingredient-recipe-view-close-action {
+	background: var(--background-secondary);
+	border-radius: 4px;
+	padding: 0.2rem 0.4rem;
+}
+.new-ingredient-recipe-view-close-action:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* The footer in which the submit button is */
+.ingredient-recipe-form-footer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* The submit button */
+.ingredient-recipe-form-submit:hover {
+	background: var(--interactive-accent-hover);
+}
+
+
+/* ============================================================
+   NEW INGREDIENT VIEW
+   ============================================================ */
+
+/* Sets the max-width and left padding */
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-content {
+	max-width: var(--recipee-plugin-large-width);
+	padding-left: var(--recipee-plugin-left-padding);
 	margin: 0 auto;
 	display: block;
 }
 
-.workspace-leaf-content[data-type="ingredient-view"] .view-header-title {
-	display: none;
+/* Title size */
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-title {
+	font-size: var(--recipee-plugin-title-size);
+	font-weight: 700;
 }
 
-.workspace-leaf-content[data-type="ingredient-view"] table,
-.workspace-leaf-content[data-type="recipe-view"] table {
-	border-collapse: collapse;
-	width: 100%;
-}
 
-.workspace-leaf-content[data-type="ingredient-view"] table td,
-.workspace-leaf-content[data-type="recipe-view"] table td {
-	border: 1px solid var(--background-modifier-border);
-	padding: 4px 8px;
-}
+/* ============================================================
+   INGREDIENT FORM (create + edit) — IngredientForm.tsx
+   Classes prefixed "ingredient-form-" are also reused by
+   RecipeForm.tsx for visual consistency (see RECIPE FORM section).
+   ============================================================ */
 
-.workspace-leaf-content[data-type="recipe-view"] table th {
-	border: 1px solid var(--background-modifier-border);
-	padding: 4px 8px;
-	text-align: left;
-}
-
-.ingredient-form {
-	max-width: 640px;
-	padding: 1rem;
-}
-
+/* A visual "section" block within the form (e.g. "Informations générales",
+   "Valeurs nutritionnelles") — separated by a bottom border. */
 .ingredient-form-section {
 	margin-bottom: 1.5rem;
 	padding-bottom: 1.5rem;
@@ -45,12 +109,31 @@
 	letter-spacing: 0.05em;
 }
 
+.ingredient-form-section li {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.1rem 0;
+}
+
+/* 2-column grid for Type / Shop section / Density / Entity weight. */
 .ingredient-form-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 0.75rem 1rem;
 }
 
+/* 3-column grid, more compact than .ingredient-form-grid, for the 9
+   nutrition fields (kcal, lipids, glucids...) — these are short numbers,
+   don't need as much width per field. */
+.ingredient-form-grid-nutrition {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.5rem 0.75rem;
+}
+
+/* Each field in the form (composed of label and an input or select) */
 .ingredient-form-field {
 	display: flex;
 	flex-direction: column;
@@ -58,11 +141,13 @@
 	margin-bottom: 0.75rem;
 }
 
+/* A label */
 .ingredient-form-field label {
 	font-size: 0.85rem;
 	color: var(--text-muted);
 }
 
+/* The input or select of a label */
 .ingredient-form-field input,
 .ingredient-form-field select {
 	padding: 0.4rem 0.6rem;
@@ -72,6 +157,9 @@
 	color: var(--text-normal);
 }
 
+/* Main submit button ("Créer l'ingrédient", "Créer la recette"...) —
+   uses the active theme's accent color rather than a hardcoded color,
+   so it stays consistent with whatever theme the user has chosen. */
 .ingredient-form-submit {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
@@ -82,75 +170,36 @@
 	cursor: pointer;
 }
 
-.ingredient-form-submit:hover {
-	background: var(--interactive-accent-hover);
+/* Block of validation errors shown at the top of the form when submit fails */
+.ingredient-form-errors {
+	background: var(--background-modifier-error);
+	color: var(--text-error);
+	border-radius: 4px;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
 }
 
+/******************/
+/* The USDA block */
+
+/* Positioning anchor for the results popup below the input. */
 .usda-search-wrapper {
 	position: relative;
 }
-.usda-popup {
-	margin-top: 4px;
-}
 
-.usda-popup-summary {
-	width: 100%;
-	text-align: left;
-	padding: 0.4rem 0.6rem;
-	border-radius: 4px;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-primary);
-	color: var(--text-normal);
-	cursor: pointer;
-}
-
-.usda-popup-summary:hover {
-	background: var(--background-modifier-hover);
-}
-
-.usda-popup-empty {
-	display: block;
-	padding: 0.4rem 0.6rem;
-	color: var(--text-faint);
-	font-style: italic;
-	font-size: 0.85rem;
-}
-
-.usda-popup-list {
-	list-style: none;
-	margin: 2px 0 0 0;
-	padding: 0;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	max-height: 200px;
-	overflow-y: auto;
-}
-
-.usda-popup-list li {
-	padding: 0.4rem 0.6rem;
-	cursor: pointer;
-}
-
-.usda-popup-list li:hover {
-	background: var(--background-modifier-hover);
-}
-
-.ingredient-form-grid-nutrition {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 0.5rem 0.75rem;
-}
-
-.usda-search-row {
+/* English suggestion line : input and magnifying button */
+.usda-search-input-row {
 	display: flex;
 	gap: 0.5rem;
 }
 
-.usda-search-row input {
+/* The suggestion input */
+.usda-search-input-row input {
 	flex: 1;
 }
 
-.usda-search-button {
+/* The magnifying-glass / spinner button to the right of the input. */
+.usda-search-input-row button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -164,16 +213,15 @@
 	color: var(--text-normal);
 	cursor: pointer;
 }
-
-.usda-search-button:hover {
+.usda-search-input-row button:hover {
 	background: var(--background-modifier-hover);
 }
-
-.usda-search-button:disabled {
+.usda-search-input-row button:disabled {
 	cursor: default;
 	opacity: 0.7;
 }
 
+/* Small spinning ring shown while a search/translation is in flight. */
 .usda-spinner {
 	width: 14px;
 	height: 14px;
@@ -182,81 +230,218 @@
 	border-radius: 50%;
 	animation: usda-spin 0.6s linear infinite;
 }
-
 @keyframes usda-spin {
 	to { transform: rotate(360deg); }
 }
 
+/* The popup is ALWAYS rendered (never conditionally
+   hidden) — it shows either a clickable one-line summary of the top
+   result, or an "empty" placeholder message. This keeps the layout
+   stable instead of jumping around as results appear/disappear. */
 
-.ingredient-validation-error {
-	color: var(--text-error);
+/* A wrapper to the popup block */
+.usda-popup-wrapper {
+	margin-top: 4px;
 }
 
-.ingredient-validation-warnings {
-	background: var(--background-modifier-error-hover);
+/* The popup menu itself */
+.usda-popup {
+	width: 100%;
+	text-align: left;
+	padding: 0.4rem 0.6rem;
 	border-radius: 4px;
-	padding: 0.5rem 1rem;
-	margin-bottom: 1rem;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	cursor: pointer;
+}
+.usda-popup:hover {
+	background: var(--background-modifier-hover);
+}
+/* In case nothing was find */
+.usda-popup-empty {
+	display: block;
+	padding: 0.4rem 0.6rem;
+	color: var(--text-faint);
+	font-style: italic;
 	font-size: 0.85rem;
 }
 
-.ingredient-details-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-}
-
-.ingredient-form-actions {
-	display: flex;
-	gap: 0.75rem;
-	align-items: center;
-}
-
-.ingredient-form-errors {
-	background: var(--background-modifier-error);
-	color: var(--text-error);
-	border-radius: 4px;
-	padding: 0.5rem 1rem;
-	margin-bottom: 1rem;
-}
-
-.shopping-list {
-	padding: 1rem; /* margin from the edges of the entire view */
-}
-
-.smart-shopping-input {
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	padding: 0.5rem;
+/* The full list of the popup results, expanded when clicking the summary button. */
+.usda-popup-list {
+	list-style: none;
+	margin: 2px 0 0 0;
+	padding: 0;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 4px;
-	margin-bottom: 1rem;
+	max-height: 200px;
+	overflow-y: auto;
 }
 
-.smart-shopping-input input {
-	flex: 1;
-	border: none;
-	background: transparent;
-	color: var(--text-normal);
+/* each entry of the list */
+.usda-popup-list li {
+	padding: 0.4rem 0.6rem;
+	cursor: pointer;
 }
+.usda-popup-list li:hover {
+	background: var(--background-modifier-hover);
+}
+
+
+/* ============================================================
+   INGREDIENT VIEW (read mode) — IngredientDetails.tsx / IngredientView.tsx
+   ============================================================ */
+
+/* Sets the max-width and left padding */
+.workspace-leaf-content[data-type="ingredient-view"] .view-content {
+	max-width: var(--recipee-plugin-small-width);
+	padding-left: var(--recipee-plugin-left-padding);
+	margin: 0 auto;
+	display: block;
+}
+
+/* Title size */
+.workspace-leaf-content[data-type="ingredient-view"] .view-header-title {
+	font-size: var(--recipee-plugin-title-size);
+	font-weight: 700;
+}
+
+/* For the nutrition table */
+.workspace-leaf-content[data-type="ingredient-view"] table {
+	border-collapse: collapse;
+	width: 100%;
+	max-width: 300px;
+}
+.workspace-leaf-content[data-type="ingredient-view"] table td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 4px 8px;
+}
+
+/* ============================================================
+   RECIPE FORM  RecipeForm.tsx
+   ============================================================ */
+
+.recipe-ingredient-remove {
+	padding: 0.1rem 0.4rem;
+	font-size: 0.75rem;
+	line-height: 1;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+/* ============================================================
+   NEW RECIPE VIEW  NewRecipeView.tsx
+   ============================================================ */
+
+/* Sets the max-width and left padding */
+.workspace-leaf-content[data-type="new-recipe-view"] .view-content {
+	max-width: var(--recipee-plugin-large-width);
+	padding-left: var(--recipee-plugin-left-padding);
+	margin: 0 auto;
+	display: block;
+}
+
+/* Title size */
+.workspace-leaf-content[data-type="new-recipe-view"] .view-header-title {
+	font-size: var(--recipee-plugin-title-size);
+	font-weight: 700;
+}
+
+
+/* ============================================================
+   RECIPE VIEW  RecipeView.tsx
+   ============================================================ */
+
+/* Sets the max-width and left padding */
+.workspace-leaf-content[data-type="recipe-view"] .view-content {
+	max-width: var(--recipee-plugin-large-width);
+	padding-left: var(--recipee-plugin-left-padding);
+	margin: 0 auto;
+	display: block;
+}
+
+/* Title size */
+.workspace-leaf-content[data-type="recipe-view"] .view-header-title {
+	font-size: var(--recipee-plugin-title-size);
+	font-weight: 700;
+}
+
+/* For the nutrition table */
+.workspace-leaf-content[data-type="recipe-view"] table {
+	border-collapse: collapse;
+	width: 100%;
+	max-width: 500px;
+}
+
+.recipe-tags-row {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-bottom: 0.75rem;
+}
+
+.recipe-ingredients-header-row h4 {
+	margin: 0;
+}
+
+.recipe-servings-reset {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0 0.2rem;
+	font-size: 0.9rem;
+}
+
+.recipe-servings-reset:hover {
+	color: var(--interactive-accent);
+}
+
+.recipe-shop-inline-button {
+	font-size: 0.85rem;
+	padding: 0.1rem 0.5rem;
+	vertical-align: middle;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   "SMART" INPUT FIELDS — shared visual style
+   Used by SmartShoppingInput, SmartRecipeIngredientInput,
+   SmartBaseRecipeInput, and the ingredient filter in the recipe
+   list view — all built on the same multi-step (name → complement
+   → quantity) interaction pattern.
+   ============================================================ */
 
 .smart-shopping-input {
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
 	padding: 0.5rem 0.75rem;
-	background: var(--background-secondary); /* dark grey fill, adapts to the active theme */
+	background: var(--background-secondary); /* fill color, adapts to the active theme */
 	border: 1px solid var(--background-modifier-border-hover); /* slightly lighter than the fill */
-	border-radius: 8px; /* rounded corners */
+	border-radius: 8px;
 	margin-bottom: 1rem;
 	line-height: 1.4;
 }
+
+/* Forces the same font-size/line-height on both the committed "tokens"
+   (spans, e.g. "farine, ") and the live input — without this, the box's
+   height would visibly grow each time a token is added. */
 .smart-shopping-input input,
 .smart-shopping-input span {
-	font: inherit; /* force the same font-size/line-height on both the input and the committed tokens,
-	                  so the box doesn't grow when a token appears next to the input */
+	font: inherit;
 }
 
 .smart-shopping-input input {
@@ -264,13 +449,13 @@
 	border: none;
 	background: transparent;
 	color: var(--text-normal);
-	padding: 0; /* remove default browser input padding, another common source of size mismatch */
+	padding: 0; /* remove the browser's default input padding — another source of size mismatch */
 }
 
+/* Positioning anchor for the autocomplete suggestions popup below. */
 .smart-shopping-input-wrapper {
 	position: relative;
 }
-
 
 .smart-shopping-suggestions {
 	position: absolute;
@@ -294,12 +479,52 @@
 	cursor: pointer;
 }
 
+/* Applied to whichever suggestion is currently highlighted via
+   arrow-key navigation or mouse hover. */
 .smart-shopping-suggestion-highlighted {
 	background: var(--background-modifier-hover);
 }
 
+
+/* ============================================================
+   SHOPPING LIST VIEW — ShoppingListView.tsx / ShoppingListDisplay.tsx
+   ============================================================ */
+
+/* Caps the content width and centers it, so the list doesn't stretch
+   across a very wide window. display:block is required for margin:auto
+   to actually center the element. */
+.workspace-leaf-content[data-type="shopping-list-view"] .view-content {
+	max-width: 600px;
+	margin: 0 auto;
+	display: block;
+}
+
+/* Enlarges Obsidian's native pane title ("Courses"). */
+.workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
+	font-size: 1.3rem;
+	font-weight: 700;
+}
+
+.shopping-list {
+	padding: 1rem;
+}
+
+.shopping-list-section {
+	margin: 0;
+	margin-bottom: 1.2rem; /* space between one shop section block and the next */
+}
+
+.shopping-list-section h4 {
+	margin-bottom: 0.4rem;
+	line-height: 1.1;
+	font-size: 1rem;
+	font-style: italic;
+	font-weight: 800;
+	color: #4db74d; /* intentionally a fixed color, not a theme variable */
+}
+
 .shopping-list-section ul {
-	margin: 0 1rem 0rem 1rem; /* top: space below the section title, left: indent the items */
+	margin: 0 1rem 0 1rem; /* slight horizontal indent relative to the section title */
 	list-style: none;
 	padding: 0;
 }
@@ -307,23 +532,48 @@
 .shopping-list-section li {
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-end; /*  aligns text and buttons on their text baseline instead of vertical center */
+	align-items: flex-end; /* aligns text and action buttons on their bottom edge, not vertical center */
 	gap: 0.5rem;
-	padding: 0.2rem 0rem; /* space above/below each line — increase first number for more vertical air */
-	line-height: 1.1; /* height of the line itself — increase for taller lines */
+	padding: 0.2rem 0;
+	line-height: 1.1;
 }
 
+/* Struck-through text: applied both when an item is checked as bought,
+   AND when its remaining quantity has been fully covered by "already
+   owned" (see isFullyCovered in ShoppingListDisplay.tsx) — same visual
+   treatment for both "nothing left to buy" cases. */
 .shopping-list-item-checked .shopping-list-item-text {
 	text-decoration: line-through;
 	color: var(--text-faint);
 }
 
 .shopping-list-item-text {
-	font-size: 1rem; /* size of the ingredient name/quantity text */
-	font-weight: 300; /* 400 = normal, 600 = semi-bold, 700 = bold */
-	color: var(--text-normal); /* or a fixed color like #ffffff */
+	font-size: 1rem;
+	font-weight: 300;
+	color: var(--text-normal);
 }
 
+/* The item's name is clickable to open the inline "j'en ai déjà" input. */
+.shopping-list-item-name-clickable {
+	cursor: pointer;
+}
+
+.shopping-list-item-name-clickable:hover {
+	text-decoration: underline;
+}
+
+/* The inline input that replaces the name when clicked. */
+.shopping-list-owned-input {
+	width: 100px;
+	font: inherit;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 3px;
+	padding: 0 4px;
+}
+
+/* Up to 3 buttons per line: 📚 (assign shop section), ✓ (mark bought),
+   ✕ (delete). */
 .shopping-list-item-actions {
 	display: flex;
 	gap: 0.55rem;
@@ -331,48 +581,76 @@
 }
 
 .shopping-list-item-actions button {
-	padding: 0.2rem 0.75rem; /* increase for bigger buttons, decrease for smaller */
-	font-size: 0.90rem; /* add this line to control the icon/text size inside */
+	padding: 0.2rem 0.75rem;
+	font-size: 0.9rem;
 	border-radius: 4px;
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-secondary);
 	cursor: pointer;
-	height: 1.5rem; /* explicitly override Obsidian's default button height */
-	min-height: unset; /* remove any inherited min-height that padding alone can't overcome */
-	border-radius: 4px;
+	height: 1.5rem; /* overrides Obsidian's default button height */
+	min-height: unset; /* removes an inherited min-height that padding alone couldn't overcome */
 }
 
-.shopping-list-section h4 {
-	margin-bottom: .4rem; /* space between the section name and its list below */
-	line-height: 1.1; /* forces a tighter line height, independent of the browser's def
-	font-size: 1rem; /* adjust size here */
-	font-style: italic;
-	font-weight: 800; /* adjust boldness here */
-	color: #4db74d; /* adjust color here — try --text-muted for a softer look */
+/* The "Recettes" section at the top of the shopping list — one line per
+   recipe added via the "Shop" button, with a ✕ to cancel it (removing
+   only the contributions it created, see removeRecipeFromShoppingList). */
+.shopping-list-recipes-section {
+	margin-bottom: 1rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.shopping-list-section {
-	margin: 0rem;
-	margin-bottom: 1.2rem; /* space between one shop section block and the next */
+.shopping-list-recipes-section ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
 }
 
-.workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
-	font-size: 1.3rem;
-	font-weight: 700;
-}
-
-.recipe-servings-input {
-	width: 4rem;
-	text-align: center;
-}
-
-.ingredient-details-header-actions {
+.shopping-list-recipes-section li {
 	display: flex;
-	gap: 0.5rem;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.2rem 0;
 }
+
+.shopping-list-recipes-section li button {
+	padding: 0.2rem 0.4rem;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	cursor: pointer;
+}
+
+
+/* ============================================================
+   MARKDOWN EDITABLE BLOCK — MarkdownEditableBlock.tsx
+   Used in the recipe view for the editable "Notes" field, and for
+   the read-only rendered "Instructions" block.
+   ============================================================ */
 
 .markdown-editable-block {
 	margin-bottom: 0.5rem;
+}
+
+.markdown-editable-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.markdown-editable-header h4 {
+	margin: 0;
+}
+
+/* The block's title (e.g. "Notes") doubles as the toggle button — clicking
+   it either starts editing or saves, depending on the current state. */
+.markdown-editable-title-clickable {
+	cursor: pointer;
+}
+
+.markdown-editable-title-clickable:hover {
+	text-decoration: underline;
 }
 
 .markdown-editable-textarea {
@@ -392,17 +670,7 @@
 	margin-top: 0.25rem;
 }
 
-.markdown-editable-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem;
-}
-
-.markdown-editable-header h4 {
-	margin: 0;
-}
-
+/* The 💾/✏️ button next to the title, only shown while editing. */
 .markdown-editable-toggle {
 	padding: 0.2rem 0.4rem;
 	border-radius: 4px;
@@ -411,13 +679,31 @@
 	cursor: pointer;
 	flex-shrink: 0;
 }
-.recipe-image {
-	max-width: 100%;
-	max-height: 120px;
-	border-radius: 4px;
-	margin: 0.5rem 0;
+
+
+/* ============================================================
+   RECIPE VIEW (read mode) — RecipeDetails.tsx / RecipeView.tsx
+   ============================================================ */
+
+.workspace-leaf-content[data-type="recipe-view"] table {
+	border-collapse: collapse;
+	width: 100%;
 }
 
+.workspace-leaf-content[data-type="recipe-view"] table td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 4px 8px;
+}
+
+/* <th> headers only exist in the recipe's nutrition table ("Pour 100g" /
+   "Total" / "Pour 1 [servingsLabel]"), not the ingredient one. */
+.workspace-leaf-content[data-type="recipe-view"] table th {
+	border: 1px solid var(--background-modifier-border);
+	padding: 4px 8px;
+	text-align: left;
+}
+
+/* Two side-by-side columns: "Temps" on the left, "Source"+"Image" on the right. */
 .recipe-top-row {
 	display: flex;
 	gap: 2rem;
@@ -438,11 +724,11 @@
 	margin: 0;
 }
 
-.recipe-tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.4rem;
-	margin-bottom: 0.5rem;
+.recipe-image {
+	max-width: 100%;
+	max-height: 120px; /* intentionally small — just a preview thumbnail */
+	border-radius: 4px;
+	margin: 0.5rem 0;
 }
 
 .recipe-tag {
@@ -453,39 +739,24 @@
 	color: var(--text-muted);
 }
 
+/* The servings input inside "Ingrédients (pour [X] personnes)". */
+.recipe-servings-input {
+	width: 4rem;
+	text-align: center;
+}
+
+/* Applied to an ingredient link when it has a quantity (so it matters
+   for the recipe) but no ingredient sheet yet — signals that a fiche
+   needs to be created for the nutrition calculation to include it. */
 .recipe-ingredient-missing {
 	color: var(--text-error);
 }
 
-.ingredient-form-section li {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 0.1rem 0;
-}
-
-.recipe-ingredient-remove {
-	padding: 0.1rem 0.4rem;
-	font-size: 0.75rem;
-	line-height: 1;
-	border-radius: 4px;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-secondary);
-	cursor: pointer;
-	flex-shrink: 0;
-}
-
-.markdown-editable-title-clickable {
-	cursor: pointer;
-}
-
-.markdown-editable-title-clickable:hover {
-	text-decoration: underline;
-}
 
 
-
+/* ============================================================
+   "ALL RECIPES" LIST VIEW — RecipeListView.tsx / RecipeListDisplay.tsx
+   ============================================================ */
 
 .recipe-list-table {
 	width: 100%;
@@ -506,6 +777,7 @@
 	vertical-align: middle;
 }
 
+/* Thumbnail column — kept deliberately tiny (16-28px). */
 .recipe-list-thumbnail-cell {
 	width: 32px;
 }
@@ -520,7 +792,7 @@
 }
 
 .recipe-list-thumbnail-placeholder {
-	background: var(--background-secondary);
+	background: var(--background-secondary); /* grey square shown when the recipe has no image */
 }
 
 .recipe-list-name-cell {
@@ -529,15 +801,10 @@
 }
 
 .recipe-list-tags-cell {
-	width: 100%;
+	width: 100%; /* takes up remaining space, pushing tags to align left */
 }
 
-.recipe-list-ingredient-filter-wrapper {
-	position: relative;
-	margin-bottom: 0.75rem;
-}
-
-
+/* Text search + ingredient filter fields, side by side. */
 .recipe-list-search-row {
 	display: flex;
 	gap: 0.5rem;
@@ -545,29 +812,15 @@
 }
 
 .recipe-list-search-row .recipe-list-search {
-	margin-bottom: 0;
+	margin-bottom: 0; /* spacing handled by the parent .recipe-list-search-row instead */
 }
 
 .recipe-list-search-row .recipe-list-ingredient-filter-wrapper {
 	flex: 1;
 }
 
-.shopping-list-item-name-clickable {
-	cursor: pointer;
+/* Positioning anchor for the ingredient-filter's autocomplete popup. */
+.recipe-list-ingredient-filter-wrapper {
+	position: relative;
+	margin-bottom: 0.75rem;
 }
-
-.shopping-list-item-name-clickable:hover {
-	text-decoration: underline;
-}
-
-.shopping-list-owned-input {
-	width: 100px;
-	font: inherit;
-	background: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 3px;
-	padding: 0 4px;
-}
-
-
-

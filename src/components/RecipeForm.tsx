@@ -35,7 +35,6 @@ interface RecipeFormProps {
 	anthropicApiKey: string;
 	anthropicModel: string;
 	onSubmit: (values: RecipeFormValues) => void;
-	onClose?: () => void;
 	initialValues?: RecipeFormValues;
 	submitLabel?: string;
 }
@@ -71,7 +70,7 @@ function sanitizeNumericInput(value: string): string {
 
 export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImagesFolder,
 							   anthropicApiKey,
-							   anthropicModel, onSubmit, onClose, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {	const base = initialValues ?? emptyValues();
+							   anthropicModel, onSubmit, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {	const base = initialValues ?? emptyValues();
 	const [name, setName] = useState(base.name);
 	const [baseServings, setBaseServings] = useState(base.baseServings);
 	const [servingsLabel, setServingsLabel] = useState(base.servingsLabel);
@@ -210,14 +209,12 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImages
 
 	return (
 		<div className="ingredient-form">
-			<div className="ingredient-details-header">
-				<h3>{initialValues ? 'Modifier la recette' : 'Nouvelle recette'}</h3>
-				{onClose && <button onClick={onClose} title="Fermer">✕</button>}
-			</div>
 
-			<button type="button" onClick={openParseTextModal} className="ingredient-form-submit">
-				Extraire depuis un texte
-			</button>
+			<div className="ingredient-recipe-form-footer">
+				<button type="button" onClick={openParseTextModal} className="ingredient-recipe-form-submit">
+					Extraire les informations depuis un texte à l'aide de Claude
+				</button>
+			</div>
 
 			<section className="ingredient-form-section">
 				<h4>Informations générales</h4>
@@ -390,8 +387,8 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImages
 				/>
 			</section>
 
-			<div className="ingredient-form-actions">
-				<button className="ingredient-form-submit" onClick={handleSubmit}>{submitLabel}</button>
+			<div className="ingredient-recipe-form-footer">
+				<button className="ingredient-recipe-form-submit" onClick={handleSubmit}>{submitLabel}</button>
 			</div>
 		</div>
 	);

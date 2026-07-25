@@ -5,6 +5,7 @@ import { parseRecipeFromFrontmatter } from './parseRecipe';
 import { convertQuantity, findUnit } from './units';
 import { findRecipeFileByName } from './findRecipeFile';
 import { findIngredientFileByName } from './findIngredientFile';
+import {findFileByBasename} from "./fileSystemUtils";
 
 const NUTRITION_KEYS: (keyof NutritionPer100g)[] = [
 	'kcal', 'lipids', 'non_saturated_lipids', 'glucids',
@@ -118,8 +119,7 @@ export function computeRecipeNutrition(
 	for (const entry of recipe.ingredients) {
 		if (entry.quantity == null) continue;
 
-		const path = `${ingredientsFolder}/${entry.ingredientName}.md`;
-		const file = app.vault.getAbstractFileByPath(path);
+		const file = findIngredientFileByName(app, ingredientsFolder, entry.ingredientName)
 		if (!(file instanceof TFile)) {
 			warnings.push(`Ingrédient "${entry.ingredientName}" sans fiche — exclu du calcul.`);
 			continue;

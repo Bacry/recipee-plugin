@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { App, Component, MarkdownRenderer } from 'obsidian';
 import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
-import { upperFirstLetter } from '../models/textNormalize';
 import { computeRecipeNutrition } from '../models/computeRecipeNutrition';
 import { NutritionTable } from './NutritionTable';
 
@@ -11,16 +10,11 @@ interface RecipeDetailsProps {
 	recipe: Recipe;
 	ingredientsFolder: string;
 	recipesFolder: string;
-	initialServings?: number; // used when opened as a base recipe, to reflect the quantity used by the parent recipe
+	initialServings?: number;
 	onIngredientClick: (ingredientName: string) => void;
 	ingredientExists: (ingredientName: string) => boolean;
-	// Passes the scaled quantity + unit at click time (not the stored base
-	// value), so the opened base recipe view can reflect exactly how much of
-	// it is actually being used here.
 	onBaseRecipeClick: (recipeName: string, scaledQuantity: number, unit: string) => void;
 	onSaveNotes: (newContent: string) => void;
-	onEdit?: () => void; // undefined = read-only (opened from another recipe), no "Modifier" button
-	onClose: () => void;
 	onShop: (servings: number) => void;
 }
 
@@ -71,15 +65,9 @@ export function RecipeDetails({
 								  onBaseRecipeClick,
 								  onSaveNotes,
 								  onShop,
-								  onEdit,
-								  onClose,
 							  }: RecipeDetailsProps) {
 	const [servingsInput, setServingsInput] = useState((initialServings ?? recipe.baseServings).toString());
 
-	// Re-syncs the displayed servings input when the recipe's baseServings
-	// actually CHANGES from what it was (e.g. after editing via NewRecipeView)
-	// — but not on first mount, so it doesn't clobber initialServings (used
-	// when this view was opened as a base recipe, scaled to the quantity used).
 	const prevBaseServingsRef = useRef(recipe.baseServings);
 	useEffect(() => {
 		if (recipe.baseServings !== prevBaseServingsRef.current) {
@@ -104,34 +92,16 @@ export function RecipeDetails({
 		per100g[key] = nutritionResult.totalWeightG > 0 ? nutritionResult.totalNutrition[key] / (nutritionResult.totalWeightG / 100) : 0;
 	}
 
-
 	const totalDuration = (recipe.preparationDurationMin ?? 0) + (recipe.cookingDurationMin ?? 0);
-
 	return (
 		<div>
-			<div className="ingredient-details-header">
-				<h2>{upperFirstLetter(recipe.name)}</h2>
-				<div className="ingredient-details-header-actions">
-					{onEdit && <button onClick={onEdit}>Modifier</button>}
-					<button onClick={onClose} title="Fermer">✕</button>
-				</div>
-			</div>
-
 			{recipe.tags.length > 0 && (
-				<div className="recipe-tags">
+				<div className="recipe-tags-row">
 					{recipe.tags.map((tag) => (
 						<span key={tag} className="recipe-tag">{tag}</span>
 					))}
 				</div>
 			)}
-
-
-			<MarkdownEditableBlock
-				app={app}
-				title="Notes"
-				content={recipe.notes ?? ''}
-				onSave={(newContent) => onSaveNotes(newContent)}
-			/>
 
 			<div className="recipe-top-row">
 				<div className="recipe-top-row-column">
@@ -148,24 +118,20 @@ export function RecipeDetails({
 								{totalDuration > 0 && <li>Total : {formatDuration(totalDuration)}</li>}
 							</ul>
 						</div>
-
 					)}
 				</div>
-				{recipe.totalWeightG != null && <p>Poids total mesuré : {recipe.totalWeightG}g</p>}
+
 				<div className="recipe-top-row-column">
-					<div className="recipe-source-row">
-						{recipe.source && (
-							<p>
-								Source :{' '}
-								{isUrl(recipe.source) ? (
-									<a href={recipe.source} target="_blank" rel="noopener noreferrer">web</a>
-								) : (
-									recipe.source
-								)}
-							</p>
-						)}
-						<button onClick={() => onShop(servings)}>Shop</button>
-					</div>
+					{recipe.source && (
+						<p>
+							Source :{' '}
+							{isUrl(recipe.source) ? (
+								<a href={recipe.source} target="_blank" rel="noopener noreferrer">web</a>
+							) : (
+								recipe.source
+							)}
+						</p>
+					)}
 					{recipe.image &&
 						(() => {
 							const imagePath = resolveImagePath(app, recipe.image);
@@ -180,31 +146,40 @@ export function RecipeDetails({
 				</div>
 			</div>
 
-			<h4>
-				Ingrédients (pour{' '}
-				<input
-					type="number"
-					value={servingsInput}
-					min={1}
-					onChange={(e) => setServingsInput(e.target.value)}
-					onBlur={() => {
-						if (Number(servingsInput) <= 0 || servingsInput.trim() === '') {
-							setServingsInput(recipe.baseServings.toString());
-						}
-					}}
-					onDoubleClick={() => setServingsInput(recipe.baseServings.toString())}
-					className="recipe-servings-input"
-				/>{' '}
-				{recipe.servingsLabel})
-			</h4>
+
+			<div className="recipe-ingredients-header-row">
+				<h4>
+					Ingrédients (pour{' '}
+					<input
+						type="number"
+						value={servingsInput}
+						min={1}
+						onChange={(e) => setServingsInput(e.target.value)}
+						onBlur={() => {
+							if (Number(servingsInput) <= 0 || servingsInput.trim() === '') {
+								setServingsInput(recipe.baseServings.toString());
+							}
+						}}
+						className="recipe-servings-input"
+					/>{' '}
+					{recipe.servingsLabel}{' '}
+					<button
+						type="button"
+						onClick={() => setServingsInput(recipe.baseServings.toString())}
+						title="Réinitialiser le nombre de portions"
+						className="recipe-servings-reset"
+					>
+						↺
+					</button>
+					){' '}
+					<button onClick={() => onShop(servings)} className="recipe-shop-inline-button">Shop</button>
+				</h4>
+			</div>
 
 			{(() => {
-				// Unified list: base recipes first, then regular ingredients — a single
-				// <ul> instead of two separate sections, with "(recette de base)"
-				// appended to distinguish the two kinds of entries.
 				type UnifiedEntry =
 					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string }
-					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string };
+					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string };
 
 				const unifiedEntries: UnifiedEntry[] = [
 					...recipe.baseRecipes.map((entry): UnifiedEntry => ({ kind: 'baseRecipe', ...entry })),
@@ -219,7 +194,7 @@ export function RecipeDetails({
 								return (
 									<li key={index}>
 										{formatScaledQuantity(entry.quantity, entry.unit, factor)}{entry.unit} de{' '}
-									<a
+										<a
 										href="#"
 										onClick={(e) => {
 										e.preventDefault();
@@ -242,7 +217,7 @@ export function RecipeDetails({
 										? formatScaledQuantity(entry.quantity, entry.unit, factor) + entry.unit + (entry.unit ? ' de ' : ' ')
 										: ''}
 									{showAsLink ? (
-										<a
+									<a
 											href="#"
 										className={exists ? '' : 'recipe-ingredient-missing'}
 										onClick={(e) => { e.preventDefault(); onIngredientClick(entry.ingredientName); }}
@@ -252,7 +227,7 @@ export function RecipeDetails({
 										) : (
 										<span>{entry.ingredientName}</span>
 							)}
-									{entry.complement ? ' (' + entry.complement + ')' : ''}
+						{entry.complement ? ' (' + entry.complement + ')' : ''}
 						{entry.form ? ' (' + entry.form + ')' : ''}
 							</li>
 							);
@@ -260,17 +235,25 @@ export function RecipeDetails({
 		</ul>
 	);
 })()}
-			<InstructionsPreview app={app} content={recipe.instructions} />
 
-			<NutritionTable
-				per100g={per100g}
-				total={scaledTotal}
-				totalWeightG={scaledTotalWeightG}
-				perServing={nutritionResult.perServingNutrition}
-				servingsLabel={recipe.servingsLabel}
-				warnings={nutritionResult.warnings}
-			/>
+<InstructionsPreview app={app} content={recipe.instructions} />
 
-		</div>
-	);
+<MarkdownEditableBlock
+	app={app}
+	title="Notes"
+	content={recipe.notes ?? ''}
+	onSave={(newContent) => onSaveNotes(newContent)}
+/>
+
+<NutritionTable
+	per100g={per100g}
+	total={scaledTotal}
+	totalWeightG={scaledTotalWeightG}
+	perServing={nutritionResult.perServingNutrition}
+	servingsLabel={recipe.servingsLabel}
+	warnings={nutritionResult.warnings}
+	measuredTotalWeightG={recipe.totalWeightG}
+/>
+</div>
+);
 }

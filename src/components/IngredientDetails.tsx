@@ -12,8 +12,6 @@ interface IngredientDetailsProps {
 	brand?: string;
 	usedInRecipes: string[];
 	onRecipeClick: (recipeName: string) => void;
-	onEdit?: () => void; // undefined = read-only, no "Modifier" button rendered
-	onClose: () => void;
 }
 
 export function IngredientDetails({
@@ -27,28 +25,29 @@ export function IngredientDetails({
 									  nutrition,
 									  usedInRecipes,
 									  onRecipeClick,
-									  onEdit,
-									  onClose,
 								  }: IngredientDetailsProps) {
 	return (
 		<div>
-			<div className="ingredient-details-header">
-				<h2>{upperFirstLetter(name)}</h2>
-				<div className="ingredient-details-header-actions">
-					{onEdit && <button onClick={onEdit}>Modifier</button>}
-					<button onClick={onClose} title="Fermer">✕</button>
-				</div>
-			</div>
-			<p>Type : {type}</p>
-			<p>Rayon : {shopSection}</p>
-			{brand && <p>Marque : {brand}</p>}
-			{densityGMl != null && <p>Densité : {densityGMl} g/mL</p>}
-			{entityWeightG != null && <p>Poids unitaire : {entityWeightG} g</p>}
-			{possibleForms != null && possibleForms.length > 0 && (
-				<p>Formes possibles : {possibleForms.join(', ')}</p>
-			)}
 
-			<h3>Valeurs nutritionnelles (pour 100g)</h3>
+			<h4> Caractéristiques </h4>
+			<ul>
+				<li>Type : {type}</li>
+				<li>Rayon : {shopSection}</li>
+				{brand &&
+					<li>Marque : {brand}</li>
+				}
+				{densityGMl != null &&
+					<li> Densité : {densityGMl} g/mL</li>
+				}
+				{entityWeightG != null &&
+					<li>Poids unitaire : {entityWeightG} g</li>
+				}
+				{possibleForms != null && possibleForms.length > 0 &&
+					<li>Formes possibles : {possibleForms.join(', ')} </li>
+				}
+			</ul>
+
+			<h4>Valeurs nutritionnelles (pour 100g)</h4>
 			<table>
 				<tbody>
 				<tr><td>Calories</td><td>{nutrition.kcal} kcal</td></tr>

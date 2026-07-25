@@ -1,12 +1,15 @@
-import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, Notice, App } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
-import { IngredientViewContainer } from '../components/IngredientViewContainer';
 import { parseIngredientFromFrontmatter } from '../models/parseIngredientFromFrontmatter';
 import type MyPlugin from '../main';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack, navigateTo } from '../navigation';
 import { upperFirstLetter } from '../models/textNormalize';
 import { findRecipesUsingIngredient } from '../models/findRecipesUsingIngredient';
 import { RECIPE_VIEW_TYPE } from './RecipeView';
+import { updateIngredient } from "../models/ingredientPersistence";
+import {IngredientDetails} from "../components/IngredientDetails";
+import {ingredientToFormValues} from "../models/ingredientToFormValues";
+import {IngredientForm} from "../components/IngredientForm";
 
 export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
@@ -22,6 +25,8 @@ export class IngredientView extends ItemView {
 	private history: NavigationEntry[] = [];
 	private root: Root | null = null;
 	private plugin: MyPlugin;
+	private isEditing = false;
+	private modifyAction!: HTMLElement; // set in onOpen, before any code that reads it runs
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -33,17 +38,68 @@ export class IngredientView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		if (!this.filePath) return 'Ingredient';
-		const file = this.app.vault.getAbstractFileByPath(this.filePath);
-		return file instanceof TFile ? upperFirstLetter(file.basename) : 'Ingredient';
+		if (!this.filePath) {
+			return this.isEditing
+				? "Modification de l’ingrédient"
+				: "Ingrédient";
+		}
+
+		const file =
+			this.app.vault.getAbstractFileByPath(this.filePath);
+
+		const name =
+			file instanceof TFile
+				? upperFirstLetter(file.basename)
+				: "Ingrédient";
+
+		return this.isEditing
+			? `Modification — ${name}`
+			: name;
 	}
 
-	async setState(state: IngredientViewState, result: unknown) {
+	private updateTitle(): void {
+		const title = this.getDisplayText();
+
+		this.titleEl.setText(title);
+		this.leaf.updateHeader();
+	}
+
+	private updateModifyButton(): void {
+		if (!this.modifyAction) return;
+
+		this.modifyAction.toggleClass(
+			"is-disabled",
+			this.isEditing
+		);
+
+		this.modifyAction.setAttribute(
+			"aria-disabled",
+			this.isEditing ? "true" : "false"
+		);
+	}
+
+	private setEditing(isEditing: boolean): void {
+		this.isEditing = isEditing;
+		this.updateModifyButton();
+		this.updateTitle();
+		this.render();
+	}
+
+	async setState(
+		state: IngredientViewState,
+		result: unknown
+	): Promise<void> {
 		this.filePath = state.filePath;
 		this.history = state.history ?? [];
-		this.leaf.updateHeader();
-		this.render();
-		return super.setState(state, result as never);
+		this.updateModifyButton();
+
+		await super.setState(state, result as never);
+
+		if (this.root) {
+			this.render();
+		}
+
+		this.updateTitle();
 	}
 
 	getState(): IngredientViewState {
@@ -62,7 +118,34 @@ export class IngredientView extends ItemView {
 			})
 		);
 
-		this.render();
+		/* If needed we add a modifying button */
+		this.modifyAction = this.addAction(
+			'pencil',
+			"Modifier l'ingrédient",
+			() => {
+				this.setEditing(true);
+			}
+			);
+		this.modifyAction.addClass('recipe-ingredient-view-actions');
+
+		/* Adding the close button */
+		const closeAction = this.addAction(
+			"x",
+			"Fermer",
+			() => {
+				if (this.isEditing) {
+					this.setEditing(false);
+					return;
+				}
+
+				this.handleClose();
+			}
+		);
+		closeAction.addClass('ingredient-recipe-view-actions');
+
+		if (this.filePath) {
+			this.render();
+		}
 	}
 
 	handleRecipeClick(recipeName: string) {
@@ -76,6 +159,57 @@ export class IngredientView extends ItemView {
 	handleClose() {
 		closeOrGoBack(this.leaf, this.history);
 	}
+
+	// Called when the edit form is submitted: moves the file if its type (and
+	// thus its target subfolder) changed, then overwrites its content.
+	async handleSave(
+		values: IngredientFormValues
+	): Promise<void> {
+		if (!this.filePath) {
+			new Notice("Aucun fichier ingrédient sélectionné.");
+			return;
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(
+			this.filePath
+		);
+
+		if (!(file instanceof TFile)) {
+			new Notice("Le fichier ingrédient est introuvable.");
+			return;
+		}
+
+		try {
+			const updatedFile = await updateIngredient({
+				app: this.app,
+				ingredientsFolder:
+				this.plugin.settings.ingredientsFolder,
+				file,
+				values,
+			});
+
+			// Important si le fichier a été déplacé ou renommé.
+			this.filePath = updatedFile.path;
+
+			this.isEditing = false;
+			this.updateModifyButton();
+			this.updateTitle();
+
+			new Notice(
+				`Ingrédient "${updatedFile.basename}" mis à jour.`
+			);
+
+			this.render();
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "Impossible de modifier l’ingrédient.";
+
+			new Notice(message);
+		}
+	}
+
 	render() {
 		if (!this.root) return;
 
@@ -92,7 +226,7 @@ export class IngredientView extends ItemView {
 
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 
-		const { ingredient, errors, warnings } = parseIngredientFromFrontmatter(
+		const {ingredient, errors, warnings} = parseIngredientFromFrontmatter(
 			frontmatter,
 			file.basename,
 			this.plugin.settings.ingredientTypes,
@@ -105,7 +239,7 @@ export class IngredientView extends ItemView {
 					<h4>Cette note contient des erreurs :</h4>
 					<ul>
 						{errors.map((error, index) => (
-							<li key={index} className="ingredient-validation-error">{error}</li>
+							<li key={index} className="recipe-ingredient-validation-error">{error}</li>
 						))}
 					</ul>
 				</div>
@@ -113,22 +247,36 @@ export class IngredientView extends ItemView {
 			return;
 		}
 
-		this.root.render(
-			<IngredientViewContainer
-				app={this.app}
-				file={file}
-				ingredient={ingredient!}
-				warnings={warnings}
-				ingredientTypes={this.plugin.settings.ingredientTypes}
-				shopSections={this.plugin.settings.shopSections}
-				usdaApiKey={this.plugin.settings.usdaApiKey}
-				ingredientsFolder={this.plugin.settings.ingredientsFolder}
-				readOnly={canNavigateBack({ history: this.history })}
-				usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
-				onRecipeClick={(name) => this.handleRecipeClick(name)}
-				onClose={() => this.handleClose()}
-			/>
-		);
+		if (this.isEditing) {
+			this.root.render(
+				<IngredientForm
+					app={this.app}
+					onSubmit={(values) => this.handleSave(values)}
+					ingredientTypes={this.plugin.settings.ingredientTypes}
+					shopSections={this.plugin.settings.shopSections}
+					usdaApiKey={this.plugin.settings.usdaApiKey}
+					initialValues={ingredientToFormValues(ingredient)}
+					submitLabel="Enregistrer les modifications"
+					autoSearchOnMount = {false}
+				/>
+			);
+		}
+		else {
+			this.root.render(
+				<IngredientDetails
+					name={ingredient.name}
+					type={ingredient.type}
+					shopSection={ingredient.shop_section}
+					densityGMl={ingredient.density_g_ml}
+					entityWeightG={ingredient.entity_weight_g}
+					brand={ingredient.brand}
+					possibleForms={ingredient.possible_forms}
+					nutrition={ingredient.nutrition_per_100g}
+					usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
+					onRecipeClick={(name) => this.handleRecipeClick(name)}
+				/>
+			)
+		}
 	}
 
 	async onClose() {

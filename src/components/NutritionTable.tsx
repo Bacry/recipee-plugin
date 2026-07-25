@@ -7,6 +7,7 @@ interface NutritionTableProps {
 	perServing: NutritionPer100g | null; // null when servingsLabel is a real unit (g/cl/...) — no middle column then
 	servingsLabel: string;
 	warnings: string[];
+	measuredTotalWeightG?: number; // the recipe's manually measured weight, if set
 }
 
 const ROWS: { key: keyof NutritionPer100g; label: string; unit: string; indent?: boolean }[] = [
@@ -25,10 +26,15 @@ function fmt(value: number): string {
 	return Number(value.toFixed(2)).toString();
 }
 
-export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings }: NutritionTableProps) {
+export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG }: NutritionTableProps) {
 	return (
 		<div>
-			<h4>Nutrition</h4>
+			<h4>
+				Nutrition{' '}
+				{measuredTotalWeightG != null
+					? `(${totalWeightG}g mesuré)`
+					: `(${totalWeightG}g calculé)`}
+			</h4>
 			<table>
 				<thead>
 				<tr>

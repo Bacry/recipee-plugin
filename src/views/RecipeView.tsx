@@ -1,19 +1,24 @@
-import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
-import { buildRecipeMarkdown } from '../models/buildRecipeMarkdown';
 import { RecipeDetails } from '../components/RecipeDetails';
+import { RecipeForm, RecipeFormValues } from '../components/RecipeForm';
 import { INGREDIENT_VIEW_TYPE } from './IngredientView';
 import { NEW_INGREDIENT_VIEW_TYPE } from './NewIngredientView';
-import { NEW_RECIPE_VIEW_TYPE } from './NewRecipeView';
 import { findUnit, convertQuantity } from '../models/units';
-import { NavigableViewState, NavigationEntry, navigateTo, canNavigateBack, closeOrGoBack } from '../navigation';
+import { NavigableViewState, NavigationEntry, navigateTo, closeOrGoBack } from '../navigation';
 import type MyPlugin from '../main';
 import { addRecipeToShoppingList, isRecipeAlreadyInShoppingList } from '../models/addRecipeToShoppingList';
 import { SHOPPING_LIST_VIEW_TYPE } from './ShoppingListView';
 import { Recipe } from '../models/recipe';
 import { findRecipeFileByName } from '../models/findRecipeFile';
 import { findIngredientFileByName } from '../models/findIngredientFile';
+import { upperFirstLetter } from '../models/textNormalize';
+import { recipeToFormValues, formValuesToRecipe } from '../models/recipeFormConversion';
+import { updateRecipe } from '../models/recipePersistence';
+import { ErrorModal } from '../components/ErrorModal';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { buildRecipeMarkdown } from '../models/buildRecipeMarkdown'
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -30,6 +35,8 @@ export class RecipeView extends ItemView {
 	private root: Root | null = null;
 	private plugin: MyPlugin;
 	private readOnly = false;
+	private isEditing = false;
+	private modifyAction!: HTMLElement; // set in onOpen, before any code that reads it runs
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -41,19 +48,67 @@ export class RecipeView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Recette';
+		if (!this.filePath) {
+			return this.isEditing ? 'Modification de la recette' : 'Recette';
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		const name = file instanceof TFile ? upperFirstLetter(file.basename) : 'Recette';
+
+		return this.isEditing ? `Modification — ${name}` : name;
 	}
-	async setState(state: RecipeViewState, result: unknown) {
+
+	private updateTitle(): void {
+		this.titleEl.setText(this.getDisplayText());
+		this.leaf.updateHeader();
+	}
+
+	// Disables the pencil button while already editing, or while read-only
+	// (opened as a base recipe reference from another recipe).
+	private updateModifyButton(): void {
+		if (!this.modifyAction) return;
+
+		this.modifyAction.toggleClass(
+			"is-disabled",
+			this.isEditing
+		);
+
+		this.modifyAction.setAttribute(
+			"aria-disabled",
+			this.isEditing ? "true" : "false"
+		);
+	}
+
+	private setEditing(isEditing: boolean): void {
+		this.isEditing = isEditing;
+		this.updateModifyButton();
+		this.updateTitle();
+		this.render();
+	}
+
+	async setState(state: RecipeViewState, result: unknown): Promise<void> {
 		this.filePath = state.filePath;
 		this.initialServings = state.initialServings;
 		this.readOnly = state.readOnly ?? false;
 		this.history = state.history ?? [];
-		this.render();
-		return super.setState(state, result as never);
+		this.updateModifyButton();
+
+		await super.setState(state, result as never);
+
+		if (this.root) {
+			this.render();
+		}
+
+		this.updateTitle();
 	}
 
 	getState(): RecipeViewState {
-		return { filePath: this.filePath, initialServings: this.initialServings, readOnly: this.readOnly, history: this.history };
+		return {
+			filePath: this.filePath,
+			initialServings: this.initialServings,
+			readOnly: this.readOnly,
+			history: this.history,
+		};
 	}
 
 	async onOpen() {
@@ -73,7 +128,23 @@ export class RecipeView extends ItemView {
 			})
 		);
 
-		this.render();
+		this.modifyAction = this.addAction('pencil', 'Modifier la recette', () => {
+			this.setEditing(true);
+		});
+		this.modifyAction.addClass('recipe-ingredient-view-actions');
+
+		const closeAction = this.addAction('x', 'Fermer', () => {
+			if (this.isEditing) {
+				this.setEditing(false);
+				return;
+			}
+			this.handleClose();
+		});
+		closeAction.addClass('ingredient-recipe-view-actions');
+
+		if (this.filePath) {
+			this.render();
+		}
 	}
 
 	handleIngredientClick(ingredientName: string) {
@@ -90,36 +161,23 @@ export class RecipeView extends ItemView {
 		return findIngredientFileByName(this.app, this.plugin.settings.ingredientsFolder, ingredientName) !== null;
 	}
 
-	// Navigates to a base recipe's view, converting the scaled quantity used
-	// here into that recipe's own output unit (its servingsLabel), so the
-	// opened view starts scaled to reflect exactly how much of it is used.
-	// Falls back to the base recipe's own baseServings if conversion fails
-	// for any reason (shouldn't happen — already validated at form-submit time).
 	handleBaseRecipeClick(recipeName: string, scaledQuantity: number, unit: string) {
 		const file = findRecipeFileByName(this.app, this.plugin.settings.recipesFolder, recipeName);
+		if (!file) return;
 
 		let initialServings: number | undefined;
-		if (file) {
-			const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
-			const { recipe: baseRecipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
-			if (baseRecipe) {
-				const fromUnit = unit === '' ? null : findUnit(unit);
-				const targetUnit = findUnit(baseRecipe.servingsLabel);
-				const converted = convertQuantity(scaledQuantity, fromUnit, targetUnit);
-				if (converted !== null) {
-					initialServings = converted;
-				}
+		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const { recipe: baseRecipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
+		if (baseRecipe) {
+			const fromUnit = unit === '' ? null : findUnit(unit);
+			const targetUnit = findUnit(baseRecipe.servingsLabel);
+			const converted = convertQuantity(scaledQuantity, fromUnit, targetUnit);
+			if (converted !== null) {
+				initialServings = converted;
 			}
 		}
 
-		if (!file) return; // recipe not found anywhere under recipesFolder — nothing to navigate to
-
 		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: file.path, initialServings, readOnly: true });
-	}
-
-	handleEdit() {
-		if (!this.filePath) return;
-		navigateTo(this.leaf, NEW_RECIPE_VIEW_TYPE, { editFilePath: this.filePath });
 	}
 
 	async handleShop(servings: number) {
@@ -133,7 +191,6 @@ export class RecipeView extends ItemView {
 
 		const shoppingListPath = this.plugin.settings.shoppingListPath;
 
-		// Make sure the shopping list note exists before checking/adding to it.
 		let shoppingListFile = this.app.vault.getAbstractFileByPath(shoppingListPath);
 		if (!(shoppingListFile instanceof TFile)) {
 			shoppingListFile = await this.app.vault.create(shoppingListPath, '---\nitems: []\nrecipes: []\n---\n');
@@ -204,6 +261,42 @@ export class RecipeView extends ItemView {
 		await this.app.vault.modify(file, buildRecipeMarkdown(updatedRecipe));
 	}
 
+	// Called when the inline edit form is submitted: validates, moves the
+	// file if its name/subfolder changed, then overwrites its content.
+	async handleSave(values: RecipeFormValues) {
+		const { recipe, errors } = formValuesToRecipe(values);
+
+		if (errors.length > 0) {
+			new ErrorModal(this.app, errors).open();
+			return;
+		}
+
+		if (!this.filePath) return;
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		if (!(file instanceof TFile)) return;
+
+		try {
+			const updatedFile = await updateRecipe({
+				app: this.app,
+				recipesFolder: this.plugin.settings.recipesFolder,
+				file,
+				recipe: recipe!,
+				subfolder: values.subfolder,
+			});
+
+			this.filePath = updatedFile.path; // important if the file was moved/renamed
+			this.isEditing = false;
+			this.updateModifyButton();
+			this.updateTitle();
+
+			new Notice(`Recette "${updatedFile.basename}" mise à jour.`);
+			this.render();
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "Impossible de modifier la recette.";
+			new Notice(message);
+		}
+	}
+
 	render() {
 		if (!this.root) return;
 
@@ -227,7 +320,7 @@ export class RecipeView extends ItemView {
 					<h4>Cette recette contient des erreurs :</h4>
 					<ul>
 						{errors.map((error, index) => (
-							<li key={index} className="ingredient-validation-error">{error}</li>
+							<li key={index} className="recipe-ingredient-validation-error">{error}</li>
 						))}
 					</ul>
 				</div>
@@ -235,7 +328,22 @@ export class RecipeView extends ItemView {
 			return;
 		}
 
-		const readOnly = this.readOnly;
+		if (this.isEditing) {
+			this.root.render(
+				<RecipeForm
+					app={this.app}
+					recipesFolder={this.plugin.settings.recipesFolder}
+					ingredientsFolder={this.plugin.settings.ingredientsFolder}
+					recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
+					anthropicApiKey={this.plugin.settings.anthropicApiKey}
+					anthropicModel={this.plugin.settings.anthropicModel}
+					onSubmit={(values) => this.handleSave(values)}
+					initialValues={recipeToFormValues(recipe!, this.filePath, this.plugin.settings.recipesFolder)}
+					submitLabel="Enregistrer les modifications"
+				/>
+			);
+			return;
+		}
 
 		this.root.render(
 			<div>
@@ -257,8 +365,6 @@ export class RecipeView extends ItemView {
 					onBaseRecipeClick={(name, qty, unit) => this.handleBaseRecipeClick(name, qty, unit)}
 					onSaveNotes={(content) => this.handleSaveNotes(content)}
 					onShop={(servings) => this.handleShop(servings)}
-					onEdit={readOnly ? undefined : () => this.handleEdit()}
-					onClose={() => this.handleClose()}
 				/>
 			</div>
 		);

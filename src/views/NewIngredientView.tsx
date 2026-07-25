@@ -8,6 +8,7 @@ import { NavigableViewState, NavigationEntry, closeOrGoBack } from '../navigatio
 import { removeOtherItemIfPresent } from '../models/otherItemsNote';
 import { normalizeNameForFile } from '../models/textNormalize';
 import { findIngredientFileByName } from '../models/findIngredientFile';
+import { createIngredient } from "../models/ingredientPersistence";
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -31,7 +32,7 @@ export class NewIngredientView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Nouvel ingrédient';
+		return 'Formulaire ingrédient';
 	}
 
 	async setState(state: NewIngredientViewState, result: unknown) {
@@ -48,6 +49,10 @@ export class NewIngredientView extends ItemView {
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
+		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
+			this.handleClose();
+		});
+		closeAction.addClass('new-ingredient-recipe-view-close-action');
 		this.render();
 	}
 
@@ -67,7 +72,6 @@ export class NewIngredientView extends ItemView {
 				key={this.prefilledName ?? 'empty'}
 				app={this.app}
 				onSubmit={(values) => this.handleSubmit(values)}
-				onClose={() => this.handleClose()}
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
@@ -94,36 +98,32 @@ export class NewIngredientView extends ItemView {
 		);
 	}
 
-	async handleSubmit(values: IngredientFormValues) {
-		const normalizedName = normalizeNameForFile(values.name);
+	async handleSubmit(values: IngredientFormValues): Promise<void> {
+		try {
+			const file = await createIngredient({
+				app: this.app,
+				ingredientsFolder:
+				this.plugin.settings.ingredientsFolder,
+				values,
+			});
 
-		if (normalizedName === '') {
-			new Notice('Le nom est obligatoire.');
-			return;
+			await removeOtherItemIfPresent(
+				this.app,
+				this.plugin.settings.otherItemsNotePath,
+				file.basename
+			);
+
+			new Notice(`Ingrédient "${file.basename}" créé.`);
+
+			this.handleClose();
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "Impossible de créer l’ingrédient.";
+
+			new Notice(message);
 		}
-
-		const folder = `${this.plugin.settings.ingredientsFolder}/${values.type}`;
-		if (!this.app.vault.getAbstractFileByPath(folder)) {
-			await this.app.vault.createFolder(folder);
-		}
-
-// Search the WHOLE ingredients tree (not just the target subfolder, which
-// may have just been created and is empty) — a "farine" in another
-// subfolder should still count as an existing collision.
-		const existing = findIngredientFileByName(this.app, this.plugin.settings.ingredientsFolder, normalizedName);
-		if (existing) {
-			new Notice(`Un ingrédient "${normalizedName}" existe déjà (${existing.path}).`);
-			return;
-		}
-
-		const path = `${folder}/${normalizedName}.md`;
-		const content = buildIngredientMarkdown({ ...values, name: normalizedName });
-		await this.app.vault.create(path, content);
-
-		await removeOtherItemIfPresent(this.app, this.plugin.settings.otherItemsNotePath, normalizedName);
-
-		new Notice(`Ingrédient "${normalizedName}" créé.`);
-		this.handleClose();
 	}
 
 	async onClose() {

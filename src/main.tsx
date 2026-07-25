@@ -177,13 +177,7 @@ export default class MyPlugin extends Plugin {
 	async activateRecipeListView() {
 		const { workspace } = this.app;
 
-		const existing = workspace.getLeavesOfType(RECIPE_LIST_VIEW_TYPE)[0];
-		if (existing) {
-			workspace.revealLeaf(existing);
-			return;
-		}
-
-		const leaf = workspace.getLeaf(false);
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
 
 		await leaf.setViewState({
 			type: RECIPE_LIST_VIEW_TYPE,
@@ -203,7 +197,7 @@ export default class MyPlugin extends Plugin {
 	// navigation from another one of our views (see navigation.ts for that case).
 	async activateIngredientView(filePath: string) {
 		const { workspace } = this.app;
-		const leaf = workspace.getLeaf(false);
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
 
 		await leaf.setViewState({
 			type: INGREDIENT_VIEW_TYPE,
@@ -214,10 +208,14 @@ export default class MyPlugin extends Plugin {
 		workspace.revealLeaf(leaf);
 	}
 
-	// Same "transform active leaf, fresh history" pattern as activateIngredientView.
 	async activateNewIngredientView(prefilledName?: string) {
 		const { workspace } = this.app;
-		const leaf = workspace.getLeaf(false);
+
+		// getLeaf(false) can silently create a brand new leaf in some contexts
+		// instead of reusing the active one — getMostRecentLeaf() is more
+		// predictable: it returns an existing leaf, or null if truly none exists
+		// (in which case we fall back to creating one, but only then).
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
 
 		await leaf.setViewState({
 			type: NEW_INGREDIENT_VIEW_TYPE,
@@ -231,7 +229,7 @@ export default class MyPlugin extends Plugin {
 	// Same pattern again.
 	async activateRecipeView(filePath: string) {
 		const { workspace } = this.app;
-		const leaf = workspace.getLeaf(false);
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
 
 		await leaf.setViewState({
 			type: RECIPE_VIEW_TYPE,
@@ -248,15 +246,7 @@ export default class MyPlugin extends Plugin {
 	async activateShoppingListView() {
 		const { workspace } = this.app;
 
-		// If a shopping list view is already open somewhere, just reveal it
-		// instead of creating/transforming another leaf into a duplicate.
-		const existing = workspace.getLeavesOfType(SHOPPING_LIST_VIEW_TYPE)[0];
-		if (existing) {
-			workspace.revealLeaf(existing);
-			return;
-		}
-
-		const leaf = workspace.getLeaf(false);
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
 
 		await leaf.setViewState({
 			type: SHOPPING_LIST_VIEW_TYPE,
@@ -272,7 +262,7 @@ export default class MyPlugin extends Plugin {
 // from another one of our views.
 	async activateNewRecipeView() {
 		const { workspace } = this.app;
-		const leaf = workspace.getLeaf(false);
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
 
 		await leaf.setViewState({
 			type: NEW_RECIPE_VIEW_TYPE,
@@ -311,7 +301,7 @@ export default class MyPlugin extends Plugin {
 
 	async activateNewRecipeViewFromTemplate(prefilledValues: RecipeFormValues, templateKey: string) {
 		const { workspace } = this.app;
-		const leaf = workspace.getLeaf(false);
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
 
 		await leaf.setViewState({
 			type: NEW_RECIPE_VIEW_TYPE,

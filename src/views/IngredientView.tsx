@@ -27,6 +27,7 @@ export class IngredientView extends ItemView {
 	private plugin: MyPlugin;
 	private isEditing = false;
 	private modifyAction!: HTMLElement; // set in onOpen, before any code that reads it runs
+	private closeAction!: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -78,6 +79,11 @@ export class IngredientView extends ItemView {
 		);
 	}
 
+	private updateCloseAction(): void {
+		if (!this.closeAction) return;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+	}
+
 	private setEditing(isEditing: boolean): void {
 		this.isEditing = isEditing;
 		this.updateModifyButton();
@@ -92,6 +98,7 @@ export class IngredientView extends ItemView {
 		this.filePath = state.filePath;
 		this.history = state.history ?? [];
 		this.updateModifyButton();
+		this.updateCloseAction();
 
 		await super.setState(state, result as never);
 
@@ -129,19 +136,18 @@ export class IngredientView extends ItemView {
 		this.modifyAction.addClass('recipe-ingredient-view-actions');
 
 		/* Adding the close button */
-		const closeAction = this.addAction(
-			"x",
-			"Fermer",
+		this.closeAction = this.addAction(
+			'arrow-left',
+			'Fermer',
 			() => {
 				if (this.isEditing) {
 					this.setEditing(false);
 					return;
 				}
-
 				this.handleClose();
 			}
 		);
-		closeAction.addClass('ingredient-recipe-view-actions');
+		this.closeAction.addClass('ingredient-recipe-view-actions');
 
 		if (this.filePath) {
 			this.render();

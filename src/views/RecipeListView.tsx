@@ -1,6 +1,5 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
-import { NavigableViewState, NavigationEntry } from '../navigation';
 import type MyPlugin from '../main';
 import { listAllRecipes } from '../models/listAllRecipes';
 import { RecipeListDisplay } from '../components/RecipeListDisplay';
@@ -8,6 +7,7 @@ import { navigateTo } from '../navigation';
 import { RECIPE_VIEW_TYPE } from './RecipeView';
 import { searchIngredientNames } from '../models/searchIngredientNames';
 import { normalizeForSearch } from '../models/textNormalize';
+import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
 
 export const RECIPE_LIST_VIEW_TYPE = 'recipe-list-view';
 
@@ -32,6 +32,7 @@ export class RecipeListView extends ItemView {
 	private tagMenuOpen = false;
 	private sortKey: 'name' | 'duration' | 'cooked' = 'name';
 	private sortDirection: 'asc' | 'desc' = 'asc';
+	private closeAction!: HTMLElement;
 
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
@@ -114,6 +115,7 @@ export class RecipeListView extends ItemView {
 		this.ingredientInput = state.ingredientQuery ?? '';
 		this.sortKey = state.sortKey ?? 'name';
 		this.sortDirection = state.sortDirection ?? 'asc';
+		this.updateCloseAction();
 		this.render();
 		return super.setState(state, result as never);
 	}
@@ -129,7 +131,16 @@ export class RecipeListView extends ItemView {
 		};
 	}
 
+	private updateCloseAction(): void {
+		if (!this.closeAction) return;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+	}
+
 	async onOpen() {
+		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+			closeOrGoBack(this.leaf, this.history);
+		});
+		this.closeAction.addClass('ingredient-recipe-view-actions');
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
 		this.render();

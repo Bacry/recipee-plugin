@@ -364,6 +364,7 @@ export function IngredientForm({
 					{submitLabel}
 				</button>
 			</div>
+			<div style={{ height: "50px" }} />
 		</div>
 	);
 }

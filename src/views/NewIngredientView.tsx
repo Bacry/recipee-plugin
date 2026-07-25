@@ -1,14 +1,10 @@
 import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { IngredientForm, IngredientFormValues } from '../components/IngredientForm';
-import { buildIngredientMarkdown } from '../models/buildIngredientMarkdown';
-import { lowerFirstLetter } from '../models/textNormalize';
 import type MyPlugin from '../main';
-import { NavigableViewState, NavigationEntry, closeOrGoBack } from '../navigation';
 import { removeOtherItemIfPresent } from '../models/otherItemsNote';
-import { normalizeNameForFile } from '../models/textNormalize';
-import { findIngredientFileByName } from '../models/findIngredientFile';
 import { createIngredient } from "../models/ingredientPersistence";
+import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } from '../navigation';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -21,6 +17,8 @@ export class NewIngredientView extends ItemView {
 	private plugin: MyPlugin;
 	private prefilledName?: string;
 	private history: NavigationEntry[] = [];
+	private closeAction!: HTMLElement;
+
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -38,6 +36,7 @@ export class NewIngredientView extends ItemView {
 	async setState(state: NewIngredientViewState, result: unknown) {
 		this.prefilledName = state.prefilledName;
 		this.history = state.history ?? [];
+		this.updateCloseAction();
 		this.render();
 		return super.setState(state, result as never);
 	}
@@ -49,11 +48,16 @@ export class NewIngredientView extends ItemView {
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
-		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
+		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			this.handleClose();
 		});
-		closeAction.addClass('new-ingredient-recipe-view-close-action');
+		this.closeAction.addClass('new-ingredient-recipe-view-close-action');
 		this.render();
+	}
+
+	private updateCloseAction() {
+		if (!this.closeAction) return;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
 	}
 
 	// Same pattern as IngredientView: go back if we navigated here from

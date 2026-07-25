@@ -390,6 +390,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImages
 			<div className="ingredient-recipe-form-footer">
 				<button className="ingredient-recipe-form-submit" onClick={handleSubmit}>{submitLabel}</button>
 			</div>
+			<div style={{ height: "50px" }} />
 		</div>
 	);
 }

@@ -6,7 +6,6 @@ import { RecipeForm, RecipeFormValues } from '../components/RecipeForm';
 import { INGREDIENT_VIEW_TYPE } from './IngredientView';
 import { NEW_INGREDIENT_VIEW_TYPE } from './NewIngredientView';
 import { findUnit, convertQuantity } from '../models/units';
-import { NavigableViewState, NavigationEntry, navigateTo, closeOrGoBack } from '../navigation';
 import type MyPlugin from '../main';
 import { addRecipeToShoppingList, isRecipeAlreadyInShoppingList } from '../models/addRecipeToShoppingList';
 import { SHOPPING_LIST_VIEW_TYPE } from './ShoppingListView';
@@ -20,6 +19,7 @@ import { ErrorModal } from '../components/ErrorModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { buildRecipeMarkdown } from '../models/buildRecipeMarkdown'
 import { recordRecipeCookedToday } from '../models/recordRecipeCooked';
+import { NavigableViewState, NavigationEntry, closeOrGoBack, navigateTo, canNavigateBack } from '../navigation';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -38,6 +38,7 @@ export class RecipeView extends ItemView {
 	private readOnly = false;
 	private isEditing = false;
 	private modifyAction!: HTMLElement; // set in onOpen, before any code that reads it runs
+	private closeAction!: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -80,6 +81,11 @@ export class RecipeView extends ItemView {
 		);
 	}
 
+	private updateCloseAction(): void {
+		if (!this.closeAction) return;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+	}
+
 	private setEditing(isEditing: boolean): void {
 		this.isEditing = isEditing;
 		this.updateModifyButton();
@@ -93,6 +99,9 @@ export class RecipeView extends ItemView {
 		this.readOnly = state.readOnly ?? false;
 		this.history = state.history ?? [];
 		this.updateModifyButton();
+		this.updateModifyButton();
+		this.updateCloseAction();
+
 
 		await super.setState(state, result as never);
 
@@ -134,14 +143,18 @@ export class RecipeView extends ItemView {
 		});
 		this.modifyAction.addClass('recipe-ingredient-view-actions');
 
-		const closeAction = this.addAction('x', 'Fermer', () => {
-			if (this.isEditing) {
-				this.setEditing(false);
-				return;
+		this.closeAction = this.addAction(
+			'arrow-left',
+			'Fermer',
+			() => {
+				if (this.isEditing) {
+					this.setEditing(false);
+					return;
+				}
+				this.handleClose();
 			}
-			this.handleClose();
-		});
-		closeAction.addClass('ingredient-recipe-view-actions');
+		);
+		this.closeAction.addClass('ingredient-recipe-view-actions');
 
 		if (this.filePath) {
 			this.render();

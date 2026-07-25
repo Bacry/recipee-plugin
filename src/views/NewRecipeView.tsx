@@ -3,11 +3,10 @@ import { createRoot, Root } from 'react-dom/client';
 import { RecipeForm, RecipeFormValues } from '../components/RecipeForm';
 import { formValuesToRecipe } from '../models/recipeFormConversion';
 import { ErrorModal } from '../components/ErrorModal';
-import { NavigableViewState, NavigationEntry, closeOrGoBack } from '../navigation';
+import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } from '../navigation';
 import { RECIPE_VIEW_TYPE } from './RecipeView';
 import type MyPlugin from '../main';
 import { createRecipe } from '../models/recipePersistence';
-
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
 interface NewRecipeViewState extends NavigableViewState {
@@ -21,6 +20,7 @@ export class NewRecipeView extends ItemView {
 	private prefilledValues?: RecipeFormValues;
 	private templateKey?: string;
 	private history: NavigationEntry[] = [];
+	private closeAction!: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -39,6 +39,7 @@ export class NewRecipeView extends ItemView {
 		this.prefilledValues = state.prefilledValues;
 		this.templateKey = state.templateKey;
 		this.history = state.history ?? [];
+		this.updateCloseAction();
 		this.render();
 		return super.setState(state, result as never);
 	}
@@ -46,15 +47,19 @@ export class NewRecipeView extends ItemView {
 	getState(): NewRecipeViewState {
 		return { prefilledValues: this.prefilledValues, templateKey: this.templateKey, history: this.history };
 	}
+	private updateCloseAction(): void {
+		if (!this.closeAction) return;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+	}
 
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
 
-		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
+		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			this.handleClose();
 		});
-		closeAction.addClass('new-recipe-ingredient-view-close-action');
+		this.closeAction.addClass('new-ingredient-view-close-action');
 
 		this.render();
 	}

@@ -12,9 +12,9 @@ import { toggleShoppingListItemChecked, deleteShoppingListItem } from '../models
 import { setOtherItemShopSection } from '../models/otherItemsNote';
 import { ShoppingListItem } from '../models/ShoppingList';
 import { showShopSectionMenu } from '../components/showShopSectionMenu';
-import { NavigableViewState, NavigationEntry } from '../navigation';
 import { removeRecipeFromShoppingList } from '../models/removeRecipeFromShoppingList';
 import { toggleShoppingListItemChecked, deleteShoppingListItem, setItemAlreadyOwned } from '../models/updateShoppingListItem';
+import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
 
@@ -29,6 +29,7 @@ export class ShoppingListView extends ItemView {
 	private root: Root | null = null;
 	private currentItems: ShoppingListItem[] = [];
 	private history: NavigationEntry[] = [];
+	private closeAction!: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -45,11 +46,17 @@ export class ShoppingListView extends ItemView {
 
 	async setState(state: ShoppingListViewState, result: unknown) {
 		this.history = state.history ?? [];
+		this.updateCloseAction();
 		return super.setState(state, result as never);
 	}
 
 	getState(): ShoppingListViewState {
 		return { history: this.history };
+	}
+
+	private updateCloseAction(): void {
+		if (!this.closeAction) return;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
 	}
 
 	async onOpen() {
@@ -62,6 +69,11 @@ export class ShoppingListView extends ItemView {
 		if (!(file instanceof TFile)) {
 			file = await this.app.vault.create(path, '---\nitems: []\n---\n');
 		}
+
+		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+			closeOrGoBack(this.leaf, this.history);
+		});
+		this.closeAction.addClass('ingredient-recipee-view-actions');
 
 		// Re-render whenever the shopping list note is modified elsewhere
 		// (e.g. once we wire in the add-item form later).

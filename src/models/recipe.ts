@@ -33,5 +33,5 @@ export interface Recipe {
 	image?: string;
 	tags: string[];
 	totalWeightG?: number; // experimentally measured final weight in grams — if absent, computed as the sum of ingredient weights instead
-
+	cookedDates: string[]; // ISO date strings (e.g. "2026-07-25"), one per day the recipe was made — always an array, empty if never
 }

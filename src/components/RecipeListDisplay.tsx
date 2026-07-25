@@ -17,8 +17,8 @@ function resolveImagePath(app: App, filename: string): string | null {
 function formatDuration(minutes: number): string {
 	const hours = Math.floor(minutes / 60);
 	const rest = minutes % 60;
-	if (hours === 0) return `${rest}min`;
-	return rest === 0 ? `${hours}h` : `${hours}h ${rest}min`;
+	if (hours === 0) return `${rest}m`;
+	return rest === 0 ? `${hours}h` : `${hours}h ${rest}`;
 }
 
 function formatTotalDuration(recipe: RecipeSummary): string {
@@ -43,6 +43,7 @@ export function RecipeListDisplay({ app, recipes, onRecipeClick }: RecipeListDis
 							)}
 						</div>
 						<div className="recipe-list-cell-duration">{formatTotalDuration(recipe)}</div>
+						<div className="recipe-list-cell-cooked">{recipe.cookedCount > 0 ? recipe.cookedCount : ''}</div>
 					</div>
 				);
 			})}

@@ -12,6 +12,7 @@ export interface RecipeSummary {
 	ingredientNames: string[]; // used to filter the recipe list by ingredient
 	preparationDurationMin?: number;
 	cookingDurationMin?: number;
+	cookedCount: number;
 }
 
 // Lists every recipe in the vault (recursively, any subfolder under
@@ -37,6 +38,7 @@ export function listAllRecipes(app: App, recipesFolder: string): RecipeSummary[]
 			ingredientNames: recipe.ingredients.map((e) => e.ingredientName),
 			preparationDurationMin: recipe.preparationDurationMin,
 			cookingDurationMin: recipe.cookingDurationMin,
+			cookedCount: recipe.cookedDates.length,
 		});
 	}
 

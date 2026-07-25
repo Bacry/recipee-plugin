@@ -71,6 +71,12 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			lines.push(`  - ${escapeYamlString(tag)}`);
 		}
 	}
+	if (recipe.cookedDates.length > 0) {
+		lines.push('cooked_dates:');
+		for (const date of recipe.cookedDates) {
+			lines.push(`  - "${date}"`);
+		}
+	}
 
 	lines.push('---');
 	lines.push('');

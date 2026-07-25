@@ -11,7 +11,13 @@ import { normalizeForSearch } from '../models/textNormalize';
 
 export const RECIPE_LIST_VIEW_TYPE = 'recipe-list-view';
 
-interface RecipeListViewState extends NavigableViewState {}
+interface RecipeListViewState extends NavigableViewState {
+	searchQuery?: string;
+	selectedTags?: string[]; // serialized as an array — Set isn't JSON-friendly for state persistence
+	ingredientQuery?: string;
+	sortKey?: 'name' | 'duration' | 'cooked';
+	sortDirection?: 'asc' | 'desc';
+}
 
 export class RecipeListView extends ItemView {
 	private plugin: MyPlugin;
@@ -24,6 +30,8 @@ export class RecipeListView extends ItemView {
 	private ingredientSuggestions: string[] = [];
 	private ingredientHighlightedIndex = -1;
 	private tagMenuOpen = false;
+	private sortKey: 'name' | 'duration' | 'cooked' = 'name';
+	private sortDirection: 'asc' | 'desc' = 'asc';
 
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
@@ -36,6 +44,7 @@ export class RecipeListView extends ItemView {
 		} else {
 			this.selectedTags.add(tag);
 		}
+		this.app.workspace.requestSaveLayout();
 		this.render();
 	}
 
@@ -99,12 +108,25 @@ export class RecipeListView extends ItemView {
 
 	async setState(state: RecipeListViewState, result: unknown) {
 		this.history = state.history ?? [];
+		this.searchQuery = state.searchQuery ?? '';
+		this.selectedTags = new Set(state.selectedTags ?? []);
+		this.ingredientQuery = state.ingredientQuery ?? '';
+		this.ingredientInput = state.ingredientQuery ?? '';
+		this.sortKey = state.sortKey ?? 'name';
+		this.sortDirection = state.sortDirection ?? 'asc';
 		this.render();
 		return super.setState(state, result as never);
 	}
 
 	getState(): RecipeListViewState {
-		return { history: this.history };
+		return {
+			history: this.history,
+			searchQuery: this.searchQuery,
+			selectedTags: Array.from(this.selectedTags),
+			ingredientQuery: this.ingredientQuery,
+			sortKey: this.sortKey,
+			sortDirection: this.sortDirection,
+		};
 	}
 
 	async onOpen() {
@@ -112,6 +134,21 @@ export class RecipeListView extends ItemView {
 		this.root = createRoot(container);
 		this.render();
 	}
+
+	private toggleSort(key: 'name' | 'duration' | 'cooked') {
+		if (this.sortKey === key) {
+			this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+		} else {
+			this.sortKey = key;
+			this.sortDirection = 'asc';
+		}
+		this.app.workspace.requestSaveLayout();
+		this.render();
+	}
+	private totalDurationMin(recipe: RecipeSummary): number {
+		return (recipe.preparationDurationMin ?? 0) + (recipe.cookingDurationMin ?? 0);
+	}
+
 	render() {
 		if (!this.root) return;
 
@@ -133,6 +170,18 @@ export class RecipeListView extends ItemView {
 			: tagFiltered.filter((r) =>
 				r.ingredientNames.some((name) => normalizeForSearch(name) === normalizeForSearch(this.ingredientQuery))
 			);
+
+		const sorted = [...filtered].sort((a, b) => {
+			let comparison = 0;
+			if (this.sortKey === 'name') {
+				comparison = a.name.localeCompare(b.name);
+			} else if (this.sortKey === 'duration') {
+				comparison = this.totalDurationMin(a) - this.totalDurationMin(b);
+			} else {
+				comparison = a.cookedCount - b.cookedCount;
+			}
+			return this.sortDirection === 'asc' ? comparison : -comparison;
+		});
 
 		this.root.render(
 			<div>
@@ -211,15 +260,22 @@ export class RecipeListView extends ItemView {
 					</div>
 				)}
 					<div className="recipe-list-row recipe-list-header-row">
-						<div className="recipe-list-cell-name">Nom</div>
+						<div className="recipe-list-cell-name recipe-list-sortable" onClick={() => this.toggleSort('name')}>
+							Nom{this.sortKey === 'name' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+						</div>
 						<div className="recipe-list-cell-thumb"></div>
-						<div className="recipe-list-cell-duration">Temps total</div>
+						<div className="recipe-list-cell-duration recipe-list-sortable" onClick={() => this.toggleSort('duration')}>
+							Durée{this.sortKey === 'duration' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+						</div>
+						<div className="recipe-list-cell-cooked recipe-list-sortable" onClick={() => this.toggleSort('cooked')}>
+							#{this.sortKey === 'cooked' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+						</div>
 					</div>
 				</div>
 
 				<RecipeListDisplay
 					app={this.app}
-					recipes={filtered}
+					recipes={sorted}
 					onRecipeClick={(filePath) => {
 						navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath });
 					}}

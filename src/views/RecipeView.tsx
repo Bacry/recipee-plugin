@@ -19,6 +19,7 @@ import { updateRecipe } from '../models/recipePersistence';
 import { ErrorModal } from '../components/ErrorModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { buildRecipeMarkdown } from '../models/buildRecipeMarkdown'
+import { recordRecipeCookedToday } from '../models/recordRecipeCooked';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -244,6 +245,20 @@ export class RecipeView extends ItemView {
 		}
 	}
 
+	async handleMarkCookedToday() {
+		if (!this.filePath) return;
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		if (!(file instanceof TFile)) return;
+
+		const result = await recordRecipeCookedToday(this.app, file);
+
+		if (result.alreadyRecordedToday) {
+			new Notice('Déjà marquée comme réalisée aujourd\'hui.');
+		} else if (result.success) {
+			new Notice('Recette marquée comme réalisée aujourd\'hui.');
+		}
+	}
+
 	handleClose() {
 		closeOrGoBack(this.leaf, this.history);
 	}
@@ -365,6 +380,7 @@ export class RecipeView extends ItemView {
 					onBaseRecipeClick={(name, qty, unit) => this.handleBaseRecipeClick(name, qty, unit)}
 					onSaveNotes={(content) => this.handleSaveNotes(content)}
 					onShop={(servings) => this.handleShop(servings)}
+					onMarkCookedToday={() => this.handleMarkCookedToday()}
 				/>
 			</div>
 		);

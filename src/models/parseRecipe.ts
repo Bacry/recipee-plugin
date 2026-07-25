@@ -90,6 +90,15 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
+	let cookedDates: string[] = [];
+	if (frontmatter.cooked_dates !== undefined && frontmatter.cooked_dates !== null) {
+		if (!Array.isArray(frontmatter.cooked_dates)) {
+			errors.push('"cooked_dates" est présent mais n\'est pas une liste.');
+		} else {
+			cookedDates = frontmatter.cooked_dates.filter((d): d is string => typeof d === 'string');
+		}
+	}
+
 	let instructions = '';
 	if (frontmatter.instructions !== undefined && frontmatter.instructions !== null) {
 		if (typeof frontmatter.instructions !== 'string') {
@@ -150,6 +159,7 @@ export function parseRecipeFromFrontmatter(
 		image,
 		tags,
 		totalWeightG,
+		cookedDates,
 	};
 
 	return { recipe, errors: [], warnings };

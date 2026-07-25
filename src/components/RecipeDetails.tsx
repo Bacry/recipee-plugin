@@ -16,6 +16,7 @@ interface RecipeDetailsProps {
 	onBaseRecipeClick: (recipeName: string, scaledQuantity: number, unit: string) => void;
 	onSaveNotes: (newContent: string) => void;
 	onShop: (servings: number) => void;
+	onMarkCookedToday: () => void;
 }
 
 function formatDuration(minutes: number): string {
@@ -65,6 +66,7 @@ export function RecipeDetails({
 								  onBaseRecipeClick,
 								  onSaveNotes,
 								  onShop,
+								  onMarkCookedToday,
 							  }: RecipeDetailsProps) {
 	const [servingsInput, setServingsInput] = useState((initialServings ?? recipe.baseServings).toString());
 
@@ -93,6 +95,12 @@ export function RecipeDetails({
 	}
 
 	const totalDuration = (recipe.preparationDurationMin ?? 0) + (recipe.cookingDurationMin ?? 0);
+
+	function formatCookedDate(isoDate: string): string {
+		const date = new Date(isoDate + 'T00:00:00');
+		return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+	}
+
 	return (
 		<div>
 			{recipe.tags.length > 0 && (
@@ -244,6 +252,16 @@ export function RecipeDetails({
 	content={recipe.notes ?? ''}
 	onSave={(newContent) => onSaveNotes(newContent)}
 />
+
+			<div className="recipe-history-header">
+				<h4>Historique</h4>
+				<button onClick={onMarkCookedToday} title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
+			</div>
+			<p>
+				{recipe.cookedDates.length === 0
+					? 'Jamais réalisée pour l\'instant.'
+					: `Réalisée ${recipe.cookedDates.length} fois — dernière fois le ${formatCookedDate([...recipe.cookedDates].sort().reverse()[0])}.`}
+			</p>
 
 <NutritionTable
 	per100g={per100g}

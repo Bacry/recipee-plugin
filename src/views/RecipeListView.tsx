@@ -23,12 +23,13 @@ export class RecipeListView extends ItemView {
 	private ingredientInput = ''; // raw text currently typed, before commit
 	private ingredientSuggestions: string[] = [];
 	private ingredientHighlightedIndex = -1;
+	private tagMenuOpen = false;
+
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 	}
-
 	private toggleTag(tag: string) {
 		if (this.selectedTags.has(tag)) {
 			this.selectedTags.delete(tag);
@@ -37,6 +38,12 @@ export class RecipeListView extends ItemView {
 		}
 		this.render();
 	}
+
+	private toggleTagMenu() {
+		this.tagMenuOpen = !this.tagMenuOpen;
+		this.render();
+	}
+
 	private handleIngredientInputChange(value: string) {
 		this.ingredientInput = value;
 		this.ingredientSuggestions = value.trim().length >= 2
@@ -87,7 +94,7 @@ export class RecipeListView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Recettes';
+		return 'Liste des recettes';
 	}
 
 	async setState(state: RecipeListViewState, result: unknown) {
@@ -129,6 +136,7 @@ export class RecipeListView extends ItemView {
 
 		this.root.render(
 			<div>
+				<div className="recipe-list-sticky-header">
 				<div className="recipe-list-search-row">
 					<input
 						type="text"
@@ -172,20 +180,42 @@ export class RecipeListView extends ItemView {
 						)}
 					</div>
 				</div>
-
 				{allTags.length > 0 && (
-					<div className="recipe-list-tag-filters">
-						{allTags.map((tag) => (
-							<span
-								key={tag}
-								className={`recipe-tag recipe-list-tag-filter ${this.selectedTags.has(tag) ? 'recipe-list-tag-filter-active' : ''}`}
-								onClick={() => this.toggleTag(tag)}
-							>
-							{tag}
-						</span>
-						))}
+					<div className="recipe-list-tag-menu-wrapper">
+						<button
+							type="button"
+							onClick={() => this.toggleTagMenu()}
+							className="recipe-list-tag-menu-button"
+						>
+							Tags {this.selectedTags.size > 0 ? `(${this.selectedTags.size})` : ''}
+						</button>
+
+						{this.tagMenuOpen && (
+							<ul className="recipe-list-tag-menu">
+								{allTags.map((tag) => (
+									<li
+										key={tag}
+										onClick={() => this.toggleTag(tag)}
+										className="recipe-list-tag-menu-item"
+									>
+										<input
+											type="checkbox"
+											checked={this.selectedTags.has(tag)}
+											readOnly
+										/>
+										{tag}
+									</li>
+								))}
+							</ul>
+						)}
 					</div>
 				)}
+					<div className="recipe-list-row recipe-list-header-row">
+						<div className="recipe-list-cell-name">Nom</div>
+						<div className="recipe-list-cell-thumb"></div>
+						<div className="recipe-list-cell-duration">Temps total</div>
+					</div>
+				</div>
 
 				<RecipeListDisplay
 					app={this.app}

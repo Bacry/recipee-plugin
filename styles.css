@@ -758,28 +758,22 @@
    "ALL RECIPES" LIST VIEW — RecipeListView.tsx / RecipeListDisplay.tsx
    ============================================================ */
 
-.recipe-list-table {
-	width: 100%;
-	border-collapse: collapse;
+.workspace-leaf-content[data-type="recipe-list-view"] .view-content {
+	padding-top: 0;
 }
 
-.recipe-list-row {
-	cursor: pointer;
+/* Sets the max-width and left padding */
+.workspace-leaf-content[data-type="recipe-list-view"] .view-content {
+	max-width: var(--recipee-plugin-large-width);
+	padding-left: var(--recipee-plugin-left-padding);
+	margin: 0 auto;
+	display: block;
 }
 
-.recipe-list-row:hover {
-	background: var(--background-modifier-hover);
-}
-
-.recipe-list-row td {
-	padding: 0.3rem 0.5rem;
-	border-bottom: 1px solid var(--background-modifier-border);
-	vertical-align: middle;
-}
-
-/* Thumbnail column — kept deliberately tiny (16-28px). */
-.recipe-list-thumbnail-cell {
-	width: 32px;
+/* Title size */
+.workspace-leaf-content[data-type="recipe-list-view"] .view-header-title {
+	font-size: var(--recipee-plugin-title-size);
+	font-weight: 700;
 }
 
 .recipe-list-thumbnail,
@@ -795,13 +789,113 @@
 	background: var(--background-secondary); /* grey square shown when the recipe has no image */
 }
 
-.recipe-list-name-cell {
+
+.recipe-list-tag-menu-wrapper {
+	position: relative;
+	margin-bottom: 0.75rem;
+}
+
+.recipe-list-tag-menu-button {
+	padding: 0.4rem 0.8rem;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	cursor: pointer;
+}
+
+.recipe-list-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3rem 0.5rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+	cursor: pointer;
+}
+
+.recipe-list-row:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* The header row reuses the exact same column widths as data rows
+   (via the shared .recipe-list-cell-* classes below), guaranteeing
+   perfect alignment without any manual offset math — it's just a
+   normal (non-sticky) row living inside the single sticky wrapper. */
+.recipe-list-header-row {
+	cursor: default;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	border-bottom: 2px solid var(--background-modifier-border);
+}
+
+.recipe-list-header-row:hover {
+	background: transparent;
+}
+
+.recipe-list-cell-name {
+	flex: 1;
+	min-width: 0; /* required for text-overflow to work inside a flex child */
 	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.recipe-list-tags-cell {
-	width: 100%; /* takes up remaining space, pushing tags to align left */
+.recipe-list-header-row .recipe-list-cell-name {
+	font-weight: inherit; /* header text stays muted/uppercase, not bold like data rows */
+}
+
+.recipe-list-cell-thumb {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+}
+
+.recipe-list-cell-duration {
+	width: 70px;
+	flex-shrink: 0;
+	text-align: right;
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+.recipe-list-sticky-header {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	background: var(--background-primary);
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+}
+
+.recipe-list-tag-menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 100;
+	margin: 2px 0 0 0;
+	padding: 0.25rem 0;
+	list-style: none;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	box-shadow: var(--shadow-s);
+	min-width: 180px;
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.recipe-list-tag-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3rem 0.6rem;
+	cursor: pointer;
+}
+
+.recipe-list-tag-menu-item:hover {
+	background: var(--background-modifier-hover);
 }
 
 /* Text search + ingredient filter fields, side by side. */
@@ -812,11 +906,14 @@
 }
 
 .recipe-list-search-row .recipe-list-search {
-	margin-bottom: 0; /* spacing handled by the parent .recipe-list-search-row instead */
+	margin-bottom: 0;
+	flex: 1;
+	min-width: 0; /* allows the input to shrink below its content's natural width on narrow screens */
 }
 
 .recipe-list-search-row .recipe-list-ingredient-filter-wrapper {
 	flex: 1;
+	min-width: 0;
 }
 
 /* Positioning anchor for the ingredient-filter's autocomplete popup. */

@@ -8,43 +8,44 @@ interface RecipeListDisplayProps {
 	onRecipeClick: (filePath: string) => void;
 }
 
-// Resolves an image filename to a displayable URL, same approach as
-// RecipeDetails — searches the whole vault by basename, not a specific folder.
 function resolveImagePath(app: App, filename: string): string | null {
 	const file = app.vault.getFiles().find((f) => f.name === filename);
 	if (!file) return null;
 	return app.vault.getResourcePath(file);
 }
+
+function formatDuration(minutes: number): string {
+	const hours = Math.floor(minutes / 60);
+	const rest = minutes % 60;
+	if (hours === 0) return `${rest}min`;
+	return rest === 0 ? `${hours}h` : `${hours}h ${rest}min`;
+}
+
+function formatTotalDuration(recipe: RecipeSummary): string {
+	const total = (recipe.preparationDurationMin ?? 0) + (recipe.cookingDurationMin ?? 0);
+	return total > 0 ? formatDuration(total) : '—';
+}
+
 export function RecipeListDisplay({ app, recipes, onRecipeClick }: RecipeListDisplayProps) {
 	return (
-		<table className="recipe-list-table">
-			<tbody>
+		<div>
 			{recipes.map((recipe) => {
 				const imagePath = recipe.image ? resolveImagePath(app, recipe.image) : null;
 
 				return (
-					<tr key={recipe.filePath} className="recipe-list-row" onClick={() => onRecipeClick(recipe.filePath)}>
-						<td className="recipe-list-name-cell">{upperFirstLetter(recipe.name)}</td>
-						<td className="recipe-list-thumbnail-cell">
+					<div key={recipe.filePath} className="recipe-list-row" onClick={() => onRecipeClick(recipe.filePath)}>
+						<div className="recipe-list-cell-name">{upperFirstLetter(recipe.name)}</div>
+						<div className="recipe-list-cell-thumb">
 							{imagePath ? (
 								<img src={imagePath} alt={recipe.name} className="recipe-list-thumbnail" />
 							) : (
 								<div className="recipe-list-thumbnail-placeholder" />
 							)}
-						</td>
-						<td className="recipe-list-tags-cell">
-							{recipe.tags.length > 0 && (
-								<div className="recipe-tags">
-									{recipe.tags.map((tag) => (
-										<span key={tag} className="recipe-tag">{tag}</span>
-									))}
-								</div>
-							)}
-						</td>
-					</tr>
+						</div>
+						<div className="recipe-list-cell-duration">{formatTotalDuration(recipe)}</div>
+					</div>
 				);
 			})}
-			</tbody>
-		</table>
+		</div>
 	);
 }

@@ -123,12 +123,12 @@ export default class MyPlugin extends Plugin {
 		});
 
 
-		this.addRibbonIcon('book-open', 'Open recipe list', () => {
+		this.addRibbonIcon('book-open', 'Ouvre la liste des recettes', () => {
 			this.activateRecipeListView();
 		});
 
 
-		this.addRibbonIcon('shopping-cart', 'Open shopping list', () => {
+		this.addRibbonIcon('shopping-cart', 'Ouvre la liste de courses', () => {
 			this.activateShoppingListView();
 		});
 
@@ -150,7 +150,7 @@ export default class MyPlugin extends Plugin {
 	<line x1="71" y1="82" x2="93" y2="82" stroke="var(--background-primary)" stroke-width="5" stroke-linecap="round"/>
 `);
 
-		this.addRibbonIcon('chef-hat-plus', 'Create new recipe', () => {
+		this.addRibbonIcon('chef-hat-plus', 'Crée une nouvelle recette', () => {
 			this.createNewRecipe();
 		});
 
@@ -166,7 +166,7 @@ export default class MyPlugin extends Plugin {
 	<line x1="82" y1="71" x2="82" y2="93" stroke="var(--background-primary)" stroke-width="5" stroke-linecap="round"/>
 	<line x1="71" y1="82" x2="93" y2="82" stroke="var(--background-primary)" stroke-width="5" stroke-linecap="round"/>
 `);
-		this.addRibbonIcon('carrot-plus', 'Create new ingredient', () => {
+		this.addRibbonIcon('carrot-plus', 'Crée un nouvel ingrédient', () => {
 			this.activateNewIngredientView();
 		});
 		this.addSettingTab(new SampleSettingTab(this.app, this));

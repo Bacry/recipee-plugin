@@ -10,6 +10,8 @@ export interface RecipeSummary {
 	tags: string[];
 	image?: string;
 	ingredientNames: string[]; // used to filter the recipe list by ingredient
+	preparationDurationMin?: number;
+	cookingDurationMin?: number;
 }
 
 // Lists every recipe in the vault (recursively, any subfolder under
@@ -33,8 +35,10 @@ export function listAllRecipes(app: App, recipesFolder: string): RecipeSummary[]
 			tags: recipe.tags,
 			image: recipe.image,
 			ingredientNames: recipe.ingredients.map((e) => e.ingredientName),
+			preparationDurationMin: recipe.preparationDurationMin,
+			cookingDurationMin: recipe.cookingDurationMin,
 		});
 	}
 
-	return summaries.sort((a, b) => a.name.localeCompare(b));
+	return summaries.sort((a, b) => a.name.localeCompare(b.name));
 }

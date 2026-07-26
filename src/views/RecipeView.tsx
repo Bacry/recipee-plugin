@@ -303,16 +303,23 @@ export class RecipeView extends ItemView {
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
 		if (!(file instanceof TFile)) return;
 
+		// Preserve the existing cooked_dates history — the edit form never
+		// touches this field, so re-read it from disk rather than letting
+		// formValuesToRecipe's empty default silently wipe it out.
+		const existingFrontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const { recipe: existingRecipe } = parseRecipeFromFrontmatter(existingFrontmatter, file.basename);
+		const recipeWithHistory = { ...recipe!, cookedDates: existingRecipe?.cookedDates ?? [] };
+
 		try {
 			const updatedFile = await updateRecipe({
 				app: this.app,
 				recipesFolder: this.plugin.settings.recipesFolder,
 				file,
-				recipe: recipe!,
+				recipe: recipeWithHistory,
 				subfolder: values.subfolder,
 			});
 
-			this.filePath = updatedFile.path; // important if the file was moved/renamed
+			this.filePath = updatedFile.path;
 			this.isEditing = false;
 			this.updateModifyButton();
 			this.updateTitle();

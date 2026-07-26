@@ -5,6 +5,7 @@ import type MyPlugin from '../main';
 import { removeOtherItemIfPresent } from '../models/otherItemsNote';
 import { createIngredient } from "../models/ingredientPersistence";
 import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } from '../navigation';
+import { INGREDIENT_VIEW_TYPE } from './IngredientView';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -106,8 +107,7 @@ export class NewIngredientView extends ItemView {
 		try {
 			const file = await createIngredient({
 				app: this.app,
-				ingredientsFolder:
-				this.plugin.settings.ingredientsFolder,
+				ingredientsFolder: this.plugin.settings.ingredientsFolder,
 				values,
 			});
 
@@ -119,12 +119,23 @@ export class NewIngredientView extends ItemView {
 
 			new Notice(`Ingrédient "${file.basename}" créé.`);
 
-			this.handleClose();
+			if (canNavigateBack({ history: this.history })) {
+				// Came from a recipe's missing-ingredient link — go back there as before.
+				this.handleClose();
+			} else {
+				// Direct creation (via command) — show the newly created ingredient
+				// instead of just closing the tab.
+				await this.leaf.setViewState({
+					type: INGREDIENT_VIEW_TYPE,
+					active: true,
+					state: { filePath: file.path, history: [] },
+				});
+			}
 		} catch (error) {
 			const message =
 				error instanceof Error
 					? error.message
-					: "Impossible de créer l’ingrédient.";
+					: "Impossible de créer l'ingrédient.";
 
 			new Notice(message);
 		}

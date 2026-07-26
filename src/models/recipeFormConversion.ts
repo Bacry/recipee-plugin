@@ -94,6 +94,7 @@ export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe |
 		image: values.image.trim() || undefined,
 		tags,
 		totalWeightG,
+		cookedDates: [], // new recipes/edits via the form never set this directly — only "Réalisée aujourd'hui" does, via recordRecipeCookedToday
 	};
 
 	return { recipe, errors: [] };

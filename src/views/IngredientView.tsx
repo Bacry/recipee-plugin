@@ -10,6 +10,8 @@ import { updateIngredient } from "../models/ingredientPersistence";
 import {IngredientDetails} from "../components/IngredientDetails";
 import {ingredientToFormValues} from "../models/ingredientToFormValues";
 import {IngredientForm} from "../components/IngredientForm";
+import { createRef } from 'react';
+import { IngredientForm, IngredientFormHandle } from '../components/IngredientForm';
 
 export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
@@ -26,8 +28,10 @@ export class IngredientView extends ItemView {
 	private root: Root | null = null;
 	private plugin: MyPlugin;
 	private isEditing = false;
-	private modifyAction!: HTMLElement; // set in onOpen, before any code that reads it runs
+	private modifyAction!: HTMLElement;
 	private closeAction!: HTMLElement;
+	private saveAction!: HTMLElement;
+	private formRef = createRef<IngredientFormHandle>();
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -87,6 +91,7 @@ export class IngredientView extends ItemView {
 	private setEditing(isEditing: boolean): void {
 		this.isEditing = isEditing;
 		this.updateModifyButton();
+		this.updateSaveButtonVisibility();
 		this.updateTitle();
 		this.render();
 	}
@@ -111,6 +116,11 @@ export class IngredientView extends ItemView {
 
 	getState(): IngredientViewState {
 		return { filePath: this.filePath, history: this.history };
+	}
+
+	private updateSaveButtonVisibility(): void {
+		if (!this.saveAction) return;
+		this.saveAction.style.display = this.isEditing ? '' : 'none';
 	}
 
 	async onOpen() {
@@ -148,6 +158,17 @@ export class IngredientView extends ItemView {
 			}
 		);
 		this.closeAction.addClass('ingredient-recipe-view-actions');
+
+		this.saveAction = this.addAction(
+			'save',
+			'Enregistrer les modifications',
+			() => {
+				this.formRef.current?.triggerSubmit();
+			}
+		);
+		this.saveAction.addClass('recipe-ingredient-view-actions');
+		this.updateSaveButtonVisibility();
+
 
 		if (this.filePath) {
 			this.render();
@@ -200,6 +221,7 @@ export class IngredientView extends ItemView {
 
 			this.isEditing = false;
 			this.updateModifyButton();
+			this.updateSaveButtonVisibility();
 			this.updateTitle();
 
 			new Notice(
@@ -257,6 +279,7 @@ export class IngredientView extends ItemView {
 		if (this.isEditing) {
 			this.root.render(
 				<IngredientForm
+					ref={this.formRef}
 					app={this.app}
 					onSubmit={(values) => this.handleSave(values)}
 					ingredientTypes={this.plugin.settings.ingredientTypes}

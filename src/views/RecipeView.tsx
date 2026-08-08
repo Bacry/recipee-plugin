@@ -20,6 +20,8 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { buildRecipeMarkdown } from '../models/buildRecipeMarkdown'
 import { recordRecipeCookedToday } from '../models/recordRecipeCooked';
 import { NavigableViewState, NavigationEntry, closeOrGoBack, navigateTo, canNavigateBack } from '../navigation';
+import { createRef } from 'react';
+import { RecipeForm, RecipeFormValues, RecipeFormHandle } from '../components/RecipeForm';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -39,6 +41,8 @@ export class RecipeView extends ItemView {
 	private isEditing = false;
 	private modifyAction!: HTMLElement; // set in onOpen, before any code that reads it runs
 	private closeAction!: HTMLElement;
+	private saveAction!: HTMLElement;
+	private formRef = createRef<RecipeFormHandle>();
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -65,6 +69,11 @@ export class RecipeView extends ItemView {
 		this.leaf.updateHeader();
 	}
 
+	private updateSaveButtonVisibility(): void {
+		if (!this.saveAction) return;
+		this.saveAction.style.display = this.isEditing ? '' : 'none';
+	}
+
 	// Disables the pencil button while already editing, or while read-only
 	// (opened as a base recipe reference from another recipe).
 	private updateModifyButton(): void {
@@ -89,6 +98,7 @@ export class RecipeView extends ItemView {
 	private setEditing(isEditing: boolean): void {
 		this.isEditing = isEditing;
 		this.updateModifyButton();
+		this.updateSaveButtonVisibility();
 		this.updateTitle();
 		this.render();
 	}
@@ -155,6 +165,12 @@ export class RecipeView extends ItemView {
 			}
 		);
 		this.closeAction.addClass('ingredient-recipe-view-actions');
+
+		this.saveAction = this.addAction('save', 'Enregistrer les modifications', () => {
+			this.formRef.current?.triggerSubmit();
+		});
+		this.saveAction.addClass('recipe-ingredient-view-actions');
+		this.updateSaveButtonVisibility();
 
 		if (this.filePath) {
 			this.render();
@@ -322,6 +338,7 @@ export class RecipeView extends ItemView {
 			this.filePath = updatedFile.path;
 			this.isEditing = false;
 			this.updateModifyButton();
+			this.updateSaveButtonVisibility();
 			this.updateTitle();
 
 			new Notice(`Recette "${updatedFile.basename}" mise à jour.`);
@@ -366,6 +383,7 @@ export class RecipeView extends ItemView {
 		if (this.isEditing) {
 			this.root.render(
 				<RecipeForm
+					ref={this.formRef}
 					app={this.app}
 					recipesFolder={this.plugin.settings.recipesFolder}
 					ingredientsFolder={this.plugin.settings.ingredientsFolder}

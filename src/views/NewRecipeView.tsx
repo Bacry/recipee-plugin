@@ -7,6 +7,10 @@ import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } f
 import { RECIPE_VIEW_TYPE } from './RecipeView';
 import type MyPlugin from '../main';
 import { createRecipe } from '../models/recipePersistence';
+import { createRef } from 'react';
+import { RecipeForm, RecipeFormHandle } from '../components/RecipeForm';
+
+
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
 interface NewRecipeViewState extends NavigableViewState {
@@ -21,6 +25,7 @@ export class NewRecipeView extends ItemView {
 	private templateKey?: string;
 	private history: NavigationEntry[] = [];
 	private closeAction!: HTMLElement;
+	private formRef = createRef<RecipeFormHandle>();
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -56,13 +61,19 @@ export class NewRecipeView extends ItemView {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
 
-		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+		const saveAction = this.addAction('save', 'Enregistrer', () => {
+			this.formRef.current?.triggerSubmit();
+		});
+		saveAction.addClass('new-recipe-view-save-action');
+
+		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
 			this.handleClose();
 		});
-		this.closeAction.addClass('new-ingredient-view-close-action');
+		closeAction.addClass('new-recipe-view-close-action');
 
 		this.render();
 	}
+
 
 	handleClose() {
 		closeOrGoBack(this.leaf, this.history);
@@ -73,6 +84,7 @@ export class NewRecipeView extends ItemView {
 
 		this.root.render(
 			<RecipeForm
+				ref={this.formRef}
 				key={this.templateKey ?? 'new'}
 				app={this.app}
 				recipesFolder={this.plugin.settings.recipesFolder}

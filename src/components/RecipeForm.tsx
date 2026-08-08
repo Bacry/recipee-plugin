@@ -6,6 +6,11 @@ import { SmartRecipeIngredientInput } from './SmartRecipeIngredientInput';
 import { SmartBaseRecipeInput } from './SmartBaseRecipeInput';
 import { listRecipeSubfolders } from '../models/listRecipeSubfolders';
 import { ParseRecipeTextModal } from './ParseRecipeTextModal';
+import { forwardRef, useImperativeHandle } from 'react';
+
+export interface RecipeFormHandle {
+	triggerSubmit: () => void;
+}
 
 // The shape of data this form works with — mirrors Recipe, but numeric/list
 // fields that need free-text editing are kept as strings until submit,
@@ -68,9 +73,12 @@ function sanitizeNumericInput(value: string): string {
 	return value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
 }
 
-export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImagesFolder,
-							   anthropicApiKey,
-							   anthropicModel, onSubmit, initialValues, submitLabel = 'Créer la recette' }: RecipeFormProps) {	const base = initialValues ?? emptyValues();
+export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function RecipeForm(
+	{ app, recipesFolder, ingredientsFolder, recipeImagesFolder, anthropicApiKey,
+		anthropicModel, onSubmit, initialValues, submitLabel = 'Créer la recette' },
+	ref
+) {
+	const base = initialValues ?? emptyValues();
 	const [name, setName] = useState(base.name);
 	const [baseServings, setBaseServings] = useState(base.baseServings);
 	const [servingsLabel, setServingsLabel] = useState(base.servingsLabel);
@@ -143,7 +151,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImages
 	function applyTagSuggestion(suggestion: string) {
 		const parts = tags.split(',');
 		parts[parts.length - 1] = ' ' + suggestion;
-		setTags(parts.join(',').replace(/^,\s*/, ''));
+		setTags(parts.join(',').replace(/^,\s*/, '') + ', ');
 		setTagSuggestions([]);
 	}
 
@@ -206,6 +214,11 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImages
 			applyExtractedValues(values);
 		}).open();
 	}
+
+	useImperativeHandle(ref, () => ({
+		triggerSubmit: handleSubmit,
+	}));
+
 
 	return (
 		<div className="ingredient-form">
@@ -387,10 +400,7 @@ export function RecipeForm({ app, recipesFolder, ingredientsFolder, recipeImages
 				/>
 			</section>
 
-			<div className="ingredient-recipe-form-footer">
-				<button className="ingredient-recipe-form-submit" onClick={handleSubmit}>{submitLabel}</button>
-			</div>
 			<div style={{ height: "50px" }} />
 		</div>
 	);
-}
+});

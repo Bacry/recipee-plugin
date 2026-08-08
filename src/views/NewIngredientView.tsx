@@ -6,6 +6,8 @@ import { removeOtherItemIfPresent } from '../models/otherItemsNote';
 import { createIngredient } from "../models/ingredientPersistence";
 import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } from '../navigation';
 import { INGREDIENT_VIEW_TYPE } from './IngredientView';
+import { createRef } from 'react';
+import { IngredientForm, IngredientFormHandle } from '../components/IngredientForm';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -19,6 +21,7 @@ export class NewIngredientView extends ItemView {
 	private prefilledName?: string;
 	private history: NavigationEntry[] = [];
 	private closeAction!: HTMLElement;
+	private formRef = createRef<IngredientFormHandle>();
 
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
@@ -49,10 +52,17 @@ export class NewIngredientView extends ItemView {
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
-		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+
+		const saveAction = this.addAction('save', 'Enregistrer', () => {
+			this.formRef.current?.triggerSubmit();
+		});
+		saveAction.addClass('new-ingredient-view-save-action');
+
+		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
 			this.handleClose();
 		});
-		this.closeAction.addClass('new-ingredient-recipe-view-close-action');
+		closeAction.addClass('new-ingredient-view-close-action');
+
 		this.render();
 	}
 
@@ -71,15 +81,16 @@ export class NewIngredientView extends ItemView {
 
 		this.root.render(
 			<IngredientForm
-				// Forces a full remount whenever the prefilled name changes — see
-				// the comment in the previous version for why this is necessary
-				// (useState's initial value is only read on first mount).
+				ref={this.formRef}
 				key={this.prefilledName ?? 'empty'}
 				app={this.app}
 				onSubmit={(values) => this.handleSubmit(values)}
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
+				dietFlags={this.plugin.settings.dietFlags}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
+				anthropicApiKey={this.plugin.settings.anthropicApiKey}
+				anthropicModel={this.plugin.settings.anthropicModel}
 				autoSearchOnMount={!!this.prefilledName}
 				initialValues={
 					this.prefilledName
@@ -91,6 +102,7 @@ export class NewIngredientView extends ItemView {
 							densityGMl: '',
 							entityWeightG: '',
 							brand: '',
+							dietFlags: '',
 							possibleForms: '',
 							nutrition: {
 								kcal: 0, lipids: 0, non_saturated_lipids: 0, glucids: 0,

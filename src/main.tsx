@@ -17,6 +17,7 @@ import { RecipeFormValues } from './components/RecipeForm';
 import { parseRecipeTemplate } from './models/parseRecipe';
 import { addIcon } from 'obsidian';
 import { RecipeListView, RECIPE_LIST_VIEW_TYPE } from './views/RecipeListView';
+import { ManageListsView, MANAGE_LISTS_VIEW_TYPE } from './views/ManageListsView';
 
 
 
@@ -55,6 +56,19 @@ export default class MyPlugin extends Plugin {
 			NEW_RECIPE_VIEW_TYPE,
 			(leaf: WorkspaceLeaf) => new NewRecipeView(leaf, this),
 		);
+
+		this.registerView(
+			MANAGE_LISTS_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new ManageListsView(leaf, this),
+		);
+
+		this.addCommand({
+			id: 'manage-lists',
+			name: 'Manage lists (types, shop sections, diet flags)',
+			callback: () => {
+				this.activateManageListsView();
+			},
+		});
 
 		this.addCommand({
 			id: 'create-new-recipe',
@@ -132,7 +146,9 @@ export default class MyPlugin extends Plugin {
 			this.activateShoppingListView();
 		});
 
-
+		this.addRibbonIcon('tags', 'Gérer les listes', () => {
+			this.activateManageListsView();
+		});
 
 // Custom "chef hat with a plus" icon, since no built-in Lucide icon combines
 // both. Roughly traces a simple chef's hat shape, with a "+" badge overlaid
@@ -173,6 +189,18 @@ export default class MyPlugin extends Plugin {
 	}
 
 
+	async activateManageListsView() {
+		const { workspace } = this.app;
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
+
+		await leaf.setViewState({
+			type: MANAGE_LISTS_VIEW_TYPE,
+			active: true,
+			state: { history: [] },
+		});
+
+		workspace.revealLeaf(leaf);
+	}
 
 	async activateRecipeListView() {
 		const { workspace } = this.app;

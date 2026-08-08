@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { App } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { NutritionPer100g } from '../models/Ingredient';
 import { searchUsda, UsdaResult } from '../services/usda';
 import { translateToEnglish } from '../services/translate';
 import { ErrorModal } from './ErrorModal';
 import { sortAlphabetically } from '../models/textNormalize';
+import { suggestIngredientFields } from '../services/claudeIngredientExtraction';
+import { forwardRef, useImperativeHandle } from 'react';
+
+export interface IngredientFormHandle {
+	triggerSubmit: () => void;
+}
 
 export interface IngredientFormValues {
 	name: string;
@@ -15,6 +21,7 @@ export interface IngredientFormValues {
 	entityWeightG: string;
 	possibleForms: string;
 	brand: string;
+	dietFlags: string;
 	nutrition: NutritionPer100g;
 }
 
@@ -23,7 +30,10 @@ interface IngredientFormProps {
 	onSubmit: (values: IngredientFormValues) => void;
 	ingredientTypes: string[];
 	shopSections: string[];
+	dietFlags: string[];
 	usdaApiKey: string;
+	anthropicApiKey: string;
+	anthropicModel: string;
 	initialValues?: IngredientFormValues;
 	submitLabel?: string;
 	autoSearchOnMount?: boolean;
@@ -63,16 +73,21 @@ function nutritionToStrings(nutrition: NutritionPer100g): Record<keyof Nutrition
 	return result;
 }
 
-export function IngredientForm({
-								   app,
-								   onSubmit,
-								   ingredientTypes,
-								   shopSections,
-								   usdaApiKey,
-								   initialValues,
-								   submitLabel = 'Créer l\'ingrédient',
-								   autoSearchOnMount,
-							   }: IngredientFormProps) {
+export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormProps>(function IngredientForm(
+	{
+		app,
+		onSubmit,
+		ingredientTypes,
+		shopSections,
+		dietFlags,
+		usdaApiKey,
+		anthropicApiKey,
+		anthropicModel,
+		initialValues,
+		submitLabel = 'Créer l\'ingrédient',
+		autoSearchOnMount,
+	},
+	ref) {
 	const [name, setName] = useState(initialValues?.name ?? '');
 	const [nameEn, setNameEn] = useState(initialValues?.nameEn ?? '');
 	const [type, setType] = useState(initialValues?.type ?? '');
@@ -89,9 +104,53 @@ export function IngredientForm({
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	const searchRequestId = useRef(0);
+	const [dietFlagsInput, setDietFlagsInput] = useState(initialValues?.dietFlags ?? '');
+	const [dietFlagSuggestions, setDietFlagSuggestions] = useState<string[]>([]);
+	const [dietFlagHighlightedIndex, setDietFlagHighlightedIndex] = useState<number>(-1);
+	const [claudeNutritionSuggestions, setClaudeNutritionSuggestions] = useState<Record<keyof NutritionPer100g, number> | null>(null);
+	const [isSuggestingWithClaude, setIsSuggestingWithClaude] = useState(false);
 
 	function updateNutritionField(field: keyof NutritionPer100g, value: string) {
 		setNutritionInputs((prev) => ({ ...prev, [field]: sanitizeNumericInput(value) }));
+	}
+
+	function applyClaudeNutritionValue(field: keyof NutritionPer100g) {
+		if (!claudeNutritionSuggestions) return;
+		updateNutritionField(field, claudeNutritionSuggestions[field].toString());
+	}
+	async function handleSuggestWithClaude() {
+		if (name.trim() === '') {
+			new Notice('Renseigne le nom de l\'ingrédient avant de demander une suggestion.');
+			return;
+		}
+
+		setIsSuggestingWithClaude(true);
+		const result = await suggestIngredientFields(
+			anthropicApiKey,
+			anthropicModel,
+			name,
+			ingredientTypes,
+			shopSections,
+			dietFlags
+		);
+		setIsSuggestingWithClaude(false);
+
+		if (result.error || !result.suggestion) {
+			new Notice(result.error ?? 'Erreur inconnue.');
+			return;
+		}
+
+		const s = result.suggestion;
+		setType(s.type);
+		setShopSection(s.shopSection);
+		setDensityGMl(s.densityGMl);
+		setEntityWeightG(s.entityWeightG);
+		setPossibleForms(s.possibleForms);
+		setDietFlagsInput(s.dietFlags);
+
+		if (s.nutrition) {
+			setClaudeNutritionSuggestions(s.nutrition);
+		}
 	}
 
 	function handleSubmit() {
@@ -131,7 +190,7 @@ export function IngredientForm({
 			return;
 		}
 
-		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, possibleForms, nutrition: parsedNutrition });
+		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, dietFlags: dietFlagsInput, possibleForms, nutrition: parsedNutrition });
 	}
 
 	async function runSearch(query: string) {
@@ -221,6 +280,70 @@ export function IngredientForm({
 		return value.replace(/[^0-9.]/g, '');
 	}
 
+	function getCurrentDietFlagFragment(value: string): string {
+		const parts = value.split(',');
+		return parts[parts.length - 1].trim();
+	}
+
+	function handleDietFlagsChange(value: string) {
+		setDietFlagsInput(value);
+		const fragment = getCurrentDietFlagFragment(value);
+		setDietFlagSuggestions(
+			fragment.length >= 1
+				? dietFlags.filter((f) => f.toLowerCase().includes(fragment.toLowerCase()))
+				: []
+		);
+		setDietFlagHighlightedIndex(-1);
+	}
+
+	function applyDietFlagSuggestion(suggestion: string) {
+		const parts = dietFlagsInput.split(',');
+		parts[parts.length - 1] = ' ' + suggestion;
+		setDietFlagsInput(parts.join(',').replace(/^,\s*/, '') + ', ');
+		setDietFlagSuggestions([]);
+	}
+
+	function handleDietFlagsKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+		if (e.key === 'ArrowDown' && dietFlagSuggestions.length > 0) {
+			e.preventDefault();
+			setDietFlagHighlightedIndex((prev) => Math.min(prev + 1, dietFlagSuggestions.length - 1));
+			return;
+		}
+		if (e.key === 'ArrowUp' && dietFlagSuggestions.length > 0) {
+			e.preventDefault();
+			setDietFlagHighlightedIndex((prev) => Math.max(prev - 1, -1));
+			return;
+		}
+		if (e.key === 'Enter' && dietFlagHighlightedIndex >= 0 && dietFlagSuggestions[dietFlagHighlightedIndex]) {
+			e.preventDefault();
+			applyDietFlagSuggestion(dietFlagSuggestions[dietFlagHighlightedIndex]);
+		}
+	}
+
+	function renderNutritionField(field: keyof NutritionPer100g) {
+		return (
+			<div className="ingredient-form-nutrition-field" key={field}>
+				<label>{nutritionLabels[field]}</label>
+				<input
+					value={nutritionInputs[field]}
+					onChange={(e) => updateNutritionField(field, e.target.value)}
+				/>
+				{claudeNutritionSuggestions && (
+					<span
+						className="ingredient-form-claude-suggestion"
+						onClick={() => applyClaudeNutritionValue(field)}
+					>
+					Claude : {claudeNutritionSuggestions[field].toFixed(1)}
+				</span>
+				)}
+			</div>
+		);
+	}
+
+	useImperativeHandle(ref, () => ({
+		triggerSubmit: handleSubmit,
+	}));
+
 	return (
 		<div className="ingredient-form">
 
@@ -238,56 +361,16 @@ export function IngredientForm({
 					/>
 				</div>
 
-				<div className="ingredient-form-field usda-search-wrapper">
-					<label>Nom en anglais (pour la recherche sur USDA)</label>
-					<div className="usda-search-input-row">
-						<input
-							value={nameEn}
-							onChange={(e) => handleNameEnChange(e.target.value)}
-							onBlur={handleNameEnBlur}
-						/>
-						<button
-							type="button"
-							className="usda-search-button"
-							onClick={() => runSearch(nameEn)}
-							disabled={isSearching}
-						>
-							{isSearching ? <span className="usda-spinner" /> : '🔍'}
-						</button>
-					</div>
 
-					<div className="usda-popup-wrapper">
-						{searchResults.length > 0 ? (
-							<>
-								<button
-									type="button"
-									className="usda-popup"
-									onClick={() => setIsPopupOpen((open) => !open)}
-								>
-									{(() => {
-										const shown = searchResults[selectedIndex ?? 0];
-										return `${shown.description} (${shown.dataType}) — ${shown.kcal ?? '?'} kcal`;
-									})()}
-								</button>
-
-								{isPopupOpen && (
-									<ul className="usda-popup-list">
-										{searchResults.map((result, index) => (
-											<li
-												key={index}
-												className={index === (selectedIndex ?? 0) ? 'usda-popup-selected' : ''}
-												onClick={() => applyResult(index)}
-											>
-												{result.description} ({result.dataType}) — {result.kcal ?? '?'} kcal
-											</li>
-										))}
-									</ul>
-								)}
-							</>
-						) : (
-							<span className="usda-popup-empty">Aucune suggestion pour l'instant</span>
-						)}
-					</div>
+				<div className="ingredient-form-field">
+					<button
+						type="button"
+						onClick={handleSuggestWithClaude}
+						disabled={isSuggestingWithClaude}
+						className="ingredient-form-submit"
+					>
+						{isSuggestingWithClaude ? 'Réflexion en cours...' : 'Suggérer avec Claude'}
+					</button>
 				</div>
 
 				<div className="ingredient-form-grid">
@@ -321,6 +404,29 @@ export function IngredientForm({
 						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />
 					</div>
 				</div>
+				<div className="ingredient-form-field usda-search-wrapper">
+					<label>Contraintes alimentaires (séparées par des virgules)</label>
+					<input
+						value={dietFlagsInput}
+						onChange={(e) => handleDietFlagsChange(e.target.value)}
+						onKeyDown={handleDietFlagsKeyDown}
+						placeholder="ex : gluten, lactose"
+					/>
+					{dietFlagSuggestions.length > 0 && (
+						<ul className="smart-shopping-suggestions">
+							{dietFlagSuggestions.map((suggestion, index) => (
+								<li
+									key={suggestion}
+									className={index === dietFlagHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
+									onMouseEnter={() => setDietFlagHighlightedIndex(index)}
+									onClick={() => applyDietFlagSuggestion(suggestion)}
+								>
+									{suggestion}
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
 
 				<div className="ingredient-form-field">
 					<label>Marque</label>
@@ -340,31 +446,82 @@ export function IngredientForm({
 			<section className="ingredient-form-section">
 				<h4>Valeurs nutritionnelles (pour 100g)</h4>
 
-				<div className="ingredient-form-grid-nutrition">
-					{NUTRITION_KEYS.map((field) => (
-						<div className="ingredient-form-field" key={field}>
-							<label>{nutritionLabels[field]}</label>
-							<input
-								value={nutritionInputs[field]}
-								onChange={(e) => updateNutritionField(field, e.target.value)}
-							/>
-						</div>
-					))}
+				<div className="ingredient-form-field usda-search-wrapper">
+					<label>Nom en anglais (pour la recherche USDA)</label>
+					<div className="usda-search-row">
+						<input
+							value={nameEn}
+							onChange={(e) => handleNameEnChange(e.target.value)}
+							onBlur={handleNameEnBlur}
+						/>
+						<button
+							type="button"
+							className="usda-search-button"
+							onClick={() => runSearch(nameEn)}
+							disabled={isSearching}
+						>
+							{isSearching ? <span className="usda-spinner" /> : '🔍'}
+						</button>
+					</div>
+
+					<div className="usda-popup">
+						{searchResults.length > 0 ? (
+							<>
+								<button
+									type="button"
+									className="usda-popup-summary"
+									onClick={() => setIsPopupOpen((open) => !open)}
+								>
+									{(() => {
+										const shown = searchResults[selectedIndex ?? 0];
+										return `${shown.description} (${shown.dataType}) — ${shown.kcal ?? '?'} kcal`;
+									})()}
+								</button>
+
+								{isPopupOpen && (
+									<ul className="usda-popup-list">
+										{searchResults.map((result, index) => (
+											<li
+												key={index}
+												className={index === (selectedIndex ?? 0) ? 'usda-popup-selected' : ''}
+												onClick={() => applyResult(index)}
+											>
+												{result.description} ({result.dataType}) — {result.kcal ?? '?'} kcal
+											</li>
+										))}
+									</ul>
+								)}
+							</>
+						) : (
+							<span className="usda-popup-empty">Aucune suggestion pour l'instant</span>
+						)}
+					</div>
+				</div>
+
+				<div className="ingredient-form-nutrition-rows">
+					<div className="ingredient-form-nutrition-row">
+						{renderNutritionField('kcal')}
+					</div>
+					<div className="ingredient-form-nutrition-row">
+						{renderNutritionField('lipids')}
+						{renderNutritionField('non_saturated_lipids')}
+					</div>
+					<div className="ingredient-form-nutrition-row">
+						{renderNutritionField('glucids')}
+						{renderNutritionField('sugar')}
+					</div>
+					<div className="ingredient-form-nutrition-row">
+						{renderNutritionField('proteins')}
+						{renderNutritionField('salt')}
+					</div>
+					<div className="ingredient-form-nutrition-row">
+						{renderNutritionField('fibers')}
+						{renderNutritionField('cholesterol')}
+					</div>
 				</div>
 			</section>
 
-			<div className="ingredient-recipe-form-footer">
-				<button
-					className="ingredient-recipe-form-submit"
-					onClick={(e) => {
-						handleSubmit();
-						e.currentTarget.blur();
-					}}
-				>
-					{submitLabel}
-				</button>
-			</div>
 			<div style={{ height: "50px" }} />
 		</div>
 	);
-}
+});

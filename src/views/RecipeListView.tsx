@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import type MyPlugin from '../main';
 import { listAllRecipes } from '../models/listAllRecipes';
@@ -8,6 +8,8 @@ import { RECIPE_VIEW_TYPE } from './RecipeView';
 import { searchIngredientNames } from '../models/searchIngredientNames';
 import { normalizeForSearch } from '../models/textNormalize';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
+import { computeRecipeDietFlags } from '../models/computeRecipeDietFlags';
+import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
 
 export const RECIPE_LIST_VIEW_TYPE = 'recipe-list-view';
 
@@ -30,9 +32,11 @@ export class RecipeListView extends ItemView {
 	private ingredientSuggestions: string[] = [];
 	private ingredientHighlightedIndex = -1;
 	private tagMenuOpen = false;
-	private sortKey: 'name' | 'duration' | 'cooked' = 'name';
+	private sortKey: 'name' | 'duration' | 'cooked' | 'created' = 'name';
 	private sortDirection: 'asc' | 'desc' = 'asc';
 	private closeAction!: HTMLElement;
+	private excludedDietFlags: Set<string> = new Set();
+	private dietMenuOpen = false;
 
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
@@ -160,6 +164,29 @@ export class RecipeListView extends ItemView {
 		return (recipe.preparationDurationMin ?? 0) + (recipe.cookingDurationMin ?? 0);
 	}
 
+	private toggleDietFlag(flag: string) {
+		if (this.excludedDietFlags.has(flag)) {
+			this.excludedDietFlags.delete(flag);
+		} else {
+			this.excludedDietFlags.add(flag);
+		}
+		this.app.workspace.requestSaveLayout();
+		this.render();
+	}
+
+	private applyDietPreset(flags: string[]) {
+		this.excludedDietFlags = new Set(flags);
+		this.app.workspace.requestSaveLayout();
+		this.render();
+	}
+
+	private toggleDietMenu() {
+		this.dietMenuOpen = !this.dietMenuOpen;
+		this.render();
+	}
+
+
+
 	render() {
 		if (!this.root) return;
 
@@ -174,13 +201,34 @@ export class RecipeListView extends ItemView {
 			? searchFiltered
 			: searchFiltered.filter((r) => Array.from(this.selectedTags).every((tag) => r.tags.includes(tag)));
 
-		// Ingredient filter: recipe must include this exact ingredient name
-		// (accent/case-insensitive), combined in AND with the other filters.
-		const filtered = this.ingredientQuery.trim() === ''
+		const ingredientFiltered = this.ingredientQuery.trim() === ''
 			? tagFiltered
 			: tagFiltered.filter((r) =>
 				r.ingredientNames.some((name) => normalizeForSearch(name) === normalizeForSearch(this.ingredientQuery))
 			);
+
+		// Diet filter: excludes any recipe that contains at least one of the
+		// checked flags anywhere in its composition (own ingredients + base
+		// recipes, recursively). Chained AFTER the ingredient filter, so all
+		// filters combine in AND.
+		const filtered = this.excludedDietFlags.size === 0
+			? ingredientFiltered
+			: ingredientFiltered.filter((r) => {
+				const file = this.app.vault.getAbstractFileByPath(r.filePath);
+				if (!(file instanceof TFile)) return true;
+				const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+				const { recipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
+				if (!recipe) return true;
+
+				const { flags } = computeRecipeDietFlags(
+					this.app,
+					this.plugin.settings.ingredientsFolder,
+					this.plugin.settings.recipesFolder,
+					recipe
+				);
+
+				return !Array.from(this.excludedDietFlags).some((excluded) => flags.has(excluded));
+			});
 
 		const sorted = [...filtered].sort((a, b) => {
 			let comparison = 0;
@@ -188,6 +236,8 @@ export class RecipeListView extends ItemView {
 				comparison = a.name.localeCompare(b.name);
 			} else if (this.sortKey === 'duration') {
 				comparison = this.totalDurationMin(a) - this.totalDurationMin(b);
+			} else if (this.sortKey === 'created') {
+				comparison = a.createdTime - b.createdTime;
 			} else {
 				comparison = a.cookedCount - b.cookedCount;
 			}
@@ -197,79 +247,113 @@ export class RecipeListView extends ItemView {
 		this.root.render(
 			<div>
 				<div className="recipe-list-sticky-header">
-				<div className="recipe-list-search-row">
-					<input
-						type="text"
-						placeholder="Rechercher une recette..."
-						value={this.searchQuery}
-						onChange={(e) => {
-							this.searchQuery = e.target.value;
-							this.render();
-						}}
-						className="recipe-list-search"
-					/>
-
-					<div className="recipe-list-ingredient-filter-wrapper">
+					<div className="recipe-list-search-row">
 						<input
 							type="text"
-							placeholder="Filtrer par ingrédient..."
-							value={this.ingredientInput}
-							onChange={(e) => this.handleIngredientInputChange(e.target.value)}
-							onKeyDown={(e) => this.handleIngredientKeyDown(e)}
+							placeholder="Rechercher une recette..."
+							value={this.searchQuery}
+							onChange={(e) => {
+								this.searchQuery = e.target.value;
+								this.render();
+							}}
 							className="recipe-list-search"
 						/>
-						{this.ingredientQuery && (
-							<button type="button" onClick={() => this.clearIngredientFilter()} title="Retirer le filtre">✕</button>
-						)}
-						{this.ingredientSuggestions.length > 0 && (
-							<ul className="smart-shopping-suggestions">
-								{this.ingredientSuggestions.map((suggestion, index) => (
-									<li
-										key={suggestion}
-										className={index === this.ingredientHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
-										onMouseEnter={() => {
-											this.ingredientHighlightedIndex = index;
-											this.render();
-										}}
-										onClick={() => this.commitIngredientFilter(suggestion)}
-									>
-										{suggestion}
-									</li>
-								))}
-							</ul>
-						)}
-					</div>
-				</div>
-				{allTags.length > 0 && (
-					<div className="recipe-list-tag-menu-wrapper">
-						<button
-							type="button"
-							onClick={() => this.toggleTagMenu()}
-							className="recipe-list-tag-menu-button"
-						>
-							Tags {this.selectedTags.size > 0 ? `(${this.selectedTags.size})` : ''}
-						</button>
 
-						{this.tagMenuOpen && (
-							<ul className="recipe-list-tag-menu">
-								{allTags.map((tag) => (
-									<li
-										key={tag}
-										onClick={() => this.toggleTag(tag)}
-										className="recipe-list-tag-menu-item"
-									>
-										<input
-											type="checkbox"
-											checked={this.selectedTags.has(tag)}
-											readOnly
-										/>
-										{tag}
-									</li>
-								))}
-							</ul>
-						)}
+						<div className="recipe-list-ingredient-filter-wrapper">
+							<input
+								type="text"
+								placeholder="Filtrer par ingrédient..."
+								value={this.ingredientInput}
+								onChange={(e) => this.handleIngredientInputChange(e.target.value)}
+								onKeyDown={(e) => this.handleIngredientKeyDown(e)}
+								className="recipe-list-search"
+							/>
+							{this.ingredientQuery && (
+								<button type="button" onClick={() => this.clearIngredientFilter()} title="Retirer le filtre">✕</button>
+							)}
+							{this.ingredientSuggestions.length > 0 && (
+								<ul className="smart-shopping-suggestions">
+									{this.ingredientSuggestions.map((suggestion, index) => (
+										<li
+											key={suggestion}
+											className={index === this.ingredientHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
+											onMouseEnter={() => {
+												this.ingredientHighlightedIndex = index;
+												this.render();
+											}}
+											onClick={() => this.commitIngredientFilter(suggestion)}
+										>
+											{suggestion}
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
 					</div>
-				)}
+
+					<div className="recipe-list-filter-buttons-row">
+						{allTags.length > 0 && (
+							<div className="recipe-list-tag-menu-wrapper">
+								<button
+									type="button"
+									onClick={() => this.toggleTagMenu()}
+									className="recipe-list-tag-menu-button"
+								>
+									Tags {this.selectedTags.size > 0 ? `(${this.selectedTags.size})` : ''}
+								</button>
+
+								{this.tagMenuOpen && (
+									<ul className="recipe-list-tag-menu">
+										{allTags.map((tag) => (
+											<li
+												key={tag}
+												onClick={() => this.toggleTag(tag)}
+												className="recipe-list-tag-menu-item"
+											>
+												<input type="checkbox" checked={this.selectedTags.has(tag)} readOnly />
+												{tag}
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+						)}
+
+						<div className="recipe-list-tag-menu-wrapper">
+							<button
+								type="button"
+								onClick={() => this.toggleDietMenu()}
+								className="recipe-list-tag-menu-button"
+							>
+								Sans... {this.excludedDietFlags.size > 0 ? `(${this.excludedDietFlags.size})` : ''}
+							</button>
+
+							{this.dietMenuOpen && (
+								<ul className="recipe-list-tag-menu">
+									{this.plugin.settings.dietPresets.map((preset) => (
+										<li
+											key={`preset-${preset.name}`}
+											onClick={() => this.applyDietPreset(preset.flags)}
+											className="recipe-list-tag-menu-item recipe-list-preset-item"
+										>
+											★ {preset.name}
+										</li>
+									))}
+									{this.plugin.settings.dietFlags.map((flag) => (
+										<li
+											key={flag}
+											onClick={() => this.toggleDietFlag(flag)}
+											className="recipe-list-tag-menu-item"
+										>
+											<input type="checkbox" checked={this.excludedDietFlags.has(flag)} readOnly />
+											{flag}
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
+					</div>
+
 					<div className="recipe-list-row recipe-list-header-row">
 						<div className="recipe-list-cell-name recipe-list-sortable" onClick={() => this.toggleSort('name')}>
 							Nom{this.sortKey === 'name' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
@@ -280,6 +364,9 @@ export class RecipeListView extends ItemView {
 						</div>
 						<div className="recipe-list-cell-cooked recipe-list-sortable" onClick={() => this.toggleSort('cooked')}>
 							#{this.sortKey === 'cooked' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+						</div>
+						<div className="recipe-list-cell-created recipe-list-sortable" onClick={() => this.toggleSort('created')}>
+							Créée le{this.sortKey === 'created' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
 						</div>
 					</div>
 				</div>

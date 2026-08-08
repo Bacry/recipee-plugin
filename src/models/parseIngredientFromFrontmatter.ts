@@ -75,6 +75,15 @@ export function parseIngredientFromFrontmatter(
 		}
 	}
 
+	let dietFlags: string[] = [];
+	if (frontmatter.diet_flags !== undefined && frontmatter.diet_flags !== null) {
+		if (!Array.isArray(frontmatter.diet_flags)) {
+			errors.push('"diet_flags" est présent mais n\'est pas une liste.');
+		} else {
+			dietFlags = frontmatter.diet_flags.filter((f): f is string => typeof f === 'string');
+		}
+	}
+
 	let brand: string | undefined;
 	if (frontmatter.brand !== undefined && frontmatter.brand !== null) {
 		if (typeof frontmatter.brand !== 'string') {
@@ -115,6 +124,7 @@ export function parseIngredientFromFrontmatter(
 		source,
 		brand,
 		possible_forms: possibleForms,
+		diet_flags: dietFlags,
 		nutrition_per_100g: parsedNutrition,
 	};
 

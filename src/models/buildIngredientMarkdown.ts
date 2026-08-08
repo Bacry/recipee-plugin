@@ -33,6 +33,16 @@ export function buildIngredientMarkdown(values: IngredientFormValues): string {
 		}
 	}
 
+	if (values.dietFlags.trim() !== '') {
+		const flags = values.dietFlags.split(',').map((f) => f.trim()).filter(Boolean);
+		if (flags.length > 0) {
+			lines.push('diet_flags:');
+			for (const flag of flags) {
+				lines.push(`  - "${flag}"`);
+			}
+		}
+	}
+
 	lines.push('nutrition_per_100g:');
 	lines.push(`  kcal: ${values.nutrition.kcal}`);
 	lines.push(`  lipids: ${values.nutrition.lipids}`);

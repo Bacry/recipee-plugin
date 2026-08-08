@@ -13,6 +13,13 @@ export interface MyPluginSettings {
 	recipeImagesFolder: string;
 	anthropicApiKey: string;
 	anthropicModel: string;
+	dietFlags: string[];
+	dietPresets: DietPreset[];
+}
+
+export interface DietPreset {
+	name: string;
+	flags: string[];
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -25,7 +32,14 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	recipeImagesFolder: 'Images',
 	anthropicApiKey: '',
 	anthropicModel: 'claude-sonnet-5',
+	dietFlags: ['gluten', 'lactose', 'oeuf', 'arachide', 'fruits à coque', 'soja', 'poisson', 'crustacés', 'viande'],
+	dietPresets: [
+		{ name: 'Végétarien', flags: ['viande', 'poisson', 'crustacés'] },
+		{ name: 'Végan', flags: ['viande', 'poisson', 'crustacés', 'oeuf', 'lactose'] },
+	],
 };
+
+
 export class SampleSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 
@@ -90,28 +104,8 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Ingredient types')
-			.setDesc('Comma-separated list (e.g. dairy, fish, meat)')
-			.addTextArea((text) =>
-				text
-					.setValue(this.plugin.settings.ingredientTypes.join(', '))
-					.onChange(async (value) => {
-						this.plugin.settings.ingredientTypes = value.split(',').map((s) => s.trim()).filter(Boolean);
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
-			.setName('Shop sections')
-			.setDesc('Comma-separated list (e.g. dairy, fresh, frozen)')
-			.addTextArea((text) =>
-				text
-					.setValue(this.plugin.settings.shopSections.join(', '))
-					.onChange(async (value) => {
-						this.plugin.settings.shopSections = value.split(',').map((s) => s.trim()).filter(Boolean);
-						await this.plugin.saveSettings();
-					}),
-			);
+			.setName('Ingredient types, shop sections & diet flags')
+			.setDesc('Managed via a dedicated view — run the "Manage lists" command or click the tag icon in the ribbon.');
 
 		new Setting(containerEl)
 			.setName('USDA API key')

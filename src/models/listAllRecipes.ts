@@ -13,6 +13,7 @@ export interface RecipeSummary {
 	preparationDurationMin?: number;
 	cookingDurationMin?: number;
 	cookedCount: number;
+	createdTime: number; // TFile.stat.ctime, ms since epoch
 }
 
 // Lists every recipe in the vault (recursively, any subfolder under
@@ -39,6 +40,7 @@ export function listAllRecipes(app: App, recipesFolder: string): RecipeSummary[]
 			preparationDurationMin: recipe.preparationDurationMin,
 			cookingDurationMin: recipe.cookingDurationMin,
 			cookedCount: recipe.cookedDates.length,
+			createdTime: file.stat.ctime,
 		});
 	}
 

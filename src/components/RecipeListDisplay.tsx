@@ -26,6 +26,10 @@ function formatTotalDuration(recipe: RecipeSummary): string {
 	return total > 0 ? formatDuration(total) : '—';
 }
 
+function formatCreatedDate(createdTime: number): string {
+	return new Date(createdTime).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export function RecipeListDisplay({ app, recipes, onRecipeClick }: RecipeListDisplayProps) {
 	return (
 		<div>
@@ -44,6 +48,7 @@ export function RecipeListDisplay({ app, recipes, onRecipeClick }: RecipeListDis
 						</div>
 						<div className="recipe-list-cell-duration">{formatTotalDuration(recipe)}</div>
 						<div className="recipe-list-cell-cooked">{recipe.cookedCount > 0 ? recipe.cookedCount : ''}</div>
+						<div className="recipe-list-cell-created">{formatCreatedDate(recipe.createdTime)}</div>
 					</div>
 				);
 			})}

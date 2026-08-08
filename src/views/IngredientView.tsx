@@ -155,8 +155,9 @@ export class IngredientView extends ItemView {
 	}
 
 	handleRecipeClick(recipeName: string) {
-		const path = `${this.plugin.settings.recipesFolder}/${recipeName}.md`;
-		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: path });
+		const file = findRecipeFileByName(this.app, this.plugin.settings.recipesFolder, recipeName);
+		if (!file) return;
+		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: file.path });
 	}
 
 	// If we got here by navigating from another view (history is non-empty),
@@ -260,6 +261,7 @@ export class IngredientView extends ItemView {
 					onSubmit={(values) => this.handleSave(values)}
 					ingredientTypes={this.plugin.settings.ingredientTypes}
 					shopSections={this.plugin.settings.shopSections}
+					dietFlags={this.plugin.settings.dietFlags}
 					usdaApiKey={this.plugin.settings.usdaApiKey}
 					initialValues={ingredientToFormValues(ingredient)}
 					submitLabel="Enregistrer les modifications"

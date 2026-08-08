@@ -23,7 +23,7 @@ const ROWS: { key: keyof NutritionPer100g; label: string; unit: string; indent?:
 ];
 
 function fmt(value: number): string {
-	return Number(value.toFixed(2)).toString();
+	return Number(value.toFixed(1)).toString();
 }
 
 export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG }: NutritionTableProps) {

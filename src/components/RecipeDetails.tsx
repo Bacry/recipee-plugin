@@ -113,33 +113,36 @@ export function RecipeDetails({
 
 			<div className="recipe-top-row">
 				<div className="recipe-top-row-column">
-					{(recipe.preparationDurationMin != null || recipe.cookingDurationMin != null) && (
-						<div>
-							<h4>Temps</h4>
-							<ul>
-								{recipe.preparationDurationMin != null && (
-									<li>Préparation : {formatDuration(recipe.preparationDurationMin)}</li>
-								)}
-								{recipe.cookingDurationMin != null && (
-									<li>Cuisson : {formatDuration(recipe.cookingDurationMin)}</li>
-								)}
-								{totalDuration > 0 && <li>Total : {formatDuration(totalDuration)}</li>}
-							</ul>
-						</div>
-					)}
+					<h4>Temps</h4>
+					<ul>
+						{recipe.preparationDurationMin != null && (
+							<li>Préparation : {formatDuration(recipe.preparationDurationMin)}</li>
+						)}
+						{recipe.cookingDurationMin != null && (
+							<li>Cuisson : {formatDuration(recipe.cookingDurationMin)}</li>
+						)}
+						{totalDuration > 0 && <li>Total : {formatDuration(totalDuration)}</li>}
+						{recipe.preparationDurationMin == null && recipe.cookingDurationMin == null && (
+							<li>Non renseigné</li>
+						)}
+					</ul>
 				</div>
 
 				<div className="recipe-top-row-column">
-					{recipe.source && (
-						<p>
-							Source :{' '}
+					<h4>
+						Source{recipe.source ? (
+						<>
+							{' : '}
 							{isUrl(recipe.source) ? (
 								<a href={recipe.source} target="_blank" rel="noopener noreferrer">web</a>
 							) : (
 								recipe.source
 							)}
-						</p>
+						</>
+					) : (
+						' : Non renseignée'
 					)}
+					</h4>
 					{recipe.image &&
 						(() => {
 							const imagePath = resolveImagePath(app, recipe.image);
@@ -259,8 +262,10 @@ export function RecipeDetails({
 			</div>
 			<p>
 				{recipe.cookedDates.length === 0
-					? 'Jamais réalisée pour l\'instant.'
-					: `Réalisée ${recipe.cookedDates.length} fois — dernière fois le ${formatCookedDate([...recipe.cookedDates].sort().reverse()[0])}.`}
+					? (recipe.madeBeforeTracking
+						? 'Déjà réalisée plusieurs fois par le passé (dates non enregistrées).'
+						: 'Jamais réalisée pour l\'instant.')
+					: `Réalisée au moins ${recipe.cookedDates.length} fois${recipe.madeBeforeTracking ? ' (+ plusieurs fois non datées avant)' : ''} — dernière fois le ${formatCookedDate([...recipe.cookedDates].sort().reverse()[0])}.`}
 			</p>
 
 <NutritionTable
@@ -271,6 +276,7 @@ export function RecipeDetails({
 	servingsLabel={recipe.servingsLabel}
 	warnings={nutritionResult.warnings}
 	measuredTotalWeightG={recipe.totalWeightG}
+	per100gReliable={!recipe.requiresCooking || recipe.totalWeightG != null}
 />
 </div>
 );

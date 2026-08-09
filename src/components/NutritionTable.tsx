@@ -8,6 +8,7 @@ interface NutritionTableProps {
 	servingsLabel: string;
 	warnings: string[];
 	measuredTotalWeightG?: number; // the recipe's manually measured weight, if set
+	per100gReliable: boolean; // false = cuisson + pas de poids mesuré → colonne "Pour 100g" non fiable
 }
 
 const ROWS: { key: keyof NutritionPer100g; label: string; unit: string; indent?: boolean }[] = [
@@ -26,7 +27,7 @@ function fmt(value: number): string {
 	return Number(value.toFixed(1)).toString();
 }
 
-export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG }: NutritionTableProps) {
+export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG, per100gReliable }: NutritionTableProps) {
 	return (
 		<div>
 			<h4>
@@ -35,6 +36,11 @@ export function NutritionTable({ per100g, total, totalWeightG, perServing, servi
 					? `(${totalWeightG}g mesuré)`
 					: `(${totalWeightG}g calculé)`}
 			</h4>
+			{!per100gReliable && (
+				<p className="ingredient-validation-warnings">
+					Cette recette nécessite une cuisson et son poids final n'a pas été mesuré — la colonne "Pour 100g" n'est pas fiable.
+				</p>
+			)}
 			<table>
 				<thead>
 				<tr>
@@ -48,7 +54,7 @@ export function NutritionTable({ per100g, total, totalWeightG, perServing, servi
 				{ROWS.map((row) => (
 					<tr key={row.key}>
 						<td style={row.indent ? { paddingLeft: '1.5em' } : undefined}>{row.label}</td>
-						<td>{fmt(per100g[row.key])} {row.unit}</td>
+						<td>{per100gReliable ? `${fmt(per100g[row.key])} ${row.unit}` : '-'}</td>
 						{perServing && <td>{fmt(perServing[row.key])} {row.unit}</td>}
 						<td>{fmt(total[row.key])} {row.unit}</td>
 					</tr>

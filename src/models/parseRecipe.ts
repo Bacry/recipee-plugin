@@ -80,6 +80,27 @@ export function parseRecipeFromFrontmatter(
 			totalWeightG = frontmatter.total_weight_g;
 		}
 	}
+	let requiresCooking = false;
+	if (frontmatter.requires_cooking !== undefined && frontmatter.requires_cooking !== null) {
+		if (typeof frontmatter.requires_cooking === 'boolean') {
+			requiresCooking = frontmatter.requires_cooking;
+		} else if (frontmatter.requires_cooking === 'true' || frontmatter.requires_cooking === 'false') {
+			requiresCooking = frontmatter.requires_cooking === 'true';
+		} else {
+			errors.push('"requires_cooking" est présent mais n\'est pas un booléen valide.');
+		}
+	}
+
+	let madeBeforeTracking = false;
+	if (frontmatter.made_before_tracking !== undefined && frontmatter.made_before_tracking !== null) {
+		if (typeof frontmatter.made_before_tracking === 'boolean') {
+			madeBeforeTracking = frontmatter.made_before_tracking;
+		} else if (frontmatter.made_before_tracking === 'true' || frontmatter.made_before_tracking === 'false') {
+			madeBeforeTracking = frontmatter.made_before_tracking === 'true';
+		} else {
+			errors.push('"made_before_tracking" est présent mais n\'est pas un booléen valide.');
+		}
+	}
 
 	let tags: string[] = [];
 	if (frontmatter.tags !== undefined && frontmatter.tags !== null) {
@@ -150,6 +171,8 @@ export function parseRecipeFromFrontmatter(
 		baseServings: baseServings as number,
 		servingsLabel: servingsLabel as string,
 		preparationDurationMin,
+		requiresCooking,
+		madeBeforeTracking,
 		cookingDurationMin,
 		ingredients,
 		baseRecipes,
@@ -226,6 +249,8 @@ export function parseRecipeTemplate(
 	const source = typeof frontmatter?.source === 'string' ? frontmatter.source : undefined;
 	const image = typeof frontmatter?.image === 'string' ? frontmatter.image : undefined;
 	const instructions = typeof frontmatter?.instructions === 'string' ? frontmatter.instructions : '';
+	const requiresCooking = typeof frontmatter?.requires_cooking === 'boolean' ? frontmatter.requires_cooking : false;
+	const madeBeforeTracking = typeof frontmatter?.made_before_tracking === 'boolean' ? frontmatter.made_before_tracking : false;
 
 	const tags = Array.isArray(frontmatter?.tags)
 		? frontmatter.tags.filter((t): t is string => typeof t === 'string')
@@ -265,6 +290,8 @@ export function parseRecipeTemplate(
 		servingsLabel,
 		preparationDurationMin,
 		cookingDurationMin,
+		requiresCooking,
+		madeBeforeTracking,
 		ingredients,
 		baseRecipes,
 		instructions,

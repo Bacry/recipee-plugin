@@ -7,6 +7,7 @@ import { SmartBaseRecipeInput } from './SmartBaseRecipeInput';
 import { listRecipeSubfolders } from '../models/listRecipeSubfolders';
 import { ParseRecipeTextModal } from './ParseRecipeTextModal';
 import { forwardRef, useImperativeHandle } from 'react';
+import { searchRecipeSources } from '../models/searchRecipeSources';
 
 export interface RecipeFormHandle {
 	triggerSubmit: () => void;
@@ -21,6 +22,8 @@ export interface RecipeFormValues {
 	servingsLabel: string;
 	preparationDurationMin: string;
 	cookingDurationMin: string;
+	requiresCooking: boolean;
+	madeBeforeTracking: boolean;
 	ingredients: RecipeIngredientEntry[]; // managed by a dedicated sub-component (step G), passed through as-is here
 	baseRecipes: RecipeBaseRecipeEntry[];
 	instructions: string;
@@ -55,6 +58,8 @@ function emptyValues(): RecipeFormValues {
 		servingsLabel: '',
 		preparationDurationMin: '',
 		cookingDurationMin: '',
+		requiresCooking: false,
+		madeBeforeTracking: false,
 		ingredients: [],
 		baseRecipes: [],
 		instructions: '',
@@ -95,6 +100,10 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	const [tagHighlightedIndex, setTagHighlightedIndex] = useState<number>(-1);
 	const [totalWeightG, setTotalWeightG] = useState(base.totalWeightG);
 	const [subfolder, setSubfolder] = useState(base.subfolder);
+	const [sourceSuggestions, setSourceSuggestions] = useState<string[]>([]);
+	const [sourceHighlightedIndex, setSourceHighlightedIndex] = useState<number>(-1);
+	const [requiresCooking, setRequiresCooking] = useState(base.requiresCooking);
+	const [madeBeforeTracking, setMadeBeforeTracking] = useState(base.madeBeforeTracking);
 
 	function handleSubmit() {
 		onSubmit({
@@ -103,6 +112,8 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			servingsLabel,
 			preparationDurationMin,
 			cookingDurationMin,
+			requiresCooking,
+			madeBeforeTracking,
 			ingredients,
 			baseRecipes,
 			instructions,
@@ -189,6 +200,34 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		setImage(candidateName);
 	}
 
+	function handleSourceChange(value: string) {
+		setSource(value);
+		setSourceSuggestions(value.trim().length >= 1 ? searchRecipeSources(app, recipesFolder, value) : []);
+		setSourceHighlightedIndex(-1);
+	}
+
+	function applySourceSuggestion(suggestion: string) {
+		setSource(suggestion);
+		setSourceSuggestions([]);
+	}
+
+	function handleSourceKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+		if (e.key === 'ArrowDown' && sourceSuggestions.length > 0) {
+			e.preventDefault();
+			setSourceHighlightedIndex((prev) => Math.min(prev + 1, sourceSuggestions.length - 1));
+			return;
+		}
+		if (e.key === 'ArrowUp' && sourceSuggestions.length > 0) {
+			e.preventDefault();
+			setSourceHighlightedIndex((prev) => Math.max(prev - 1, -1));
+			return;
+		}
+		if (e.key === 'Enter' && sourceHighlightedIndex >= 0 && sourceSuggestions[sourceHighlightedIndex]) {
+			e.preventDefault();
+			applySourceSuggestion(sourceSuggestions[sourceHighlightedIndex]);
+		}
+	}
+
 	// Applies a full RecipeFormValues object to every individual useState field —
 // used after Claude successfully extracts a recipe from pasted text, to
 // prefill the already-open form without having to remount the component.
@@ -198,6 +237,8 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		setServingsLabel(values.servingsLabel);
 		setPreparationDurationMin(values.preparationDurationMin);
 		setCookingDurationMin(values.cookingDurationMin);
+		setRequiresCooking(values.requiresCooking);
+		setMadeBeforeTracking(values.madeBeforeTracking);
 		setIngredients(values.ingredients);
 		setBaseRecipes(values.baseRecipes);
 		setInstructions(values.instructions);
@@ -232,11 +273,19 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			<section className="ingredient-form-section">
 				<h4>Informations générales</h4>
 
-				<div className="ingredient-form-field">
+				<div className="ingredient-form-field ingredient-form-field-wide">
 					<label>Nom</label>
 					<input value={name} onChange={(e) => setName(e.target.value)} />
 				</div>
-
+				<div className="recipe-made-before-row">
+					<label>Recette déjà réalisée (dates inconnues)</label>
+					<input
+						type="checkbox"
+						checked={madeBeforeTracking}
+						onChange={(e) => setMadeBeforeTracking(e.target.checked)}
+						className="recipe-made-before-checkbox"
+					/>
+				</div>
 				<div className="ingredient-form-grid">
 					<div className="ingredient-form-field">
 						<label>Portions de base</label>
@@ -260,12 +309,31 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="ingredient-form-field">
-						<label>Cuisson (min)</label>
-						<input
-							value={cookingDurationMin}
-							onChange={(e) => setCookingDurationMin(sanitizeNumericInput(e.target.value))}
-						/>
+						<label>Nécessite cuisson</label>
+						<div className="recipe-cooking-row">
+							<input
+								type="checkbox"
+								checked={requiresCooking}
+								onChange={(e) => setRequiresCooking(e.target.checked)}
+								className="recipe-cooking-checkbox"
+							/>
+							<input
+								value={cookingDurationMin}
+								onChange={(e) => setCookingDurationMin(sanitizeNumericInput(e.target.value))}
+								disabled={!requiresCooking}
+								placeholder="durée en min"
+								className="recipe-cooking-duration-input"
+							/>
+							<input
+								value={totalWeightG}
+								onChange={(e) => setTotalWeightG(sanitizeNumericInput(e.target.value))}
+								disabled={!requiresCooking}
+								placeholder="poids après cuisson (g)"
+								className="recipe-cooking-weight-input"
+							/>
+						</div>
 					</div>
+
 					<div className="ingredient-form-field">
 						<label>Sous-dossier</label>
 						<select value={subfolder} onChange={(e) => setSubfolder(e.target.value)}>
@@ -275,62 +343,75 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 							))}
 						</select>
 					</div>
+
 					<div className="ingredient-form-field">
-						<label>Poids total mesuré (g, optionnel)</label>
-						<input
-							value={totalWeightG}
-							onChange={(e) => setTotalWeightG(sanitizeNumericInput(e.target.value))}
-							placeholder="ex : 240"
-						/>
+						<label>Image</label>
+						<div className="usda-search-row">
+							<input value={image} onChange={(e) => setImage(e.target.value)} placeholder="ex : crème brûlée.png" />
+							<input
+								type="file"
+								accept="image/*"
+								id="recipe-image-upload"
+								style={{ display: 'none' }}
+								onChange={(e) => {
+									const file = e.target.files?.[0];
+									if (file) handleImageUpload(file);
+								}}
+							/>
+							<button type="button" onClick={() => document.getElementById('recipe-image-upload')?.click()}>
+								Choisir
+							</button>
+						</div>
 					</div>
 				</div>
 
-				<div className="ingredient-form-field">
-					<label>Source (texte libre ou URL)</label>
-					<input value={source} onChange={(e) => setSource(e.target.value)} />
-				</div>
-
-				<div className="ingredient-form-field">
-					<label>Image</label>
-					<div className="usda-search-row">
-						<input value={image} onChange={(e) => setImage(e.target.value)} placeholder="ex : crème brûlée.png" />
+				<div className="ingredient-form-row-tags-source">
+					<div className="ingredient-form-field usda-search-wrapper">
+						<label>Tags (séparés par des virgules)</label>
 						<input
-							type="file"
-							accept="image/*"
-							id="recipe-image-upload"
-							style={{ display: 'none' }}
-							onChange={(e) => {
-								const file = e.target.files?.[0];
-								if (file) handleImageUpload(file);
-							}}
+							value={tags}
+							onChange={(e) => handleTagsChange(e.target.value)}
+							onKeyDown={handleTagsKeyDown}
+							placeholder="ex : dessert, sans gluten"
 						/>
-						<button type="button" onClick={() => document.getElementById('recipe-image-upload')?.click()}>
-							Choisir
-						</button>
+						{tagSuggestions.length > 0 && (
+							<ul className="smart-shopping-suggestions">
+								{tagSuggestions.map((suggestion, index) => (
+									<li
+										key={suggestion}
+										className={index === tagHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
+										onMouseEnter={() => setTagHighlightedIndex(index)}
+										onClick={() => applyTagSuggestion(suggestion)}
+									>
+										{suggestion}
+									</li>
+								))}
+							</ul>
+						)}
 					</div>
-				</div>
-				<div className="ingredient-form-field usda-search-wrapper">
-					<label>Tags (séparés par des virgules)</label>
-					<input
-						value={tags}
-						onChange={(e) => handleTagsChange(e.target.value)}
-						onKeyDown={handleTagsKeyDown}
-						placeholder="ex : dessert, sans gluten"
-					/>
-					{tagSuggestions.length > 0 && (
-						<ul className="smart-shopping-suggestions">
-							{tagSuggestions.map((suggestion, index) => (
-								<li
-									key={suggestion}
-									className={index === tagHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
-									onMouseEnter={() => setTagHighlightedIndex(index)}
-									onClick={() => applyTagSuggestion(suggestion)}
-								>
-									{suggestion}
-								</li>
-							))}
-						</ul>
-					)}
+
+					<div className="ingredient-form-field usda-search-wrapper ingredient-form-field-source">
+						<label>Source (texte libre ou URL)</label>
+						<input
+							value={source}
+							onChange={(e) => handleSourceChange(e.target.value)}
+							onKeyDown={handleSourceKeyDown}
+						/>
+						{sourceSuggestions.length > 0 && (
+							<ul className="smart-shopping-suggestions">
+								{sourceSuggestions.map((suggestion, index) => (
+									<li
+										key={suggestion}
+										className={index === sourceHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
+										onMouseEnter={() => setSourceHighlightedIndex(index)}
+										onClick={() => applySourceSuggestion(suggestion)}
+									>
+										{suggestion}
+									</li>
+								))}
+							</ul>
+						)}
+					</div>
 				</div>
 			</section>
 

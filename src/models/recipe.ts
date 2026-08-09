@@ -25,6 +25,8 @@ export interface Recipe {
 	servingsLabel: string;
 	preparationDurationMin?: number;
 	cookingDurationMin?: number;
+	requiresCooking: boolean;
+	madeBeforeTracking: boolean;
 	ingredients: RecipeIngredientEntry[];
 	baseRecipes: RecipeBaseRecipeEntry[]; // always an array, empty if none used
 	instructions: string;

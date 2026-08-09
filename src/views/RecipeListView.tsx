@@ -19,6 +19,7 @@ interface RecipeListViewState extends NavigableViewState {
 	ingredientQuery?: string;
 	sortKey?: 'name' | 'duration' | 'cooked';
 	sortDirection?: 'asc' | 'desc';
+	scrollTop?: number;
 }
 
 export class RecipeListView extends ItemView {
@@ -37,6 +38,7 @@ export class RecipeListView extends ItemView {
 	private closeAction!: HTMLElement;
 	private excludedDietFlags: Set<string> = new Set();
 	private dietMenuOpen = false;
+	private scrollTop = 0;
 
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
@@ -119,8 +121,16 @@ export class RecipeListView extends ItemView {
 		this.ingredientInput = state.ingredientQuery ?? '';
 		this.sortKey = state.sortKey ?? 'name';
 		this.sortDirection = state.sortDirection ?? 'asc';
+		this.scrollTop = state.scrollTop ?? 0;
 		this.updateCloseAction();
 		this.render();
+		// Restore scroll position after React has painted the list — a plain
+		// render() call is synchronous but the DOM update it triggers isn't
+		// guaranteed to be flushed yet, so we wait a frame.
+		requestAnimationFrame(() => {
+			const container = this.containerEl.children[1] as HTMLElement;
+			container.scrollTop = this.scrollTop;
+		});
 		return super.setState(state, result as never);
 	}
 
@@ -132,6 +142,7 @@ export class RecipeListView extends ItemView {
 			ingredientQuery: this.ingredientQuery,
 			sortKey: this.sortKey,
 			sortDirection: this.sortDirection,
+			scrollTop: this.scrollTop,
 		};
 	}
 
@@ -145,8 +156,13 @@ export class RecipeListView extends ItemView {
 			closeOrGoBack(this.leaf, this.history);
 		});
 		this.closeAction.addClass('ingredient-recipe-view-actions');
-		const container = this.containerEl.children[1];
+		const container = this.containerEl.children[1] as HTMLElement;
 		this.root = createRoot(container);
+
+		container.addEventListener('scroll', () => {
+			this.scrollTop = container.scrollTop;
+		});
+
 		this.render();
 	}
 
@@ -239,7 +255,10 @@ export class RecipeListView extends ItemView {
 			} else if (this.sortKey === 'created') {
 				comparison = a.createdTime - b.createdTime;
 			} else {
-				comparison = a.cookedCount - b.cookedCount;
+				comparison = (a.madeBeforeTracking ? 1 : 0) - (b.madeBeforeTracking ? 1 : 0);
+				if (comparison === 0) {
+					comparison = a.cookedCount - b.cookedCount;
+				}
 			}
 			return this.sortDirection === 'asc' ? comparison : -comparison;
 		});

@@ -47,7 +47,11 @@ export function RecipeListDisplay({ app, recipes, onRecipeClick }: RecipeListDis
 							)}
 						</div>
 						<div className="recipe-list-cell-duration">{formatTotalDuration(recipe)}</div>
-						<div className="recipe-list-cell-cooked">{recipe.cookedCount > 0 ? recipe.cookedCount : ''}</div>
+						<div className="recipe-list-cell-cooked">
+							{recipe.madeBeforeTracking
+								? `${recipe.cookedCount > 0 ? recipe.cookedCount : ''}+`
+								: (recipe.cookedCount > 0 ? recipe.cookedCount : '')}
+						</div>
 						<div className="recipe-list-cell-created">{formatCreatedDate(recipe.createdTime)}</div>
 					</div>
 				);

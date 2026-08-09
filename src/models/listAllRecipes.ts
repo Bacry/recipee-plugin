@@ -13,6 +13,7 @@ export interface RecipeSummary {
 	preparationDurationMin?: number;
 	cookingDurationMin?: number;
 	cookedCount: number;
+	madeBeforeTracking: boolean;
 	createdTime: number; // TFile.stat.ctime, ms since epoch
 }
 
@@ -40,6 +41,7 @@ export function listAllRecipes(app: App, recipesFolder: string): RecipeSummary[]
 			preparationDurationMin: recipe.preparationDurationMin,
 			cookingDurationMin: recipe.cookingDurationMin,
 			cookedCount: recipe.cookedDates.length,
+			madeBeforeTracking: recipe.madeBeforeTracking,
 			createdTime: file.stat.ctime,
 		});
 	}

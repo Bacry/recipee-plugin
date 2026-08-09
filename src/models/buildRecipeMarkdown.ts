@@ -13,6 +13,9 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 		lines.push(`cooking_duration_min: ${recipe.cookingDurationMin}`);
 	}
 
+	lines.push(`requires_cooking: ${recipe.requiresCooking}`);
+	lines.push(`made_before_tracking: ${recipe.madeBeforeTracking}`);
+
 	if (recipe.ingredients.length === 0) {
 		lines.push('ingredients: []');
 	} else {

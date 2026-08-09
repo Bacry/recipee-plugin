@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
-import { RecipeForm, RecipeFormValues } from '../components/RecipeForm';
+import { RecipeForm, RecipeFormValues,RecipeFormHandle } from '../components/RecipeForm';
 import { formValuesToRecipe } from '../models/recipeFormConversion';
 import { ErrorModal } from '../components/ErrorModal';
 import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } from '../navigation';
@@ -8,7 +8,6 @@ import { RECIPE_VIEW_TYPE } from './RecipeView';
 import type MyPlugin from '../main';
 import { createRecipe } from '../models/recipePersistence';
 import { createRef } from 'react';
-import { RecipeForm, RecipeFormHandle } from '../components/RecipeForm';
 
 
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';

@@ -8,7 +8,7 @@ import { RECIPE_VIEW_TYPE } from './RecipeView';
 import type MyPlugin from '../main';
 import { createRecipe } from '../models/recipePersistence';
 import { createRef } from 'react';
-
+import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
 
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
@@ -115,6 +115,9 @@ export class NewRecipeView extends ItemView {
 			});
 
 			new Notice(`Recette "${file.basename}" créée.`);
+			if (recipe!.madeBeforeTracking) {
+				await propagateMadeBeforeTracking(this.app, this.plugin.settings.recipesFolder, recipe!.baseRecipes);
+			}
 
 			await this.leaf.setViewState({
 				type: RECIPE_VIEW_TYPE,

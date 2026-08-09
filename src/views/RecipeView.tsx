@@ -22,6 +22,8 @@ import { recordRecipeCookedToday } from '../models/recordRecipeCooked';
 import { NavigableViewState, NavigationEntry, closeOrGoBack, navigateTo, canNavigateBack } from '../navigation';
 import { createRef } from 'react';
 import { RecipeForm, RecipeFormValues, RecipeFormHandle } from '../components/RecipeForm';
+import { recordRecipeCookedTodayRecursive } from '../models/recordRecipeCookedRecursive';
+import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -279,13 +281,15 @@ export class RecipeView extends ItemView {
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
 		if (!(file instanceof TFile)) return;
 
-		const result = await recordRecipeCookedToday(this.app, file);
+		const result = await recordRecipeCookedTodayRecursive(this.app, this.plugin.settings.recipesFolder, file);
 
-		if (result.alreadyRecordedToday) {
+		if (result.recordedNames.length === 0) {
 			new Notice('Déjà marquée comme réalisée aujourd\'hui.');
-		} else if (result.success) {
-			new Notice('Recette marquée comme réalisée aujourd\'hui.');
+		} else {
+			new Notice(`Réalisée aujourd'hui : ${result.recordedNames.join(', ')}.`);
 		}
+
+		this.render();
 	}
 
 	handleClose() {
@@ -342,6 +346,9 @@ export class RecipeView extends ItemView {
 			this.updateTitle();
 
 			new Notice(`Recette "${updatedFile.basename}" mise à jour.`);
+			if (recipeWithHistory.madeBeforeTracking) {
+				await propagateMadeBeforeTracking(this.app, this.plugin.settings.recipesFolder, recipeWithHistory.baseRecipes);
+			}
 			this.render();
 		} catch (error) {
 			const message = error instanceof Error ? error.message : "Impossible de modifier la recette.";

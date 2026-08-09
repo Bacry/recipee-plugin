@@ -24,6 +24,7 @@ export function recipeToFormValues(recipe: Recipe, filePath: string, recipesFold
 		image: recipe.image ?? '',
 		tags: recipe.tags.join(', '),
 		totalWeightG: recipe.totalWeightG?.toString() ?? '',
+		fryingOilName: recipe.fryingOilName ?? '',
 		subfolder,
 	};
 }
@@ -96,6 +97,7 @@ export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe |
 		notes: values.notes.trim() || undefined,
 		source: values.source.trim() || undefined,
 		image: values.image.trim() || undefined,
+		fryingOilName: values.fryingOilName.trim() || undefined,
 		tags,
 		totalWeightG,
 		cookedDates: [], // new recipes/edits via the form never set this directly — only "Réalisée aujourd'hui" does, via recordRecipeCookedToday

@@ -48,7 +48,7 @@ export async function addRecipeToShoppingList(
 			updatedItems,
 			{
 				name: ing.ingredientName,
-				complement: '',
+				complement: ing.complement ?? '',
 				quantity: ing.quantity,
 				unit: ing.unit,
 				source: `recipe:${recipeEntryId}`,

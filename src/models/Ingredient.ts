@@ -18,5 +18,6 @@ export interface Ingredient {
 	source?: string;
 	brand?: string; // optional — only meaningful for processed foods where brand affects nutrition (e.g. low-sodium soy sauce)
 	possible_forms?: string[];
+	can_be_used_for_frying: boolean;
 	nutrition_per_100g: NutritionPer100g;
 }

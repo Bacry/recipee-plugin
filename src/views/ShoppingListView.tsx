@@ -161,7 +161,14 @@ export class ShoppingListView extends ItemView {
 				const ingredientPath = `${this.plugin.settings.ingredientsFolder}/${item.name}.md`;
 				const isKnownIngredient = this.app.vault.getAbstractFileByPath(ingredientPath) instanceof TFile;
 
-				return { item, shopSection, aggregation, isKnownIngredient };
+				return {
+					item,
+					shopSection,
+					aggregation,
+					isKnownIngredient,
+					densityGMl: densityInfo.densityGMl,
+					entityWeightG: densityInfo.entityWeightG,
+				};
 			})
 		);
 

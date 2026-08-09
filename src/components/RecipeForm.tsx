@@ -8,6 +8,7 @@ import { listRecipeSubfolders } from '../models/listRecipeSubfolders';
 import { ParseRecipeTextModal } from './ParseRecipeTextModal';
 import { forwardRef, useImperativeHandle } from 'react';
 import { searchRecipeSources } from '../models/searchRecipeSources';
+import { listOilIngredients } from '../models/listOilIngredients';
 
 export interface RecipeFormHandle {
 	triggerSubmit: () => void;
@@ -24,6 +25,7 @@ export interface RecipeFormValues {
 	cookingDurationMin: string;
 	requiresCooking: boolean;
 	madeBeforeTracking: boolean;
+	fryingOilName: string;
 	ingredients: RecipeIngredientEntry[]; // managed by a dedicated sub-component (step G), passed through as-is here
 	baseRecipes: RecipeBaseRecipeEntry[];
 	instructions: string;
@@ -68,6 +70,7 @@ function emptyValues(): RecipeFormValues {
 		image: '',
 		tags: '',
 		subfolder: '',
+		fryingOilName: '',
 	};
 }
 
@@ -104,6 +107,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	const [sourceHighlightedIndex, setSourceHighlightedIndex] = useState<number>(-1);
 	const [requiresCooking, setRequiresCooking] = useState(base.requiresCooking);
 	const [madeBeforeTracking, setMadeBeforeTracking] = useState(base.madeBeforeTracking);
+	const [fryingOilName, setFryingOilName] = useState(base.fryingOilName);
 
 	function handleSubmit() {
 		onSubmit({
@@ -123,6 +127,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			tags,
 			totalWeightG,
 			subfolder,
+			fryingOilName,
 		});
 	}
 
@@ -168,6 +173,12 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 
 	function handleRemoveIngredient(index: number) {
 		setIngredients((prev) => prev.filter((_, i) => i !== index));
+	}
+
+	function toggleFried(index: number) {
+		setIngredients((prev) =>
+			prev.map((entry, i) => (i === index ? { ...entry, fried: !entry.fried } : entry))
+		);
 	}
 
 	function handleRemoveBaseRecipe(index: number) {
@@ -247,6 +258,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		setImage(values.image);
 		setTags(values.tags);
 		setTotalWeightG(values.totalWeightG);
+		setFryingOilName(values.fryingOilName);
 //		setSubfolder(values.subfolder);
 	}
 
@@ -437,6 +449,19 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			</section>
 
 			<section className="ingredient-form-section">
+				<h4>Friture</h4>
+				<div className="recipe-frying-oil-row">
+					<label>Huile utilisée</label>
+					<select value={fryingOilName} onChange={(e) => setFryingOilName(e.target.value)}>
+						<option value="">-- Aucune (pas de friture) --</option>
+						{listOilIngredients(app, ingredientsFolder, [], []).map((oilName) => (
+							<option key={oilName} value={oilName}>{oilName}</option>
+						))}
+					</select>
+				</div>
+			</section>
+
+			<section className="ingredient-form-section">
 				<h4>Ingrédients</h4>
 
 				{ingredients.length > 0 && (
@@ -448,7 +473,19 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		{entry.complement ? ` (${entry.complement})` : ''}
 		{entry.quantity != null ? ` — ${entry.quantity}${entry.unit}` : ''}
 	</span>
-								<button type="button" onClick={() => handleRemoveIngredient(index)} title="Retirer" className="recipe-ingredient-remove">✕</button>
+								<div className="recipe-ingredient-actions">
+									{fryingOilName && (
+										<button
+											type="button"
+											onClick={() => toggleFried(index)}
+											title={entry.fried ? 'Marqué comme frit' : 'Marquer comme frit'}
+											className={entry.fried ? 'recipe-ingredient-fried-active' : 'recipe-ingredient-fried'}
+										>
+											{entry.fried ? 'Frit' : 'Pas frit'}
+										</button>
+									)}
+									<button type="button" onClick={() => handleRemoveIngredient(index)} title="Retirer" className="recipe-ingredient-remove">✕</button>
+								</div>
 							</li>
 						))}
 					</ul>

@@ -22,6 +22,7 @@ export interface IngredientFormValues {
 	possibleForms: string;
 	brand: string;
 	dietFlags: string;
+	canBeUsedForFrying: boolean;
 	nutrition: NutritionPer100g;
 }
 
@@ -109,6 +110,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 	const [dietFlagHighlightedIndex, setDietFlagHighlightedIndex] = useState<number>(-1);
 	const [claudeNutritionSuggestions, setClaudeNutritionSuggestions] = useState<Record<keyof NutritionPer100g, number> | null>(null);
 	const [isSuggestingWithClaude, setIsSuggestingWithClaude] = useState(false);
+	const [canBeUsedForFrying, setCanBeUsedForFrying] = useState(initialValues?.canBeUsedForFrying ?? false);
 
 	function updateNutritionField(field: keyof NutritionPer100g, value: string) {
 		setNutritionInputs((prev) => ({ ...prev, [field]: sanitizeNumericInput(value) }));
@@ -190,7 +192,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 			return;
 		}
 
-		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, dietFlags: dietFlagsInput, possibleForms, nutrition: parsedNutrition });
+		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, dietFlags: dietFlagsInput, possibleForms, canBeUsedForFrying, nutrition: parsedNutrition });
 	}
 
 	async function runSearch(query: string) {
@@ -350,7 +352,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 			<section className="ingredient-form-section">
 				<h4>Informations générales</h4>
 
-				<div className="ingredient-form-field">
+				<div className="ingredient-form-field ingredient-form-field-wide">
 					<label>Nom *</label>
 					<input
 						value={name}
@@ -439,6 +441,15 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 						value={possibleForms}
 						onChange={(e) => setPossibleForms(e.target.value)}
 						placeholder="ex : feuilles, haché, en branches"
+					/>
+				</div>
+				<div className="recipe-made-before-row">
+					<label>Peut être utilisé pour la friture</label>
+					<input
+						type="checkbox"
+						checked={canBeUsedForFrying}
+						onChange={(e) => setCanBeUsedForFrying(e.target.checked)}
+						className="recipe-made-before-checkbox"
 					/>
 				</div>
 			</section>

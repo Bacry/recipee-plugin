@@ -56,6 +56,7 @@ export interface RecipeNutritionResult {
 	totalNutrition: NutritionPer100g;
 	perServingNutrition: NutritionPer100g | null;
 	warnings: string[];
+	fryingInfo: { oilName: string; oilAbsorbedG: number; friedWeightG: number } | null;
 }
 
 // Converts a single ingredient entry's quantity into grams, reading its
@@ -110,7 +111,8 @@ export function computeRecipeNutrition(
 	ingredientsFolder: string,
 	recipesFolder: string,
 	recipe: Recipe,
-	visiting: Set<string> = new Set()
+	visiting: Set<string> = new Set(),
+	fryingAbsorptionPercent: number = 15
 ): RecipeNutritionResult {
 	const warnings: string[] = [];
 	let totalNutrition = emptyNutrition();
@@ -182,6 +184,35 @@ export function computeRecipeNutrition(
 		totalNutrition = addNutrition(totalNutrition, baseNutritionPer100g, grams / 100);
 	}
 
+	let fryingInfo: RecipeNutritionResult['fryingInfo'] = null;
+
+	if (recipe.fryingOilName) {
+		let friedWeightG = 0;
+		for (const entry of recipe.ingredients) {
+			if (!entry.fried || entry.quantity == null) continue;
+			const grams = convertIngredientEntryToGrams(app, ingredientsFolder, entry);
+			if (grams !== null) friedWeightG += grams;
+		}
+
+		if (friedWeightG > 0) {
+			const oilFile = findIngredientFileByName(app, ingredientsFolder, recipe.fryingOilName);
+			if (oilFile instanceof TFile) {
+				const oilFrontmatter = app.metadataCache.getFileCache(oilFile)?.frontmatter;
+				const oilData = readIngredientForCalc(oilFrontmatter);
+				if (oilData) {
+					const oilAbsorbedG = friedWeightG * (fryingAbsorptionPercent / 100);
+					totalNutrition = addNutrition(totalNutrition, oilData.nutritionPer100g, oilAbsorbedG / 100);
+					summedWeightG += oilAbsorbedG;
+					fryingInfo = { oilName: recipe.fryingOilName, oilAbsorbedG, friedWeightG };
+				} else {
+					warnings.push(`Huile de friture "${recipe.fryingOilName}" invalide — absorption non incluse dans le calcul.`);
+				}
+			} else {
+				warnings.push(`Huile de friture "${recipe.fryingOilName}" introuvable — absorption non incluse dans le calcul.`);
+			}
+		}
+	}
+
 	const totalWeightG = recipe.totalWeightG ?? summedWeightG;
 
 	const servingsUnit = findUnit(recipe.servingsLabel);
@@ -193,5 +224,5 @@ export function computeRecipeNutrition(
 		}
 	}
 
-	return { totalWeightG, totalNutrition, perServingNutrition, warnings };
+	return { totalWeightG, totalNutrition, perServingNutrition, warnings, fryingInfo };
 }

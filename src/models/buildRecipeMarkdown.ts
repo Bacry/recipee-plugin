@@ -30,6 +30,9 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			if (entry.form) {
 				lines.push(`    form: ${escapeYamlString(entry.form)}`);
 			}
+			if (entry.fried) {
+				lines.push(`    fried: true`);
+			}
 		}
 	}
 
@@ -62,6 +65,10 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 
 	if (recipe.image) {
 		lines.push(`image: ${escapeYamlString(recipe.image)}`);
+	}
+
+	if (recipe.fryingOilName) {
+		lines.push(`frying_oil_name: ${escapeYamlString(recipe.fryingOilName)}`);
 	}
 
 	if (recipe.totalWeightG != null) {

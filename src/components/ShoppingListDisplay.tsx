@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { ShoppingListItem, ShoppingListRecipeEntry } from '../models/ShoppingList';
 import { AggregationResult } from '../models/aggregateContributions';
 import { parseQuantityString } from '../models/units';
+import { convertQuantity, findUnit, parseQuantityString } from '../models/units';
 
 export interface ResolvedItem {
 	item: ShoppingListItem;
 	shopSection: string;
 	aggregation: AggregationResult;
 	isKnownIngredient: boolean;
+	densityGMl?: number;
+	entityWeightG?: number;
 }
 
 interface ShoppingListDisplayProps {
@@ -39,13 +42,34 @@ function formatQuantity(value: number, unit: string): string {
 	return Number(value.toFixed(2)).toString();
 }
 
-function formatAggregation(aggregation: AggregationResult): string {
+function formatAggregation(resolved: ResolvedItem): string {
+	const { aggregation } = resolved;
 	const parts: string[] = [];
 	const hasRealTotal = aggregation.totalQuantity > 0;
 
 	if (hasRealTotal) {
 		const formatted = formatQuantity(aggregation.totalQuantity, aggregation.totalUnit);
-		parts.push(aggregation.totalUnit ? `${formatted}${aggregation.totalUnit}` : formatted);
+		const withUnit = aggregation.totalUnit ? `${formatted}${aggregation.totalUnit}` : formatted;
+
+		// If the total is expressed in a real unit (not already an entity
+		// count) and we know this ingredient's unit weight, also show an
+		// approximate number of items to buy — e.g. "~2 (300g)" for a
+		// cucumber whose recipe needed 300g total.
+		if (aggregation.totalUnit !== '' && resolved.entityWeightG != null) {
+			const fromUnit = findUnit(aggregation.totalUnit);
+			const entityCount = convertQuantity(aggregation.totalQuantity, fromUnit, null, {
+				densityGMl: resolved.densityGMl,
+				entityWeightG: resolved.entityWeightG,
+			});
+
+			if (entityCount !== null) {
+				parts.push(`~${Math.max(1, Math.ceil(entityCount))} (${withUnit})`);
+			} else {
+				parts.push(withUnit);
+			}
+		} else {
+			parts.push(withUnit);
+		}
 	}
 
 	for (const c of aggregation.unmerged) {
@@ -157,7 +181,7 @@ export function ShoppingListDisplay({
 												</span>
 											)}
 											{resolved.item.complement && ` (${resolved.item.complement})`}
-											{formatAggregation(resolved.aggregation) && ` — ${formatAggregation(resolved.aggregation)}`}
+											{formatAggregation(resolved) && ` — ${formatAggregation(resolved)}`}
 											{resolved.aggregation.ownedSubtractionFailed && (
 												<span className="ingredient-validation-error"> (unité incompatible)</span>
 											)}

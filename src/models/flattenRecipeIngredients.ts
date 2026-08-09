@@ -7,8 +7,9 @@ import { findRecipeFileByName } from './findRecipeFile';
 
 export interface FlattenedIngredient {
 	ingredientName: string;
-	quantity: number;
+	quantity: number | null;
 	unit: string;
+	complement?: string;
 }
 
 export interface FlattenResult {
@@ -32,12 +33,19 @@ export function flattenRecipeIngredients(
 	const ingredients: FlattenedIngredient[] = [];
 
 	for (const entry of recipe.ingredients) {
-		if (entry.quantity == null) continue;
-
 		ingredients.push({
 			ingredientName: entry.ingredientName,
-			quantity: entry.quantity * scaleFactor,
+			quantity: entry.quantity != null ? entry.quantity * scaleFactor : null,
 			unit: entry.unit,
+		});
+	}
+
+	if (recipe.fryingOilName) {
+		ingredients.push({
+			ingredientName: recipe.fryingOilName,
+			quantity: null,
+			unit: '',
+			complement: 'pour friture',
 		});
 	}
 

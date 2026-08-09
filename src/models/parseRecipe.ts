@@ -72,6 +72,15 @@ export function parseRecipeFromFrontmatter(
 		}
 	}
 
+	let fryingOilName: string | undefined;
+	if (frontmatter.frying_oil_name !== undefined && frontmatter.frying_oil_name !== null) {
+		if (typeof frontmatter.frying_oil_name !== 'string') {
+			errors.push('"frying_oil_name" est présent mais n\'est pas un texte valide.');
+		} else {
+			fryingOilName = frontmatter.frying_oil_name;
+		}
+	}
+
 	let totalWeightG: number | undefined;
 	if (frontmatter.total_weight_g !== undefined && frontmatter.total_weight_g !== null) {
 		if (typeof frontmatter.total_weight_g !== 'number' || Number.isNaN(frontmatter.total_weight_g)) {
@@ -174,6 +183,7 @@ export function parseRecipeFromFrontmatter(
 		requiresCooking,
 		madeBeforeTracking,
 		cookingDurationMin,
+		fryingOilName,
 		ingredients,
 		baseRecipes,
 		instructions,
@@ -213,7 +223,13 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 		complement = obj.complement;
 	}
 
-	return { ingredientName: obj.ingredient_name, complement, quantity, unit: obj.unit, form };
+	let fried: boolean | undefined;
+	if (obj.fried !== undefined && obj.fried !== null) {
+		if (typeof obj.fried !== 'boolean') return null;
+		fried = obj.fried;
+	}
+
+	return { ingredientName: obj.ingredient_name, complement, quantity, unit: obj.unit, form, fried };
 }
 
 // Unlike ingredients, quantity is required here (no null case) — a base
@@ -268,6 +284,7 @@ export function parseRecipeTemplate(
 					quantity: typeof obj.quantity === 'number' ? obj.quantity : null,
 					unit: typeof obj.unit === 'string' ? obj.unit : '',
 					form: typeof obj.form === 'string' ? obj.form : undefined,
+					fried: typeof obj.fried === 'boolean' ? obj.fried : undefined,
 				};
 			})
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
@@ -283,6 +300,7 @@ export function parseRecipeTemplate(
 			})
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
 		: [];
+	const fryingOilName = typeof frontmatter?.frying_oil_name === 'string' ? frontmatter.frying_oil_name : undefined;
 
 	return {
 		name: fileName,
@@ -292,6 +310,7 @@ export function parseRecipeTemplate(
 		cookingDurationMin,
 		requiresCooking,
 		madeBeforeTracking,
+		fryingOilName,
 		ingredients,
 		baseRecipes,
 		instructions,

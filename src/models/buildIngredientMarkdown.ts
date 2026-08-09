@@ -20,6 +20,7 @@ export function buildIngredientMarkdown(values: IngredientFormValues): string {
 	}
 
 	lines.push(`shop_section: ${values.shopSection}`);
+	lines.push(`can_be_used_for_frying: ${values.canBeUsedForFrying}`);
 
 	const forms = values.possibleForms
 		.split(',')

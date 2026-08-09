@@ -111,6 +111,17 @@ export function parseIngredientFromFrontmatter(
 		}
 	}
 
+	let canBeUsedForFrying = false;
+	if (frontmatter.can_be_used_for_frying !== undefined && frontmatter.can_be_used_for_frying !== null) {
+		if (typeof frontmatter.can_be_used_for_frying === 'boolean') {
+			canBeUsedForFrying = frontmatter.can_be_used_for_frying;
+		} else if (frontmatter.can_be_used_for_frying === 'true' || frontmatter.can_be_used_for_frying === 'false') {
+			canBeUsedForFrying = frontmatter.can_be_used_for_frying === 'true';
+		} else {
+			errors.push('"can_be_used_for_frying" est présent mais n\'est pas un booléen valide.');
+		}
+	}
+
 	if (errors.length > 0) {
 		return { ingredient: null, errors, warnings };
 	}
@@ -125,6 +136,7 @@ export function parseIngredientFromFrontmatter(
 		brand,
 		possible_forms: possibleForms,
 		diet_flags: dietFlags,
+		can_be_used_for_frying: canBeUsedForFrying,
 		nutrition_per_100g: parsedNutrition,
 	};
 

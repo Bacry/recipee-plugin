@@ -14,6 +14,7 @@ export function ingredientToFormValues(ingredient: Ingredient): IngredientFormVa
 		possibleForms: ingredient.possible_forms?.join(', ') ?? '',
 		brand: ingredient.brand ?? '',
 		dietFlags: ingredient.diet_flags?.join(', ') ?? '',
+		canBeUsedForFrying: ingredient.can_be_used_for_frying,
 		nutrition: ingredient.nutrition_per_100g,
 	};
 }

@@ -1,4 +1,5 @@
 import { NutritionPer100g } from '../models/Ingredient';
+import { findUnit, roundQuantityForUnit } from '../models/units';
 
 interface NutritionTableProps {
 	per100g: NutritionPer100g;
@@ -9,6 +10,10 @@ interface NutritionTableProps {
 	warnings: string[];
 	measuredTotalWeightG?: number; // the recipe's manually measured weight, if set
 	per100gReliable: boolean; // false = cuisson + pas de poids mesuré → colonne "Pour 100g" non fiable
+	fryingInfo: { oilName: string; oilAbsorbedG: number; friedWeightG: number } | null;
+	factor: number;
+	absorptionPercent: number;
+	onAbsorptionPercentChange: (value: number) => void;
 }
 
 const ROWS: { key: keyof NutritionPer100g; label: string; unit: string; indent?: boolean }[] = [
@@ -27,15 +32,30 @@ function fmt(value: number): string {
 	return Number(value.toFixed(1)).toString();
 }
 
-export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG, per100gReliable }: NutritionTableProps) {
+export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG, per100gReliable, fryingInfo, factor,
+								   absorptionPercent, onAbsorptionPercentChange }: NutritionTableProps) {
 	return (
 		<div>
 			<h4>
 				Nutrition{' '}
 				{measuredTotalWeightG != null
-					? `(${totalWeightG}g mesuré)`
-					: `(${totalWeightG}g calculé)`}
+					? `(poids total mesuré : ${totalWeightG}g)`
+					: `(poids total calulé : ${totalWeightG}g)`}
 			</h4>
+			{fryingInfo && (
+				<p className="recipe-frying-hypothesis">
+					Hypothèse d'absorption de {fryingInfo.oilName} par les aliments frits :{' '}
+					<input
+						type="number"
+						min={0}
+						max={100}
+						value={absorptionPercent}
+						onChange={(e) => onAbsorptionPercentChange(Number(e.target.value) || 0)}
+						className="recipe-frying-percent-input"
+					/>
+					% (= {roundQuantityForUnit(fryingInfo.oilAbsorbedG * factor, findUnit('g'))}g de {fryingInfo.oilName})
+				</p>
+			)}
 			{!per100gReliable && (
 				<p className="ingredient-validation-warnings">
 					Cette recette nécessite une cuisson et son poids final n'a pas été mesuré — la colonne "Pour 100g" n'est pas fiable.

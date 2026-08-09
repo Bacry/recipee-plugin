@@ -34,10 +34,11 @@ export async function removeRecipeFromShoppingList(
 			...item,
 			contributions: item.contributions.filter((c) => c.source !== source),
 		}))
-		// Drop items that end up with zero contributions left — nothing to
-		// buy for them anymore, and they weren't manually added (a manual
-		// addition with a quantity would have its own "manual" contribution
-		// still present, so it survives this filter untouched).
+		// Drop items that end up with zero contributions left — nothing left to
+		// buy for them anymore. Since every addition (even quantity-less ones)
+		// now creates a tagged contribution, this only removes items that were
+		// EXCLUSIVELY added by the recipe being cancelled — an item shared with
+		// another still-present recipe keeps its other contribution(s) and survives.
 		.filter((item) => item.contributions.length > 0);
 
 	const updatedRecipes = list.recipes.filter((r) => r.id !== recipeEntryId);

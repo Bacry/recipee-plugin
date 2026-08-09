@@ -71,6 +71,7 @@ export function RecipeDetails({
 								  onMarkCookedToday,
 							  }: RecipeDetailsProps) {
 	const [servingsInput, setServingsInput] = useState((initialServings ?? recipe.baseServings).toString());
+	const [absorptionPercent, setAbsorptionPercent] = useState(15);
 
 	const prevBaseServingsRef = useRef(recipe.baseServings);
 	useEffect(() => {
@@ -83,7 +84,7 @@ export function RecipeDetails({
 	const servings = Number(servingsInput) || recipe.baseServings;
 	const factor = servings / recipe.baseServings;
 
-	const nutritionResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, recipe);
+	const nutritionResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, recipe, undefined, absorptionPercent);
 
 	const scaledTotal = { ...nutritionResult.totalNutrition };
 	for (const key of Object.keys(scaledTotal) as (keyof typeof scaledTotal)[]) {
@@ -192,11 +193,14 @@ export function RecipeDetails({
 			{(() => {
 				type UnifiedEntry =
 					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string }
-					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string };
+					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean };
 
 				const unifiedEntries: UnifiedEntry[] = [
 					...recipe.baseRecipes.map((entry): UnifiedEntry => ({ kind: 'baseRecipe', ...entry })),
 					...recipe.ingredients.map((entry): UnifiedEntry => ({ kind: 'ingredient', ...entry })),
+					...(recipe.fryingOilName
+						? [{ kind: 'ingredient' as const, ingredientName: recipe.fryingOilName, quantity: null, unit: '', isFryingOil: true }]
+						: []),
 				];
 
 				return (
@@ -242,6 +246,7 @@ export function RecipeDetails({
 							)}
 						{entry.complement ? ' (' + entry.complement + ')' : ''}
 						{entry.form ? ' (' + entry.form + ')' : ''}
+									{entry.isFryingOil ? ' (pour la friture)' : ''}
 							</li>
 							);
 						})}
@@ -279,6 +284,10 @@ export function RecipeDetails({
 	warnings={nutritionResult.warnings}
 	measuredTotalWeightG={recipe.totalWeightG}
 	per100gReliable={!recipe.requiresCooking || recipe.totalWeightG != null}
+	fryingInfo={nutritionResult.fryingInfo}
+	factor={factor}
+	absorptionPercent={absorptionPercent}
+	onAbsorptionPercentChange={setAbsorptionPercent}
 />
 </div>
 );

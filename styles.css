@@ -1192,3 +1192,56 @@
 	appearance: auto;
 	-webkit-appearance: auto;
 }
+
+.recipe-frying-oil-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.recipe-frying-oil-row label {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	margin: 0;
+	flex-shrink: 0;
+	margin-right: 0.75rem;
+}
+
+.recipe-frying-oil-row select {
+	flex: 1;
+	width: 100%;
+	max-width: none;
+}
+
+.recipe-ingredient-fried,
+.recipe-ingredient-fried-active {
+	padding: 0.15rem 0.6rem;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	cursor: pointer;
+	flex-shrink: 0;
+	white-space: nowrap;
+	opacity: 0.5;
+}
+
+.recipe-ingredient-fried-active {
+	opacity: 1;
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
+
+.recipe-ingredient-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex-shrink: 0;
+}
+
+.recipe-frying-percent-input {
+	width: 3.5rem;
+	max-width: 3.5rem !important;
+	text-align: center;
+}

@@ -36,9 +36,17 @@ export async function addSingleIngredientToShoppingList(
 			item.complement.trim().toLowerCase() === normalizedComplement
 	);
 
-	const newContribution = addition.quantity != null
-		? [{ quantity: addition.quantity, unit: addition.unit, source: addition.source }]
-		: [];
+// Even a "no amount" addition (quantity null — e.g. "vanille, à volonté")
+// still creates a contribution, using 0 as a sentinel quantity. This is
+// what lets removeRecipeFromShoppingList later know which recipe added
+// this item, so it only removes it if THAT recipe is the one being
+// cancelled — without this, quantity-less items would have no traceable
+// source at all and could get wrongly deleted by any recipe removal.
+	const newContribution = [{
+		quantity: addition.quantity ?? 0,
+		unit: addition.unit,
+		source: addition.source,
+	}];
 
 	if (existingIndex >= 0) {
 		const updated = [...items];

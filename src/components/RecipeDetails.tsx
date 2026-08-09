@@ -4,6 +4,7 @@ import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
 import { computeRecipeNutrition } from '../models/computeRecipeNutrition';
 import { NutritionTable } from './NutritionTable';
+import { findUnit, roundQuantityForUnit } from '../models/units';
 
 interface RecipeDetailsProps {
 	app: App;
@@ -28,8 +29,9 @@ function formatDuration(minutes: number): string {
 
 function formatScaledQuantity(quantity: number, unit: string, factor: number): string {
 	const scaled = quantity * factor;
-	if (unit === '') return Math.ceil(scaled).toString();
-	return Number(scaled.toFixed(2)).toString();
+	const unitObj = unit === '' ? null : findUnit(unit);
+	const rounded = roundQuantityForUnit(scaled, unitObj);
+	return Number(rounded.toFixed(4)).toString(); // toFixed(4) puis toString() évite les artefacts de virgule flottante (ex: 2.0000000004) sans réintroduire un arrondi fixe
 }
 
 function isUrl(text: string): boolean {

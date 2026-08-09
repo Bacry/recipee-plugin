@@ -2,21 +2,26 @@ export interface Unit {
 	name: string; // canonical short name, e.g. "g", "kg", "cl"
 	ratioToBaseline: number; // ratio to 1g if mass, ratio to 1mL if volume
 	isVolume: boolean;
+	autoConvertTo?: string; // si présent, cette unité ne doit jamais être stockée telle quelle — toujours convertie vers l'unité nommée ici (ou vers un poids si la densité de l'ingrédient est connue)
+	roundToNearest: number; // ex: 1 = arrondi à l'entier, 0.1 = arrondi au dixième, 0
 }
 
 // Ratio is:
 // - the ratio to 1g if the unit measures mass
 // - the ratio to 1mL if the unit measures volume
 export const UNITS: Unit[] = [
-	{ name: 'kg', ratioToBaseline: 1000, isVolume: false },
-	{ name: 'g', ratioToBaseline: 1, isVolume: false },
-	{ name: 'l', ratioToBaseline: 1000, isVolume: true },
-	{ name: 'dl', ratioToBaseline: 100, isVolume: true },
-	{ name: 'cl', ratioToBaseline: 10, isVolume: true },
-	{ name: 'ml', ratioToBaseline: 1, isVolume: true },
-	{ name: 'cs', ratioToBaseline: 15, isVolume: true }, // cuillère à soupe
-	{ name: 'cc', ratioToBaseline: 5, isVolume: true }, // cuillère à café
-	{ name: 'dash', ratioToBaseline: 0.9, isVolume: true }, // bartending convention: ~0.9mL, varies by bottle/pourer
+	{ name: 'kg', ratioToBaseline: 1000, isVolume: false, roundToNearest: 0.01 },
+	{ name: 'g', ratioToBaseline: 1, isVolume: false, roundToNearest: 1 },
+	{ name: 'l', ratioToBaseline: 1000, isVolume: true, roundToNearest: 0.01 },
+	{ name: 'dl', ratioToBaseline: 100, isVolume: true, roundToNearest: 0.1 },
+	{ name: 'cl', ratioToBaseline: 10, isVolume: true, roundToNearest: 0.1 },
+	{ name: 'ml', ratioToBaseline: 1, isVolume: true, roundToNearest: 1 },
+	{ name: 'cs', ratioToBaseline: 15, isVolume: true, roundToNearest: 1 },
+	{ name: 'cc', ratioToBaseline: 5, isVolume: true, roundToNearest: 1 },
+	{ name: 'dash', ratioToBaseline: 0.9, isVolume: true, roundToNearest: 1 },
+	{ name: 'cup', ratioToBaseline: 236.588, isVolume: true, autoConvertTo: 'cl', roundToNearest: 0.1 },
+	{ name: 'tbsp', ratioToBaseline: 14.787, isVolume: true, autoConvertTo: 'cs', roundToNearest: 1 },
+	{ name: 'tsp', ratioToBaseline: 4.929, isVolume: true, autoConvertTo: 'cc', roundToNearest: 1 },
 ];
 
 // Looks up a unit by its exact name (case-insensitive). Returns null if unknown —
@@ -119,4 +124,14 @@ export function parseQuantityString(input: string): ParsedQuantity | null {
 	if (!unit) return null;
 
 	return { quantity, unit };
+}
+
+// Rounds a quantity according to its unit's own precision rule (e.g. grams
+// round to whole numbers, cl to tenths, cs/cc to quarters). Falls back to a
+// generic 2-decimal rounding for entities (unit === null), since they have
+// no rounding rule of their own — a "3.7 eggs" situation only ever arises
+// from a scaling factor, and 2 decimals is a reasonable generic default.
+export function roundQuantityForUnit(quantity: number, unit: Unit | null): number {
+	const step = unit?.roundToNearest ?? 0.01;
+	return Math.round(quantity / step) * step;
 }

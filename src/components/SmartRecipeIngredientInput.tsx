@@ -3,6 +3,7 @@ import { App } from 'obsidian';
 import { parseQuantityString, ParsedQuantity } from '../models/units';
 import { searchIngredientNames } from '../models/searchIngredientNames';
 import { RecipeIngredientEntry } from '../models/recipe';
+import { normalizeParsedQuantity } from '../models/normalizeQuantityUnit';
 
 interface SmartRecipeIngredientInputProps {
 	app: App;
@@ -58,11 +59,15 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, onAdd }: Sm
 	}
 
 	function finalize(complementValue: string, parsedQuantity: ParsedQuantity | null) {
+		const normalized = parsedQuantity
+			? normalizeParsedQuantity(app, ingredientsFolder, name, parsedQuantity)
+			: null;
+
 		onAdd({
 			ingredientName: name,
 			complement: complementValue.trim() || undefined,
-			quantity: parsedQuantity?.quantity ?? null,
-			unit: parsedQuantity?.unit?.name ?? '',
+			quantity: normalized?.quantity ?? null,
+			unit: normalized?.unit?.name ?? '',
 		});
 		reset();
 	}

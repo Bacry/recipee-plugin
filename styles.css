@@ -1075,6 +1075,18 @@
 	align-items: center;
 	gap: 0.3rem;
 	font-size: 0.9rem;
+	white-space: nowrap;
+}
+
+.manage-lists-preset-checkbox input[type="checkbox"] {
+	width: 1rem !important;
+	max-width: 1rem !important;
+	height: 1rem !important;
+	padding: 0 !important;
+	margin: 0;
+	flex-shrink: 0;
+	appearance: auto;
+	-webkit-appearance: auto;
 }
 
 .recipe-list-preset-item {

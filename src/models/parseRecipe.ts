@@ -202,6 +202,18 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 	if (typeof raw !== 'object' || raw === null) return null;
 	const obj = raw as Record<string, unknown>;
 
+
+	if (obj.is_section_header === true) {
+		if (typeof obj.section_title !== 'string' || obj.section_title.trim() === '') return null;
+		return {
+			ingredientName: '',
+			quantity: null,
+			unit: '',
+			isSectionHeader: true,
+			sectionTitle: obj.section_title,
+		};
+	}
+
 	if (typeof obj.ingredient_name !== 'string' || obj.ingredient_name.trim() === '') return null;
 	if (typeof obj.unit !== 'string') return null;
 
@@ -271,12 +283,22 @@ export function parseRecipeTemplate(
 	const tags = Array.isArray(frontmatter?.tags)
 		? frontmatter.tags.filter((t): t is string => typeof t === 'string')
 		: [];
-
 	const ingredients = Array.isArray(frontmatter?.ingredients)
 		? frontmatter.ingredients
 			.map((raw: unknown) => {
 				if (typeof raw !== 'object' || raw === null) return null;
 				const obj = raw as Record<string, unknown>;
+
+				if (obj.is_section_header === true) {
+					return {
+						ingredientName: '',
+						quantity: null,
+						unit: '',
+						isSectionHeader: true,
+						sectionTitle: typeof obj.section_title === 'string' ? obj.section_title : '',
+					};
+				}
+
 				if (typeof obj.ingredient_name !== 'string') return null;
 				return {
 					ingredientName: obj.ingredient_name,

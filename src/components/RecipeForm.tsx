@@ -175,9 +175,32 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		setIngredients((prev) => prev.filter((_, i) => i !== index));
 	}
 
+	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+	function reorderIngredients(fromIndex: number, toIndex: number) {
+		setIngredients((prev) => {
+			const next = [...prev];
+			const [moved] = next.splice(fromIndex, 1);
+			next.splice(toIndex, 0, moved);
+			return next;
+		});
+	}
+
 	function toggleFried(index: number) {
 		setIngredients((prev) =>
 			prev.map((entry, i) => (i === index ? { ...entry, fried: !entry.fried } : entry))
+		);
+	}
+
+	function addSection() {
+		setIngredients((prev) => [
+			...prev,
+			{ ingredientName: '', quantity: null, unit: '', isSectionHeader: true, sectionTitle: '' },
+		]);
+	}
+
+	function updateSectionTitle(index: number, title: string) {
+		setIngredients((prev) =>
+			prev.map((entry, i) => (i === index ? { ...entry, sectionTitle: title } : entry))
 		);
 	}
 
@@ -463,18 +486,57 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 
 			<section className="ingredient-form-section">
 				<h4>Ingrédients</h4>
+				<button type="button" onClick={addSection} className="recipe-add-section-button">
+					+ Ajouter une section
+				</button>
+				{ingredients.length > 0 && (() => {
+					let currentlyInSection = false;
+					return (
+						<ul>
+							{ingredients.map((entry, index) => {
+								if (entry.isSectionHeader) {
+									currentlyInSection = true;
+								}
+								const isIndented = !entry.isSectionHeader && currentlyInSection;
 
-				{ingredients.length > 0 && (
-					<ul>
-						{ingredients.map((entry, index) => (
-							<li key={index}>
-	<span>
-		{entry.ingredientName}
-		{entry.complement ? ` (${entry.complement})` : ''}
-		{entry.quantity != null ? ` — ${entry.quantity}${entry.unit}` : ''}
-	</span>
+								return (
+							<li
+								key={index}
+								draggable
+								onDragStart={() => setDraggedIndex(index)}
+								onDragOver={(e) => e.preventDefault()}
+								onDrop={(e) => {
+									e.preventDefault();
+									if (draggedIndex === null || draggedIndex === index) return;
+									reorderIngredients(draggedIndex, index);
+									setDraggedIndex(null);
+								}}
+								onDragEnd={() => setDraggedIndex(null)}
+								className={
+									(draggedIndex === index ? 'recipe-ingredient-dragging ' : '') +
+									(entry.isSectionHeader ? 'recipe-section-header-row ' : '') +
+									(isIndented ? 'recipe-ingredient-indented' : '')
+								}
+							>
+								<span className="recipe-ingredient-drag-handle" title="Glisser pour réordonner">⠿</span>
+
+								{entry.isSectionHeader ? (
+									<input
+										value={entry.sectionTitle ?? ''}
+										onChange={(e) => updateSectionTitle(index, e.target.value)}
+										placeholder="Titre de la section (ex : Pour la pâte)"
+										className="recipe-section-title-input"
+									/>
+								) : (
+									<span className="recipe-ingredient-name">
+				{entry.ingredientName}
+										{entry.complement ? ` (${entry.complement})` : ''}
+										{entry.quantity != null ? ` — ${entry.quantity}${entry.unit}` : ''}
+			</span>
+								)}
+
 								<div className="recipe-ingredient-actions">
-									{fryingOilName && (
+									{!entry.isSectionHeader && fryingOilName && (
 										<button
 											type="button"
 											onClick={() => toggleFried(index)}
@@ -487,9 +549,11 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 									<button type="button" onClick={() => handleRemoveIngredient(index)} title="Retirer" className="recipe-ingredient-remove">✕</button>
 								</div>
 							</li>
-						))}
-					</ul>
-				)}
+								);
+							})}
+						</ul>
+					);
+				})()}
 
 				<SmartRecipeIngredientInput
 					app={app}

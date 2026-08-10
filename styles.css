@@ -108,13 +108,15 @@
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 }
-
 .ingredient-form-section li {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.1rem 0;
+}
+.recipe-ingredient-name {
+	flex: 1;
+	text-align: left;
 }
 
 /* 2-column grid for Type / Shop section / Density / Entity weight. */
@@ -1244,4 +1246,91 @@
 	width: 3.5rem;
 	max-width: 3.5rem !important;
 	text-align: center;
+}
+
+
+.recipe-unit-picker-wrapper {
+	position: relative;
+	display: inline-block;
+}
+
+.recipe-unit-picker-menu {
+	min-width: 140px;
+	white-space: nowrap;
+}
+
+.recipe-quantity-clickable {
+	cursor: pointer;
+	border-bottom: 1px dotted var(--text-faint);
+}
+
+@media (hover: hover) {
+	.recipe-quantity-clickable:hover {
+		border-bottom-color: var(--text-muted);
+		color: var(--text-normal);
+	}
+}
+
+
+.recipe-ingredient-drag-handle {
+	cursor: grab;
+	color: var(--text-faint);
+	flex-shrink: 0;
+	margin-right: 0.3rem;
+}
+
+.recipe-ingredient-drag-handle:active {
+	cursor: grabbing;
+}
+
+.recipe-ingredient-dragging {
+	opacity: 0.4;
+}
+
+.recipe-add-section-button {
+	margin-bottom: 0.75rem;
+	padding: 0.3rem 0.7rem;
+	font-size: 0.85rem;
+	border-radius: 4px;
+	border: 1px dashed var(--background-modifier-border);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.recipe-add-section-button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.recipe-section-header-row {
+	margin-top: 0.5rem;
+	padding-top: 0.4rem;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.recipe-section-title-input {
+	flex: 1;
+	font-weight: 600;
+	border: none !important;
+	background: transparent !important;
+	padding: 0 !important;
+}
+
+.recipe-section-header-item {
+	list-style: none;
+	margin: 0.6rem 0 0.3rem -1.5em;
+	font-weight: 600;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.recipe-ingredient-indented {
+	margin-left: 1.5rem;
+}
+
+.recipe-section-indent {
+	margin-left: 1.5rem;
 }

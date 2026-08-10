@@ -119,6 +119,7 @@ export function computeRecipeNutrition(
 	let summedWeightG = 0;
 
 	for (const entry of recipe.ingredients) {
+		if (entry.isSectionHeader) continue;
 		if (entry.quantity == null) continue;
 
 		const file = findIngredientFileByName(app, ingredientsFolder, entry.ingredientName)

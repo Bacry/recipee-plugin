@@ -4,7 +4,10 @@ import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
 import { computeRecipeNutrition } from '../models/computeRecipeNutrition';
 import { NutritionTable } from './NutritionTable';
-import { findUnit, roundQuantityForUnit } from '../models/units';
+import { findIngredientFileByName } from '../models/findIngredientFile';
+import { readIngredientForCalc } from '../models/computeRecipeNutrition';
+import { findUnit, roundQuantityForUnit, convertQuantity, UNITS, Unit, formatRoundedQuantity } from '../models/units';
+
 
 interface RecipeDetailsProps {
 	app: App;
@@ -72,6 +75,9 @@ export function RecipeDetails({
 							  }: RecipeDetailsProps) {
 	const [servingsInput, setServingsInput] = useState((initialServings ?? recipe.baseServings).toString());
 	const [absorptionPercent, setAbsorptionPercent] = useState(15);
+	const ENTITY_SENTINEL = '__entity__';
+	const [openUnitMenuIndex, setOpenUnitMenuIndex] = useState<number | null>(null);
+	const [unitOverrides, setUnitOverrides] = useState<Record<number, string>>({});
 
 	const prevBaseServingsRef = useRef(recipe.baseServings);
 	useEffect(() => {
@@ -102,6 +108,135 @@ export function RecipeDetails({
 	function formatCookedDate(isoDate: string): string {
 		const date = new Date(isoDate + 'T00:00:00');
 		return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+	}
+
+	function getIngredientData(ingredientName: string) {
+		const file = findIngredientFileByName(app, ingredientsFolder, ingredientName);
+		if (!file) return null;
+		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
+		return readIngredientForCalc(frontmatter);
+	}
+
+	interface UnitOption {
+		key: string;
+		unit: Unit | null;
+		quantity: number;
+	}
+
+// Every unit this ingredient's quantity could be converted to right now,
+// given its known density/entity weight — excludes units flagged
+// autoConvertTo (cup/tbsp/tsp are input conveniences, never a display
+// target) and the ingredient's current unit itself.
+	function getAvailableUnitOptions(entry: { ingredientName: string; quantity: number; unit: string }): UnitOption[] {
+		const originalUnit = entry.unit === '' ? null : findUnit(entry.unit);
+		const ingredientData = getIngredientData(entry.ingredientName);
+		if (!ingredientData) return [];
+
+		const candidates: (Unit | null)[] = originalUnit
+			? UNITS.filter((u) => !u.autoConvertTo && !u.excludeFromPicker && u.isVolume !== originalUnit.isVolume)
+			: UNITS.filter((u) => !u.autoConvertTo && !u.excludeFromPicker);
+		if (ingredientData.entityWeightG != null) candidates.push(null);
+
+		const options: UnitOption[] = [];
+		for (const candidate of candidates) {
+			if ((candidate?.name ?? null) === (originalUnit?.name ?? null)) continue;
+
+			const converted = convertQuantity(entry.quantity, originalUnit, candidate, {
+				densityGMl: ingredientData.densityGMl,
+				entityWeightG: ingredientData.entityWeightG,
+			});
+			if (converted === null) continue;
+
+			const rounded = roundQuantityForUnit(converted * factor, candidate);
+			if (rounded < 1) continue;
+
+			options.push({
+				key: candidate?.name ?? ENTITY_SENTINEL,
+				unit: candidate,
+				quantity: rounded,
+			});
+		}
+
+		return options;
+	}
+
+	function renderIngredientQuantity(entry: { ingredientName: string; quantity: number | null; unit: string }, index: number) {
+		if (entry.quantity == null) return '';
+
+		const originalUnit = entry.unit === '' ? null : findUnit(entry.unit);
+		const override = unitOverrides[index];
+		const ingredientData = getIngredientData(entry.ingredientName);
+
+		let displayQuantity: number;
+		let displayUnitName: string;
+
+		if (override && ingredientData) {
+			const targetUnit = override === ENTITY_SENTINEL ? null : findUnit(override);
+			const converted = convertQuantity(entry.quantity, originalUnit, targetUnit, {
+				densityGMl: ingredientData.densityGMl,
+				entityWeightG: ingredientData.entityWeightG,
+			});
+			if (converted !== null) {
+				displayQuantity = roundQuantityForUnit(converted * factor, targetUnit);
+				displayUnitName = targetUnit?.name ?? '';
+			} else {
+				displayQuantity = Number(formatScaledQuantity(entry.quantity, entry.unit, factor));
+				displayUnitName = entry.unit;
+			}
+		} else {
+			displayQuantity = Number(formatScaledQuantity(entry.quantity, entry.unit, factor));
+			displayUnitName = entry.unit;
+		}
+
+		const options = getAvailableUnitOptions(entry);
+		const quantityText = `${formatRoundedQuantity(displayQuantity)}${displayUnitName}`;
+		const suffix = displayUnitName ? ' de' : '';
+
+		if (options.length === 0) {
+			return quantityText + suffix;
+		}
+
+		return (
+			<span className="recipe-unit-picker-wrapper">
+		<span
+			className="recipe-quantity-clickable"
+			onClick={(e) => {
+				e.preventDefault();
+				setOpenUnitMenuIndex(openUnitMenuIndex === index ? null : index);
+			}}
+		>
+			{quantityText}
+		</span>
+				{suffix}
+				{openUnitMenuIndex === index && (
+					<ul className="smart-shopping-suggestions recipe-unit-picker-menu">
+						<li
+							onClick={() => {
+								setUnitOverrides((prev) => {
+									const next = { ...prev };
+									delete next[index];
+									return next;
+								});
+								setOpenUnitMenuIndex(null);
+							}}
+						>
+							{formatRoundedQuantity(Number(formatScaledQuantity(entry.quantity!, entry.unit, factor)))}{entry.unit} (original)
+						</li>
+						{options.map((opt) => (
+							<li
+								key={opt.key}
+								onClick={() => {
+									setUnitOverrides((prev) => ({ ...prev, [index]: opt.key }));
+									setOpenUnitMenuIndex(null);
+								}}
+							>
+								{formatRoundedQuantity(opt.quantity)}{opt.unit?.name ?? ' (pièce)'}
+							</li>
+						))}
+					</ul>
+				)}
+	</span>
+		);
 	}
 
 	return (
@@ -193,8 +328,7 @@ export function RecipeDetails({
 			{(() => {
 				type UnifiedEntry =
 					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string }
-					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean };
-
+					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string };
 				const unifiedEntries: UnifiedEntry[] = [
 					...recipe.baseRecipes.map((entry): UnifiedEntry => ({ kind: 'baseRecipe', ...entry })),
 					...recipe.ingredients.map((entry): UnifiedEntry => ({ kind: 'ingredient', ...entry })),
@@ -206,6 +340,13 @@ export function RecipeDetails({
 				return (
 					<ul>
 						{unifiedEntries.map((entry, index) => {
+							if (entry.kind === 'ingredient' && entry.isSectionHeader) {
+								return (
+									<li key={index} className="recipe-section-header-item">
+										{entry.sectionTitle}
+									</li>
+								);
+							}
 							if (entry.kind === 'baseRecipe') {
 								const scaled = entry.quantity * factor;
 								return (
@@ -230,9 +371,7 @@ export function RecipeDetails({
 
 							return (
 								<li key={index}>
-									{entry.quantity != null
-										? formatScaledQuantity(entry.quantity, entry.unit, factor) + entry.unit + (entry.unit ? ' de ' : ' ')
-										: ''}
+									{renderIngredientQuantity(entry, index)}{' '}
 									{showAsLink ? (
 									<a
 											href="#"
@@ -267,7 +406,7 @@ export function RecipeDetails({
 				<h4>Historique</h4>
 				<button onClick={onMarkCookedToday} title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
 			</div>
-			<p>
+			<p className="recipe-section-indent">
 				{recipe.cookedDates.length === 0
 					? (recipe.madeBeforeTracking
 						? 'Déjà réalisée plusieurs fois par le passé (dates non enregistrées).'

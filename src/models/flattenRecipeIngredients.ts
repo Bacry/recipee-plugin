@@ -33,6 +33,7 @@ export function flattenRecipeIngredients(
 	const ingredients: FlattenedIngredient[] = [];
 
 	for (const entry of recipe.ingredients) {
+		if (entry.isSectionHeader) continue;
 		ingredients.push({
 			ingredientName: entry.ingredientName,
 			quantity: entry.quantity != null ? entry.quantity * scaleFactor : null,

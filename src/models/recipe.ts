@@ -7,6 +7,8 @@ export interface RecipeIngredientEntry {
 	form?: string;
 	complement?: string; // free text, e.g. a specific brand ("Gordon's") — not used to identify the ingredient itself
 	fried?: boolean;
+	isSectionHeader?: boolean; // si vrai, cette entrée n'est pas un ingrédient mais un titre de section (ex: "Pour la pâte") — les autres champs sont ignorés
+	sectionTitle?: string;
 }
 
 // A reference to another recipe (tagged "base") used as a component of this

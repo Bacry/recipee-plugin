@@ -21,6 +21,12 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 	} else {
 		lines.push('ingredients:');
 		for (const entry of recipe.ingredients) {
+			if (entry.isSectionHeader) {
+				lines.push(`  - is_section_header: true`);
+				lines.push(`    section_title: ${escapeYamlString(entry.sectionTitle ?? '')}`);
+				continue;
+			}
+
 			lines.push(`  - ingredient_name: ${escapeYamlString(entry.ingredientName)}`);
 			if (entry.complement) {
 				lines.push(`    complement: ${escapeYamlString(entry.complement)}`);

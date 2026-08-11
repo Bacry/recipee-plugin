@@ -55,6 +55,15 @@ export class RecipeListView extends ItemView {
 		this.render();
 	}
 
+	private async togglePinnedTag(tag: string) {
+		const current = this.plugin.settings.pinnedTags;
+		this.plugin.settings.pinnedTags = current.includes(tag)
+			? current.filter((t) => t !== tag)
+			: [...current, tag];
+		await this.plugin.saveSettings();
+		this.render();
+	}
+
 	private toggleTagMenu() {
 		this.tagMenuOpen = !this.tagMenuOpen;
 		this.render();
@@ -311,40 +320,13 @@ export class RecipeListView extends ItemView {
 					</div>
 
 					<div className="recipe-list-filter-buttons-row">
-						{allTags.length > 0 && (
-							<div className="recipe-list-tag-menu-wrapper">
-								<button
-									type="button"
-									onClick={() => this.toggleTagMenu()}
-									className="recipe-list-tag-menu-button"
-								>
-									Tags {this.selectedTags.size > 0 ? `(${this.selectedTags.size})` : ''}
-								</button>
-
-								{this.tagMenuOpen && (
-									<ul className="recipe-list-tag-menu">
-										{allTags.map((tag) => (
-											<li
-												key={tag}
-												onClick={() => this.toggleTag(tag)}
-												className="recipe-list-tag-menu-item"
-											>
-												<input type="checkbox" checked={this.selectedTags.has(tag)} readOnly />
-												{tag}
-											</li>
-										))}
-									</ul>
-								)}
-							</div>
-						)}
-
 						<div className="recipe-list-tag-menu-wrapper">
 							<button
 								type="button"
 								onClick={() => this.toggleDietMenu()}
 								className="recipe-list-tag-menu-button"
 							>
-								Sans... {this.excludedDietFlags.size > 0 ? `(${this.excludedDietFlags.size})` : ''}
+								Contraintes {this.excludedDietFlags.size > 0 ? `(${this.excludedDietFlags.size})` : ''}
 							</button>
 
 							{this.dietMenuOpen && (
@@ -365,12 +347,61 @@ export class RecipeListView extends ItemView {
 											className="recipe-list-tag-menu-item"
 										>
 											<input type="checkbox" checked={this.excludedDietFlags.has(flag)} readOnly />
-											{flag}
+											sans {flag}
 										</li>
 									))}
 								</ul>
 							)}
 						</div>
+
+						{allTags.length > 0 && (
+							<div className="recipe-list-tag-menu-wrapper recipe-list-tags-wrapper">
+								<button
+									type="button"
+									onClick={() => this.toggleTagMenu()}
+									className="recipe-list-tag-menu-button"
+								>
+									Tags {this.selectedTags.size > 0 ? `(${this.selectedTags.size})` : ''}
+								</button>
+
+								{this.tagMenuOpen && (
+									<ul className="recipe-list-tag-menu">
+										{allTags.map((tag) => (
+											<li
+												key={tag}
+												className="recipe-list-tag-menu-item"
+											>
+							<span onClick={() => this.toggleTag(tag)} className="recipe-list-tag-menu-item-label">
+								<input type="checkbox" checked={this.selectedTags.has(tag)} readOnly />
+								{tag}
+							</span>
+												<button
+													type="button"
+													onClick={(e) => { e.stopPropagation(); this.togglePinnedTag(tag); }}
+													className="recipe-list-pin-button"
+													title={this.plugin.settings.pinnedTags.includes(tag) ? 'Désépingler' : 'Épingler'}
+												>
+													{this.plugin.settings.pinnedTags.includes(tag) ? '📌' : '📍'}
+												</button>
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+						)}
+
+						{this.plugin.settings.pinnedTags
+							.filter((tag) => allTags.includes(tag))
+							.map((tag) => (
+								<button
+									key={tag}
+									type="button"
+									onClick={() => this.toggleTag(tag)}
+									className={this.selectedTags.has(tag) ? 'recipe-list-pinned-tag recipe-list-pinned-tag-active' : 'recipe-list-pinned-tag'}
+								>
+									{tag}
+								</button>
+							))}
 					</div>
 
 					<div className="recipe-list-row recipe-list-header-row">

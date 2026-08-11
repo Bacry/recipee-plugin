@@ -881,6 +881,7 @@
 	margin-bottom: 0.75rem;
 }
 
+
 .recipe-list-tag-menu-button {
 	padding: 0.4rem 0.8rem;
 	border-radius: 4px;
@@ -970,6 +971,10 @@
 	min-width: 180px;
 	max-height: 220px;
 	overflow-y: auto;
+}
+
+.recipe-list-tags-wrapper {
+	margin-left: 1.5rem;
 }
 
 .recipe-list-tag-menu-item {
@@ -1431,4 +1436,51 @@
 .markdown-editable-placeholder {
 	color: var(--text-faint);
 	font-style: italic;
+}
+
+.recipe-list-pinned-tag {
+	padding: 0.3rem 0.7rem;
+	font-size: 0.85rem;
+	border-radius: 999px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.recipe-list-pinned-tag:hover {
+	background: var(--background-modifier-hover);
+}
+
+.recipe-list-pinned-tag-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.recipe-list-tag-menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.recipe-list-tag-menu-item-label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex: 1;
+	cursor: pointer;
+}
+
+.recipe-list-pin-button {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0 0.3rem;
+	font-size: 0.85rem;
+	opacity: 0.6;
+}
+
+.recipe-list-pin-button:hover {
+	opacity: 1;
 }

@@ -15,6 +15,7 @@ export interface MyPluginSettings {
 	anthropicModel: string;
 	dietFlags: string[];
 	dietPresets: DietPreset[];
+	pinnedTags: string[];
 	oilIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "huile" (affiche "Peut être utilisé pour la friture" dans le formulaire ingrédient)
 	defaultFryingAbsorptionPercent: number;
 	fruitIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "fruit" (affiche "Rendement en jus")
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 		{ name: 'Végétarien', flags: ['viande', 'poisson', 'crustacés'] },
 		{ name: 'Végan', flags: ['viande', 'poisson', 'crustacés', 'oeuf', 'lactose'] },
 	],
+	pinnedTags: [],
 	oilIngredientTypes: ['oil'],
 	defaultFryingAbsorptionPercent: 15,
 	fruitIngredientTypes: ['fruit juice'],

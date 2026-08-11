@@ -1,13 +1,22 @@
 import { App, TFile } from 'obsidian';
 import { parseIngredientFromFrontmatter } from './parseIngredientFromFrontmatter';
 
-// Lists the names of every ingredient flagged "can be used for frying",
-// for the oil selector in the recipe form's "Friture" section.
+// An ingredient counts as "an oil" purely based on its type — no dedicated
+// field needed, since every ingredient of an oil-flagged type is
+// unconditionally usable for frying.
+export function isOilIngredient(type: string, oilIngredientTypes: string[]): boolean {
+	return oilIngredientTypes.includes(type);
+}
+
+// Lists the names of every ingredient whose type is flagged as an oil type
+// (settings.oilIngredientTypes), for the oil selector in the recipe form's
+// "Friture" section.
 export function listOilIngredients(
 	app: App,
 	ingredientsFolder: string,
 	ingredientTypes: string[],
-	shopSections: string[]
+	shopSections: string[],
+	oilIngredientTypes: string[]
 ): string[] {
 	const files = app.vault
 		.getMarkdownFiles()
@@ -17,7 +26,7 @@ export function listOilIngredients(
 	for (const file of files) {
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const { ingredient } = parseIngredientFromFrontmatter(frontmatter, file.basename, ingredientTypes, shopSections);
-		if (ingredient?.can_be_used_for_frying) {
+		if (ingredient && isOilIngredient(ingredient.type, oilIngredientTypes)) {
 			names.push(ingredient.name);
 		}
 	}

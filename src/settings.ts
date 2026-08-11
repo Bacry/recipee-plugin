@@ -15,6 +15,9 @@ export interface MyPluginSettings {
 	anthropicModel: string;
 	dietFlags: string[];
 	dietPresets: DietPreset[];
+	oilIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "huile" (affiche "Peut être utilisé pour la friture" dans le formulaire ingrédient)
+	defaultFryingAbsorptionPercent: number;
+	fruitIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "fruit" (affiche "Rendement en jus")
 }
 
 export interface DietPreset {
@@ -23,7 +26,7 @@ export interface DietPreset {
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
-	ingredientTypes: ['dairy', 'fish', 'meat', 'vegetable', 'fruit', 'cereal', 'other'],
+	ingredientTypes: ['dairy', 'fish', 'meat', 'vegetable', 'fruit', 'fruit juice', 'cereal', 'other', 'oil'],
 	shopSections: ['dairy', 'fresh', 'frozen', 'bakery', 'pantry', 'produce', 'meat_fish', 'beverages', 'other'],
 	ingredientsFolder: 'Ingredients',
 	usdaApiKey: '',
@@ -37,6 +40,9 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 		{ name: 'Végétarien', flags: ['viande', 'poisson', 'crustacés'] },
 		{ name: 'Végan', flags: ['viande', 'poisson', 'crustacés', 'oeuf', 'lactose'] },
 	],
+	oilIngredientTypes: ['oil'],
+	defaultFryingAbsorptionPercent: 15,
+	fruitIngredientTypes: ['fruit juice'],
 };
 
 
@@ -47,7 +53,46 @@ export class SampleSettingTab extends PluginSettingTab {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
+	private renderCategoryPicker(
+		containerEl: HTMLElement,
+		label: string,
+		settingsKey: 'oilIngredientTypes' | 'fruitIngredientTypes'
+	): void {
+		const wrapper = containerEl.createDiv({ cls: 'recipe-list-tag-menu-wrapper' });
 
+		const updateButtonText = () => {
+			const stored = this.plugin.settings[settingsKey] as string[];
+			const validCount = stored.filter((v) => this.plugin.settings.ingredientTypes.includes(v)).length;
+			button.setText(validCount > 0 ? `${label} (${validCount})` : label);
+		};
+
+		const button = wrapper.createEl('button', { cls: 'recipe-list-tag-menu-button' });
+		updateButtonText();
+
+		const menu = wrapper.createEl('ul', { cls: 'recipe-list-tag-menu' });
+		menu.style.display = 'none';
+
+		for (const type of this.plugin.settings.ingredientTypes) {
+			const item = menu.createEl('li', { cls: 'recipe-list-tag-menu-item' });
+			const itemLabel = item.createEl('label');
+			const checkbox = itemLabel.createEl('input', { type: 'checkbox' }) as HTMLInputElement;
+			checkbox.checked = (this.plugin.settings[settingsKey] as string[]).includes(type);
+			itemLabel.createSpan({ text: type });
+
+			checkbox.addEventListener('change', async () => {
+				const current = this.plugin.settings[settingsKey] as string[];
+				this.plugin.settings[settingsKey] = checkbox.checked
+					? Array.from(new Set([...current, type]))
+					: current.filter((t) => t !== type);
+				await this.plugin.saveSettings();
+				updateButtonText();
+			});
+		}
+
+		button.addEventListener('click', () => {
+			menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+		});
+	}
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
@@ -106,6 +151,31 @@ export class SampleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Ingredient types, shop sections & diet flags')
 			.setDesc('Managed via a dedicated view — run the "Manage lists" command or click the tag icon in the ribbon.');
+
+		new Setting(containerEl)
+			.setName('Catégories spéciales')
+			.setDesc('Parmi tes types d\'ingrédients existants, lesquels correspondent à une huile (active "Peut être utilisé pour la friture") ou un fruit (active "Rendement en jus") sur la fiche ingrédient.')
+			.setHeading();
+
+		this.renderCategoryPicker(containerEl, 'Types "huile" (friture)', 'oilIngredientTypes');
+
+		new Setting(containerEl)
+			.setName('Absorption d\'huile par défaut')
+			.setDesc('Pourcentage utilisé au départ pour estimer l\'huile absorbée par les aliments frits — ajustable ensuite dans chaque recette. La littérature situe l\'absorption entre 8% et 25% selon la porosité de l\'aliment.')
+			.addText((text) =>
+				text
+					.setPlaceholder('15')
+					.setValue(this.plugin.settings.defaultFryingAbsorptionPercent.toString())
+					.onChange(async (value) => {
+						const parsed = Number(value);
+						if (!Number.isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+							this.plugin.settings.defaultFryingAbsorptionPercent = parsed;
+							await this.plugin.saveSettings();
+						}
+					}),
+			);
+		this.renderCategoryPicker(containerEl, 'Types "fruit" (rendement en jus)', 'fruitIngredientTypes');
+
 
 		new Setting(containerEl)
 			.setName('USDA API key')

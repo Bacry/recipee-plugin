@@ -1,5 +1,6 @@
 import { NutritionPer100g } from '../models/Ingredient';
 import {upperFirstLetter} from '../models/textNormalize'
+import { isOilIngredient } from '../models/listOilIngredients';
 
 interface IngredientDetailsProps {
 	name: string;
@@ -8,6 +9,9 @@ interface IngredientDetailsProps {
 	densityGMl?: number;
 	entityWeightG?: number;
 	possibleForms?: string[];
+	dietFlags?: string[];
+	oilIngredientTypes: string[];
+	juiceYieldMl?: number;
 	nutrition: NutritionPer100g;
 	brand?: string;
 	usedInRecipes: string[];
@@ -26,6 +30,9 @@ export function IngredientDetails({
 									  entityWeightG,
 									  brand,
 									  possibleForms,
+									  dietFlags,
+									  oilIngredientTypes,
+									  juiceYieldMl,
 									  nutrition,
 									  usedInRecipes,
 									  onRecipeClick,
@@ -46,8 +53,17 @@ export function IngredientDetails({
 				{entityWeightG != null &&
 					<li>Poids unitaire : {entityWeightG} g</li>
 				}
+				{juiceYieldMl != null &&
+					<li>Rendement en jus : {juiceYieldMl} mL / fruit</li>
+				}
 				{possibleForms != null && possibleForms.length > 0 &&
 					<li>Formes possibles : {possibleForms.join(', ')} </li>
+				}
+				{dietFlags != null && dietFlags.length > 0 &&
+					<li>Contraintes alimentaires : {dietFlags.join(', ')} </li>
+				}
+				{isOilIngredient(type, oilIngredientTypes) &&
+					<li>Peut être utilisé pour la friture</li>
 				}
 			</ul>
 

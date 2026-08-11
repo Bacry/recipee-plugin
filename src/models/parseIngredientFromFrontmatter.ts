@@ -75,6 +75,15 @@ export function parseIngredientFromFrontmatter(
 		}
 	}
 
+	let juiceYieldMl: number | undefined;
+	if (frontmatter.juice_yield_ml !== undefined && frontmatter.juice_yield_ml !== null) {
+		if (typeof frontmatter.juice_yield_ml !== 'number' || Number.isNaN(frontmatter.juice_yield_ml)) {
+			errors.push('"juice_yield_ml" est présent mais n\'est pas un nombre valide.');
+		} else {
+			juiceYieldMl = frontmatter.juice_yield_ml;
+		}
+	}
+
 	let dietFlags: string[] = [];
 	if (frontmatter.diet_flags !== undefined && frontmatter.diet_flags !== null) {
 		if (!Array.isArray(frontmatter.diet_flags)) {
@@ -111,17 +120,6 @@ export function parseIngredientFromFrontmatter(
 		}
 	}
 
-	let canBeUsedForFrying = false;
-	if (frontmatter.can_be_used_for_frying !== undefined && frontmatter.can_be_used_for_frying !== null) {
-		if (typeof frontmatter.can_be_used_for_frying === 'boolean') {
-			canBeUsedForFrying = frontmatter.can_be_used_for_frying;
-		} else if (frontmatter.can_be_used_for_frying === 'true' || frontmatter.can_be_used_for_frying === 'false') {
-			canBeUsedForFrying = frontmatter.can_be_used_for_frying === 'true';
-		} else {
-			errors.push('"can_be_used_for_frying" est présent mais n\'est pas un booléen valide.');
-		}
-	}
-
 	if (errors.length > 0) {
 		return { ingredient: null, errors, warnings };
 	}
@@ -136,7 +134,7 @@ export function parseIngredientFromFrontmatter(
 		brand,
 		possible_forms: possibleForms,
 		diet_flags: dietFlags,
-		can_be_used_for_frying: canBeUsedForFrying,
+		juice_yield_ml: juiceYieldMl,
 		nutrition_per_100g: parsedNutrition,
 	};
 

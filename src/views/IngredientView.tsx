@@ -9,9 +9,9 @@ import { RECIPE_VIEW_TYPE } from './RecipeView';
 import { updateIngredient } from "../models/ingredientPersistence";
 import {IngredientDetails} from "../components/IngredientDetails";
 import {ingredientToFormValues} from "../models/ingredientToFormValues";
-import {IngredientForm} from "../components/IngredientForm";
 import { createRef } from 'react';
 import { IngredientForm, IngredientFormHandle } from '../components/IngredientForm';
+import { findRecipeFileByName } from '../models/findRecipeFile';
 
 export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
@@ -285,6 +285,7 @@ export class IngredientView extends ItemView {
 					ingredientTypes={this.plugin.settings.ingredientTypes}
 					shopSections={this.plugin.settings.shopSections}
 					dietFlags={this.plugin.settings.dietFlags}
+					fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
 					usdaApiKey={this.plugin.settings.usdaApiKey}
 					initialValues={ingredientToFormValues(ingredient)}
 					submitLabel="Enregistrer les modifications"
@@ -302,9 +303,12 @@ export class IngredientView extends ItemView {
 					entityWeightG={ingredient.entity_weight_g}
 					brand={ingredient.brand}
 					possibleForms={ingredient.possible_forms}
+					dietFlags={ingredient.diet_flags}
+					juiceYieldMl={ingredient.juice_yield_ml}
 					nutrition={ingredient.nutrition_per_100g}
 					usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
 					onRecipeClick={(name) => this.handleRecipeClick(name)}
+					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
 				/>
 			)
 		}

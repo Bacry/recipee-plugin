@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { App, Component, MarkdownRenderer } from 'obsidian';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { App, Component, MarkdownRenderer, setIcon } from 'obsidian';
 import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
 import { computeRecipeNutrition } from '../models/computeRecipeNutrition';
@@ -35,6 +35,39 @@ function formatScaledQuantity(quantity: number, unit: string, factor: number): s
 	const unitObj = unit === '' ? null : findUnit(unit);
 	const rounded = roundQuantityForUnit(scaled, unitObj);
 	return Number(rounded.toFixed(4)).toString(); // toFixed(4) puis toString() évite les artefacts de virgule flottante (ex: 2.0000000004) sans réintroduire un arrondi fixe
+}
+
+type UnifiedIngredientEntry = { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string };
+
+// Places the frying oil right after a randomly-picked fried ingredient (so it
+// visually lands in the same section as what it's frying), instead of always
+// tacking it onto the very end of the list. Falls back to appending at the
+// end if nothing is marked fried yet.
+function buildIngredientEntriesWithOil(recipe: Recipe): UnifiedIngredientEntry[] {
+	const base: UnifiedIngredientEntry[] = recipe.ingredients.map((entry) => ({ kind: 'ingredient', ...entry }));
+
+	if (!recipe.fryingOilName) return base;
+
+	const friedIndices = base
+		.map((e, i) => (!e.isSectionHeader && e.fried ? i : -1))
+		.filter((i) => i !== -1);
+
+	const oilEntry: UnifiedIngredientEntry = {
+		kind: 'ingredient',
+		ingredientName: recipe.fryingOilName,
+		quantity: null,
+		unit: '',
+		isFryingOil: true,
+	};
+
+	if (friedIndices.length === 0) {
+		return [...base, oilEntry];
+	}
+
+	const insertAfter = friedIndices[Math.floor(Math.random() * friedIndices.length)];
+	const result = [...base];
+	result.splice(insertAfter + 1, 0, oilEntry);
+	return result;
 }
 
 function isUrl(text: string): boolean {
@@ -78,6 +111,7 @@ export function RecipeDetails({
 	const ENTITY_SENTINEL = '__entity__';
 	const [openUnitMenuIndex, setOpenUnitMenuIndex] = useState<number | null>(null);
 	const [unitOverrides, setUnitOverrides] = useState<Record<number, string>>({});
+	const ingredientEntriesWithOil = useMemo(() => buildIngredientEntriesWithOil(recipe), [recipe]);
 
 	const prevBaseServingsRef = useRef(recipe.baseServings);
 	useEffect(() => {
@@ -122,6 +156,14 @@ export function RecipeDetails({
 		unit: Unit | null;
 		quantity: number;
 	}
+
+	const shopButtonRef = useRef<HTMLButtonElement>(null);
+	useEffect(() => {
+		if (shopButtonRef.current) {
+			setIcon(shopButtonRef.current, 'shopping-cart');
+		}
+	}, []);
+
 
 // Every unit this ingredient's quantity could be converted to right now,
 // given its known density/entity weight — excludes units flagged
@@ -321,7 +363,7 @@ export function RecipeDetails({
 						↺
 					</button>
 					){' '}
-					<button onClick={() => onShop(servings)} className="recipe-shop-inline-button">Shop</button>
+					<button ref={shopButtonRef} onClick={() => onShop(servings)} className="recipe-shop-inline-button" title="Ajouter à la liste de courses"></button>
 				</h4>
 			</div>
 
@@ -331,12 +373,8 @@ export function RecipeDetails({
 					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string };
 				const unifiedEntries: UnifiedEntry[] = [
 					...recipe.baseRecipes.map((entry): UnifiedEntry => ({ kind: 'baseRecipe', ...entry })),
-					...recipe.ingredients.map((entry): UnifiedEntry => ({ kind: 'ingredient', ...entry })),
-					...(recipe.fryingOilName
-						? [{ kind: 'ingredient' as const, ingredientName: recipe.fryingOilName, quantity: null, unit: '', isFryingOil: true }]
-						: []),
+					...ingredientEntriesWithOil,
 				];
-
 				return (
 					<ul>
 						{unifiedEntries.map((entry, index) => {
@@ -395,13 +433,13 @@ export function RecipeDetails({
 
 <InstructionsPreview app={app} content={recipe.instructions} />
 
-<MarkdownEditableBlock
-	app={app}
-	title="Notes"
-	content={recipe.notes ?? ''}
-	onSave={(newContent) => onSaveNotes(newContent)}
-/>
-
+			<MarkdownEditableBlock
+				app={app}
+				title="Notes"
+				content={recipe.notes ?? ''}
+				placeholder="- Pour insérer une note cliquer sur le titre 'Notes'. Puis écrivez votre note (en format markdown), puis ré-appuyer sur 'Notes' pour enregistrer"
+				onSave={(newContent) => onSaveNotes(newContent)}
+			/>
 			<div className="recipe-history-header">
 				<h4>Historique</h4>
 				<button onClick={onMarkCookedToday} title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>

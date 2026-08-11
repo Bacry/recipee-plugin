@@ -2,7 +2,6 @@ import { ItemView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
 import { RecipeDetails } from '../components/RecipeDetails';
-import { RecipeForm, RecipeFormValues } from '../components/RecipeForm';
 import { INGREDIENT_VIEW_TYPE } from './IngredientView';
 import { NEW_INGREDIENT_VIEW_TYPE } from './NewIngredientView';
 import { findUnit, convertQuantity } from '../models/units';
@@ -400,6 +399,7 @@ export class RecipeView extends ItemView {
 					onSubmit={(values) => this.handleSave(values)}
 					initialValues={recipeToFormValues(recipe!, this.filePath, this.plugin.settings.recipesFolder)}
 					submitLabel="Enregistrer les modifications"
+					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
 				/>
 			);
 			return;

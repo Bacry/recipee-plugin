@@ -94,6 +94,7 @@ export class NewRecipeView extends ItemView {
 				onSubmit={(values) => this.handleSubmit(values)}
 				initialValues={this.prefilledValues}
 				submitLabel="Créer la recette"
+				oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
 			/>
 		);
 	}

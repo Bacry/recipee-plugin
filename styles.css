@@ -453,12 +453,20 @@
 }
 
 .recipe-shop-inline-button {
-	font-size: 0.85rem;
-	padding: 0.1rem 0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.3rem;
 	vertical-align: middle;
+	margin-left: 0.6rem;
+	background: transparent;
+	box-shadow: none;
+	border: 1px solid var(--background-modifier-border);
 }
 
-
+.recipe-shop-inline-button:hover {
+	background: var(--background-modifier-hover);
+}
 
 
 
@@ -793,8 +801,9 @@
 
 /* The servings input inside "Ingrédients (pour [X] personnes)". */
 .recipe-servings-input {
-	width: 4rem;
+	width: 2.5rem;
 	text-align: center;
+	margin: 0 0.4rem;
 }
 
 /* Applied to an ingredient link when it has a quantity (so it matters
@@ -1138,12 +1147,38 @@
 	cursor: pointer;
 }
 
+.recipe-cooking-row {
+	position: relative;
+}
+
+.recipe-cooking-duration-wrapper,
+.recipe-cooking-weight-wrapper {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+
 .recipe-cooking-row input.recipe-cooking-duration-input,
 .recipe-cooking-row input.recipe-cooking-weight-input {
-	width: 100%;
-	max-width: none;
-	min-width: 8rem;
+	width: 6rem !important;
+	max-width: 6rem !important;
 	box-sizing: border-box;
+	padding-right: 1.4rem !important;
+	font-size: 0.85rem;
+}
+
+.recipe-cooking-duration-wrapper::after,
+.recipe-cooking-weight-wrapper::after {
+	content: 'min';
+	position: absolute;
+	right: 0.5rem;
+	pointer-events: none;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+
+.recipe-cooking-weight-wrapper::after {
+	content: 'g';
 }
 
 .recipe-cooking-duration-input:disabled,
@@ -1194,25 +1229,34 @@
 	appearance: auto;
 	-webkit-appearance: auto;
 }
-
 .recipe-frying-oil-row {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
+	margin-top: 0.4rem;
 }
 
 .recipe-frying-oil-row label {
-	font-size: 0.85rem;
-	color: var(--text-muted);
+	color: var(--text-faint);
+	font-size: 0.75rem;
 	margin: 0;
 	flex-shrink: 0;
-	margin-right: 0.75rem;
 }
 
 .recipe-frying-oil-row select {
-	flex: 1;
-	width: 100%;
-	max-width: none;
+	width: auto;
+	max-width: 12rem;
+	flex: none;
+	font-size: 0.75rem;
+	padding: 0.15rem 0.4rem;
+	color: var(--text-faint);
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: none;
+}
+
+.recipe-frying-oil-row select:hover {
+	color: var(--text-muted);
 }
 
 .recipe-ingredient-fried,
@@ -1288,14 +1332,17 @@
 }
 
 .recipe-add-section-button {
-	margin-bottom: 0.75rem;
-	padding: 0.3rem 0.7rem;
+	padding: 0.4rem 0.7rem;
 	font-size: 0.85rem;
 	border-radius: 4px;
 	border: 1px dashed var(--background-modifier-border);
 	background: transparent;
 	color: var(--text-muted);
 	cursor: pointer;
+	height: 2.4rem;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	align-self: stretch;
 }
 
 .recipe-add-section-button:hover {
@@ -1333,4 +1380,55 @@
 
 .recipe-section-indent {
 	margin-left: 1.5rem;
+}
+
+
+.workspace-leaf-content[data-type="recipe-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="ingredient-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="new-recipe-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="shopping-list-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="recipe-list-view"] .view-header-nav-buttons {
+	display: none;
+}
+
+.recipe-list-tag-menu-item input[type="checkbox"] {
+	width: 1rem !important;
+	max-width: 1rem !important;
+	height: 1rem !important;
+	padding: 0 !important;
+	margin: 0;
+	flex-shrink: 0;
+	appearance: auto;
+	-webkit-appearance: auto;
+}
+
+.recipe-list-tag-menu-item label {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	cursor: pointer;
+	width: 100%;
+}
+
+.recipe-empty-entries {
+	color: var(--text-faint);
+	font-style: italic;
+	margin: 0.5rem 0;
+}
+
+.recipe-ingredient-input-row {
+	display: flex;
+	align-items: stretch;
+	gap: 0.5rem;
+}
+
+.recipe-ingredient-input-grow {
+	flex: 1;
+	min-width: 0;
+}
+
+.markdown-editable-placeholder {
+	color: var(--text-faint);
+	font-style: italic;
 }

@@ -18,6 +18,6 @@ export interface Ingredient {
 	source?: string;
 	brand?: string; // optional — only meaningful for processed foods where brand affects nutrition (e.g. low-sodium soy sauce)
 	possible_forms?: string[];
-	can_be_used_for_frying: boolean;
+	juice_yield_ml?: number; // pour un jus : combien de mL équivalent à 1 fruit frais — utilisé uniquement pour suggérer une alternative d'achat dans la liste de courses, sans impact sur le calcul nutritionnel
 	nutrition_per_100g: NutritionPer100g;
 }

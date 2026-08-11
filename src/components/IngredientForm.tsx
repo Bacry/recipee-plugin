@@ -22,7 +22,7 @@ export interface IngredientFormValues {
 	possibleForms: string;
 	brand: string;
 	dietFlags: string;
-	canBeUsedForFrying: boolean;
+	juiceYieldMl: string;
 	nutrition: NutritionPer100g;
 }
 
@@ -32,6 +32,7 @@ interface IngredientFormProps {
 	ingredientTypes: string[];
 	shopSections: string[];
 	dietFlags: string[];
+	fruitIngredientTypes: string[];
 	usdaApiKey: string;
 	anthropicApiKey: string;
 	anthropicModel: string;
@@ -81,6 +82,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		ingredientTypes,
 		shopSections,
 		dietFlags,
+		fruitIngredientTypes,
 		usdaApiKey,
 		anthropicApiKey,
 		anthropicModel,
@@ -105,12 +107,19 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	const searchRequestId = useRef(0);
-	const [dietFlagsInput, setDietFlagsInput] = useState(initialValues?.dietFlags ?? '');
-	const [dietFlagSuggestions, setDietFlagSuggestions] = useState<string[]>([]);
-	const [dietFlagHighlightedIndex, setDietFlagHighlightedIndex] = useState<number>(-1);
 	const [claudeNutritionSuggestions, setClaudeNutritionSuggestions] = useState<Record<keyof NutritionPer100g, number> | null>(null);
 	const [isSuggestingWithClaude, setIsSuggestingWithClaude] = useState(false);
-	const [canBeUsedForFrying, setCanBeUsedForFrying] = useState(initialValues?.canBeUsedForFrying ?? false);
+	const [juiceYieldMl, setJuiceYieldMl] = useState(initialValues?.juiceYieldMl ?? '');
+	const [dietFlagsSelected, setDietFlagsSelected] = useState<string[]>(
+		(initialValues?.dietFlags ?? '').split(',').map((f) => f.trim()).filter(Boolean)
+	);
+	const [dietMenuOpen, setDietMenuOpen] = useState(false);
+
+	function toggleDietFlag(flag: string) {
+		setDietFlagsSelected((prev) =>
+			prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]
+		);
+	}
 
 	function updateNutritionField(field: keyof NutritionPer100g, value: string) {
 		setNutritionInputs((prev) => ({ ...prev, [field]: sanitizeNumericInput(value) }));
@@ -148,7 +157,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		setDensityGMl(s.densityGMl);
 		setEntityWeightG(s.entityWeightG);
 		setPossibleForms(s.possibleForms);
-		setDietFlagsInput(s.dietFlags);
+		setDietFlagsSelected(s.dietFlags.split(',').map((f: string) => f.trim()).filter(Boolean));
 
 		if (s.nutrition) {
 			setClaudeNutritionSuggestions(s.nutrition);
@@ -176,6 +185,11 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 			errors.push('Le poids unitaire doit être un nombre strictement positif');
 		}
 
+		const j = Number(juiceYieldMl)
+		if (juiceYieldMl.trim() !== "" && (Number.isNaN(j) || j <= 0)) {
+			errors.push('Le rendement en jus doit être un nombre strictement positif');
+		}
+
 		const parsedNutrition = {} as NutritionPer100g;
 		for (const key of NUTRITION_KEYS) {
 			const raw = nutritionInputs[key];
@@ -192,7 +206,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 			return;
 		}
 
-		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, dietFlags: dietFlagsInput, possibleForms, canBeUsedForFrying, nutrition: parsedNutrition });
+		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, dietFlags: dietFlagsSelected.join(', '), possibleForms, juiceYieldMl, nutrition: parsedNutrition });
 	}
 
 	async function runSearch(query: string) {
@@ -282,46 +296,6 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		return value.replace(/[^0-9.]/g, '');
 	}
 
-	function getCurrentDietFlagFragment(value: string): string {
-		const parts = value.split(',');
-		return parts[parts.length - 1].trim();
-	}
-
-	function handleDietFlagsChange(value: string) {
-		setDietFlagsInput(value);
-		const fragment = getCurrentDietFlagFragment(value);
-		setDietFlagSuggestions(
-			fragment.length >= 1
-				? dietFlags.filter((f) => f.toLowerCase().includes(fragment.toLowerCase()))
-				: []
-		);
-		setDietFlagHighlightedIndex(-1);
-	}
-
-	function applyDietFlagSuggestion(suggestion: string) {
-		const parts = dietFlagsInput.split(',');
-		parts[parts.length - 1] = ' ' + suggestion;
-		setDietFlagsInput(parts.join(',').replace(/^,\s*/, '') + ', ');
-		setDietFlagSuggestions([]);
-	}
-
-	function handleDietFlagsKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-		if (e.key === 'ArrowDown' && dietFlagSuggestions.length > 0) {
-			e.preventDefault();
-			setDietFlagHighlightedIndex((prev) => Math.min(prev + 1, dietFlagSuggestions.length - 1));
-			return;
-		}
-		if (e.key === 'ArrowUp' && dietFlagSuggestions.length > 0) {
-			e.preventDefault();
-			setDietFlagHighlightedIndex((prev) => Math.max(prev - 1, -1));
-			return;
-		}
-		if (e.key === 'Enter' && dietFlagHighlightedIndex >= 0 && dietFlagSuggestions[dietFlagHighlightedIndex]) {
-			e.preventDefault();
-			applyDietFlagSuggestion(dietFlagSuggestions[dietFlagHighlightedIndex]);
-		}
-	}
-
 	function renderNutritionField(field: keyof NutritionPer100g) {
 		return (
 			<div className="ingredient-form-nutrition-field" key={field}>
@@ -406,53 +380,62 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />
 					</div>
 				</div>
-				<div className="ingredient-form-field usda-search-wrapper">
-					<label>Contraintes alimentaires (séparées par des virgules)</label>
-					<input
-						value={dietFlagsInput}
-						onChange={(e) => handleDietFlagsChange(e.target.value)}
-						onKeyDown={handleDietFlagsKeyDown}
-						placeholder="ex : gluten, lactose"
-					/>
-					{dietFlagSuggestions.length > 0 && (
-						<ul className="smart-shopping-suggestions">
-							{dietFlagSuggestions.map((suggestion, index) => (
-								<li
-									key={suggestion}
-									className={index === dietFlagHighlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
-									onMouseEnter={() => setDietFlagHighlightedIndex(index)}
-									onClick={() => applyDietFlagSuggestion(suggestion)}
-								>
-									{suggestion}
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
-
-				<div className="ingredient-form-field">
-					<label>Marque</label>
-					<input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="ex : Kikkoman" />
-				</div>
-
-				<div className="ingredient-form-field">
-					<label>Formes possibles (séparées par des virgules)</label>
-					<input
-						value={possibleForms}
-						onChange={(e) => setPossibleForms(e.target.value)}
-						placeholder="ex : feuilles, haché, en branches"
-					/>
-				</div>
-				<div className="recipe-made-before-row">
-					<label>Peut être utilisé pour la friture</label>
-					<input
-						type="checkbox"
-						checked={canBeUsedForFrying}
-						onChange={(e) => setCanBeUsedForFrying(e.target.checked)}
-						className="recipe-made-before-checkbox"
-					/>
-				</div>
 			</section>
+				<section className="ingredient-form-section">
+					<h4>Informations spécifiques</h4>
+
+					<div className="ingredient-form-grid">
+						<div className="ingredient-form-field">
+							<label>Formes</label>
+							<input
+								value={possibleForms}
+								onChange={(e) => setPossibleForms(e.target.value)}
+								placeholder="ex : feuilles, haché"
+							/>
+						</div>
+
+						<div className="ingredient-form-field">
+							<label>Contraintes</label>
+							<div className="recipe-list-tag-menu-wrapper">
+								<button
+									type="button"
+									onClick={() => setDietMenuOpen((open) => !open)}
+									className="recipe-list-tag-menu-button"
+								>
+									{dietFlagsSelected.length > 0 ? `Contraintes (${dietFlagsSelected.length})` : 'Aucune'}
+								</button>
+								{dietMenuOpen && (
+									<ul className="recipe-list-tag-menu">
+										{sortAlphabetically(dietFlags).map((flag) => (
+											<li key={flag} className="recipe-list-tag-menu-item">
+												<label>
+													<input
+														type="checkbox"
+														checked={dietFlagsSelected.includes(flag)}
+														onChange={() => toggleDietFlag(flag)}
+													/>
+													{' '}{flag}
+												</label>
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+						</div>
+
+						<div className="ingredient-form-field">
+							<label>Marque</label>
+							<input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="ex : Kikkoman" />
+						</div>
+
+						{fruitIngredientTypes.includes(type) && (
+							<div className="ingredient-form-field">
+								<label>Rendement jus</label>
+								<input value={juiceYieldMl} onChange={(e) => setJuiceYieldMl(sanitizeNumericInput(e.target.value))} placeholder="mL / fruit" />
+							</div>
+						)}
+					</div>
+				</section>
 
 			<section className="ingredient-form-section">
 				<h4>Valeurs nutritionnelles (pour 100g)</h4>

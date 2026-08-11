@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ShoppingListItem, ShoppingListRecipeEntry } from '../models/ShoppingList';
 import { AggregationResult } from '../models/aggregateContributions';
-import { parseQuantityString } from '../models/units';
 import { convertQuantity, findUnit, parseQuantityString } from '../models/units';
 
 export interface ResolvedItem {
@@ -11,6 +10,7 @@ export interface ResolvedItem {
 	isKnownIngredient: boolean;
 	densityGMl?: number;
 	entityWeightG?: number;
+	juiceYieldMl?: number;
 }
 
 interface ShoppingListDisplayProps {
@@ -51,10 +51,8 @@ function formatAggregation(resolved: ResolvedItem): string {
 		const formatted = formatQuantity(aggregation.totalQuantity, aggregation.totalUnit);
 		const withUnit = aggregation.totalUnit ? `${formatted}${aggregation.totalUnit}` : formatted;
 
-		// If the total is expressed in a real unit (not already an entity
-		// count) and we know this ingredient's unit weight, also show an
-		// approximate number of items to buy — e.g. "~2 (300g)" for a
-		// cucumber whose recipe needed 300g total.
+		let mainPart = withUnit;
+
 		if (aggregation.totalUnit !== '' && resolved.entityWeightG != null) {
 			const fromUnit = findUnit(aggregation.totalUnit);
 			const entityCount = convertQuantity(aggregation.totalQuantity, fromUnit, null, {
@@ -63,13 +61,26 @@ function formatAggregation(resolved: ResolvedItem): string {
 			});
 
 			if (entityCount !== null) {
-				parts.push(`~${Math.max(1, Math.ceil(entityCount))} (${withUnit})`);
-			} else {
-				parts.push(withUnit);
+				mainPart = `~${Math.max(1, Math.ceil(entityCount))} (${withUnit})`;
 			}
-		} else {
-			parts.push(withUnit);
 		}
+
+		// If this is a juice-type ingredient (juice_yield_ml known on its
+		// sheet) and the total is expressed in a volume unit, also show the
+		// approximate number of whole fruits — a shopping-time alternative to
+		// buying bottled juice, independent of the entity-count branch above.
+		if (aggregation.totalUnit !== '' && resolved.juiceYieldMl != null) {
+			const fromUnit = findUnit(aggregation.totalUnit);
+			if (fromUnit?.isVolume) {
+				const mlAmount = convertQuantity(aggregation.totalQuantity, fromUnit, findUnit('ml'));
+				if (mlAmount !== null) {
+					const fruitCount = Math.max(1, Math.ceil(mlAmount / resolved.juiceYieldMl));
+					mainPart += ` (≈ ${fruitCount} fruit${fruitCount > 1 ? 's' : ''})`;
+				}
+			}
+		}
+
+		parts.push(mainPart);
 	}
 
 	for (const c of aggregation.unmerged) {

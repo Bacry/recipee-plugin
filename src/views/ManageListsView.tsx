@@ -112,6 +112,12 @@ export class ManageListsView extends ItemView {
 		const current = this.plugin.settings[settingsKey] as string[];
 		const updated = Array.from(new Set(current.map((v) => (v === oldValue ? newValue : v))));
 		this.plugin.settings[settingsKey] = updated;
+
+		if (field === 'type') {
+			this.plugin.settings.oilIngredientTypes = this.plugin.settings.oilIngredientTypes.map((v) => (v === oldValue ? newValue : v));
+			this.plugin.settings.fruitIngredientTypes = this.plugin.settings.fruitIngredientTypes.map((v) => (v === oldValue ? newValue : v));
+		}
+
 		await this.plugin.saveSettings();
 
 		new Notice(`"${oldValue}" renommé en "${newValue}" (${affectedCount} ingrédient(s) mis à jour).`);
@@ -121,6 +127,17 @@ export class ManageListsView extends ItemView {
 	async handleRemove(field: ListField, value: string) {
 		const settingsKey = field === 'type' ? 'ingredientTypes' : field === 'shop_section' ? 'shopSections' : 'dietFlags';
 		const current = this.plugin.settings[settingsKey] as string[];
+
+		if (field === 'type') {
+			if (this.plugin.settings.oilIngredientTypes.includes(value)) {
+				new Notice(`Impossible de supprimer "${value}" : ce type est utilisé dans les réglages (catégorie "Huile"). Retire-le d'abord dans Réglages → Catégories spéciales.`);
+				return;
+			}
+			if (this.plugin.settings.fruitIngredientTypes.includes(value)) {
+				new Notice(`Impossible de supprimer "${value}" : ce type est utilisé dans les réglages (catégorie "Fruit"). Retire-le d'abord dans Réglages → Catégories spéciales.`);
+				return;
+			}
+		}
 
 		const stillUsed = wouldMergeWithExisting(this.app, this.plugin.settings.ingredientsFolder, field, '', value);
 

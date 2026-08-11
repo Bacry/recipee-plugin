@@ -1,13 +1,12 @@
 import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
-import { IngredientForm, IngredientFormValues } from '../components/IngredientForm';
 import type MyPlugin from '../main';
 import { removeOtherItemIfPresent } from '../models/otherItemsNote';
 import { createIngredient } from "../models/ingredientPersistence";
 import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } from '../navigation';
 import { INGREDIENT_VIEW_TYPE } from './IngredientView';
 import { createRef } from 'react';
-import { IngredientForm, IngredientFormHandle } from '../components/IngredientForm';
+import { IngredientForm, IngredientFormValues, IngredientFormHandle } from '../components/IngredientForm';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -88,6 +87,7 @@ export class NewIngredientView extends ItemView {
 				ingredientTypes={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
 				dietFlags={this.plugin.settings.dietFlags}
+				fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
 				usdaApiKey={this.plugin.settings.usdaApiKey}
 				anthropicApiKey={this.plugin.settings.anthropicApiKey}
 				anthropicModel={this.plugin.settings.anthropicModel}
@@ -104,6 +104,7 @@ export class NewIngredientView extends ItemView {
 							brand: '',
 							dietFlags: '',
 							possibleForms: '',
+							juiceYieldMl: '',
 							nutrition: {
 								kcal: 0, lipids: 0, non_saturated_lipids: 0, glucids: 0,
 								sugar: 0, proteins: 0, salt: 0, fibers: 0, cholesterol: 0,

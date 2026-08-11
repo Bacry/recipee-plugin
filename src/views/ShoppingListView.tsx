@@ -15,6 +15,9 @@ import { showShopSectionMenu } from '../components/showShopSectionMenu';
 import { removeRecipeFromShoppingList } from '../models/removeRecipeFromShoppingList';
 import { toggleShoppingListItemChecked, deleteShoppingListItem, setItemAlreadyOwned } from '../models/updateShoppingListItem';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
+import { readIngredientForCalc } from '../models/computeRecipeNutrition';
+import { findIngredientFileByName } from '../models/findIngredientFile';
+
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
 
@@ -156,6 +159,9 @@ export class ShoppingListView extends ItemView {
 				);
 
 				const densityInfo = getIngredientDensityInfo(this.app, this.plugin.settings.ingredientsFolder, item.name);
+				const ingredientFile = findIngredientFileByName(this.app, this.plugin.settings.ingredientsFolder, item.name);
+				const ingredientFrontmatter = ingredientFile ? this.app.metadataCache.getFileCache(ingredientFile)?.frontmatter : undefined;
+				const juiceYieldMl = typeof ingredientFrontmatter?.juice_yield_ml === 'number' ? ingredientFrontmatter.juice_yield_ml : undefined;
 				const aggregation = aggregateContributions(item.contributions, densityInfo, item.alreadyOwned);
 
 				const ingredientPath = `${this.plugin.settings.ingredientsFolder}/${item.name}.md`;
@@ -168,6 +174,7 @@ export class ShoppingListView extends ItemView {
 					isKnownIngredient,
 					densityGMl: densityInfo.densityGMl,
 					entityWeightG: densityInfo.entityWeightG,
+					juiceYieldMl,
 				};
 			})
 		);

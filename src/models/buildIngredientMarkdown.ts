@@ -15,12 +15,16 @@ export function buildIngredientMarkdown(values: IngredientFormValues): string {
 		lines.push(`entity_weight_g: ${entityWeight}`);
 	}
 
+	const juiceYield = Number(values.juiceYieldMl);
+	if (values.juiceYieldMl.trim() !== '' && !Number.isNaN(juiceYield)) {
+		lines.push(`juice_yield_ml: ${juiceYield}`);
+	}
+
 	if (values.brand.trim() !== '') {
 		lines.push(`brand: ${values.brand.trim()}`);
 	}
 
 	lines.push(`shop_section: ${values.shopSection}`);
-	lines.push(`can_be_used_for_frying: ${values.canBeUsedForFrying}`);
 
 	const forms = values.possibleForms
 		.split(',')

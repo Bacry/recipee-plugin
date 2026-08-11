@@ -3,16 +3,13 @@ import { App, Component, MarkdownRenderer } from 'obsidian';
 
 interface MarkdownEditableBlockProps {
 	app: App;
-	title?: string; // optional heading shown next to the edit/save button
+	title?: string;
 	content: string;
+	placeholder?: string; // shown, dimmed, in the preview when content is empty — never actually saved as content
 	onSave: (newContent: string) => void;
 }
 
-// A text block that toggles between raw markdown editing (a plain textarea)
-// and a rendered preview (using Obsidian's native MarkdownRenderer). Used for
-// recipe instruction sections and the notes field — anywhere free-form
-// markdown needs both easy editing and a nicely formatted display.
-export function MarkdownEditableBlock({ app, title, content, onSave }: MarkdownEditableBlockProps) {
+export function MarkdownEditableBlock({ app, title, content, placeholder, onSave }: MarkdownEditableBlockProps) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [draft, setDraft] = useState(content);
 	const previewRef = useRef<HTMLDivElement>(null);
@@ -23,8 +20,14 @@ export function MarkdownEditableBlock({ app, title, content, onSave }: MarkdownE
 		if (isEditing || !previewRef.current) return;
 
 		previewRef.current.empty();
+
+		if (content.trim() === '' && placeholder) {
+			previewRef.current.createSpan({ text: placeholder, cls: 'markdown-editable-placeholder' });
+			return;
+		}
+
 		MarkdownRenderer.render(app, content, previewRef.current, '', componentRef.current);
-	}, [isEditing, content, app]);
+	}, [isEditing, content, app, placeholder]);
 
 	function handleSave() {
 		onSave(draft);
@@ -35,7 +38,7 @@ export function MarkdownEditableBlock({ app, title, content, onSave }: MarkdownE
 		if (isEditing) {
 			handleSave();
 		} else {
-			setDraft(content); // start editing from the latest saved content
+			setDraft(content);
 			setIsEditing(true);
 		}
 	}

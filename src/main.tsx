@@ -18,6 +18,7 @@ import { parseRecipeTemplate } from './models/parseRecipe';
 import { addIcon } from 'obsidian';
 import { RecipeListView, RECIPE_LIST_VIEW_TYPE } from './views/RecipeListView';
 import { ManageListsView, MANAGE_LISTS_VIEW_TYPE } from './views/ManageListsView';
+import { IngredientListView, INGREDIENT_LIST_VIEW_TYPE } from './views/IngredientListView';
 
 
 
@@ -61,6 +62,20 @@ export default class MyPlugin extends Plugin {
 			MANAGE_LISTS_VIEW_TYPE,
 			(leaf: WorkspaceLeaf) => new ManageListsView(leaf, this),
 		);
+
+		this.registerView(
+			INGREDIENT_LIST_VIEW_TYPE,
+			(leaf: WorkspaceLeaf) => new IngredientListView(leaf, this),
+		);
+
+		this.addCommand({
+			id: 'ingredient-list',
+			name: 'Liste des ingrédients',
+			callback: () => {
+				this.activateIngredientListView();
+			},
+		});
+
 
 		this.addCommand({
 			id: 'manage-lists',
@@ -146,6 +161,10 @@ export default class MyPlugin extends Plugin {
 			this.activateShoppingListView();
 		});
 
+		this.addRibbonIcon('carrot', 'Liste des ingrédients', () => {
+			this.activateIngredientListView();
+		});
+
 		this.addRibbonIcon('tags', 'Gérer les listes', () => {
 			this.activateManageListsView();
 		});
@@ -188,6 +207,18 @@ export default class MyPlugin extends Plugin {
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 	}
 
+	async activateIngredientListView() {
+		const { workspace } = this.app;
+		const leaf = workspace.getMostRecentLeaf() ?? workspace.getLeaf(true);
+
+		await leaf.setViewState({
+			type: INGREDIENT_LIST_VIEW_TYPE,
+			active: true,
+			state: { history: [] },
+		});
+
+		workspace.revealLeaf(leaf);
+	}
 
 	async activateManageListsView() {
 		const { workspace } = this.app;

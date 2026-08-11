@@ -12,6 +12,8 @@ import {ingredientToFormValues} from "../models/ingredientToFormValues";
 import { createRef } from 'react';
 import { IngredientForm, IngredientFormHandle } from '../components/IngredientForm';
 import { findRecipeFileByName } from '../models/findRecipeFile';
+import { countRecipesUsingIngredient, renameIngredientInRecipes } from '../models/renameIngredientInRecipes';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
@@ -207,16 +209,45 @@ export class IngredientView extends ItemView {
 			return;
 		}
 
+		const oldName = file.basename;
+		const normalizedNewName = values.name.trim();
+		const nameChanged = normalizedNewName !== '' && normalizedNewName !== oldName;
+
+		if (nameChanged) {
+			const { count, recipeNames } = countRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, oldName);
+
+			if (count > 0) {
+				new ConfirmModal(
+					this.app,
+					`"${oldName}" est utilisé dans ${count} recette(s) : ${recipeNames.join(', ')}. Renommer partout ?`,
+					async () => {
+						await this.performSave(file, values, oldName);
+					}
+				).open();
+				return;
+			}
+		}
+
+		await this.performSave(file, values, oldName);
+	}
+
+	private async performSave(file: TFile, values: IngredientFormValues, oldName: string): Promise<void> {
 		try {
 			const updatedFile = await updateIngredient({
 				app: this.app,
-				ingredientsFolder:
-				this.plugin.settings.ingredientsFolder,
+				ingredientsFolder: this.plugin.settings.ingredientsFolder,
 				file,
 				values,
 			});
 
-			// Important si le fichier a été déplacé ou renommé.
+			const newName = updatedFile.basename;
+			if (newName !== oldName) {
+				const updatedCount = await renameIngredientInRecipes(this.app, this.plugin.settings.recipesFolder, oldName, newName);
+				if (updatedCount > 0) {
+					new Notice(`${updatedCount} recette(s) mise(s) à jour avec le nouveau nom.`);
+				}
+			}
+
 			this.filePath = updatedFile.path;
 
 			this.isEditing = false;
@@ -233,7 +264,7 @@ export class IngredientView extends ItemView {
 			const message =
 				error instanceof Error
 					? error.message
-					: "Impossible de modifier l’ingrédient.";
+					: "Impossible de modifier l'ingrédient.";
 
 			new Notice(message);
 		}

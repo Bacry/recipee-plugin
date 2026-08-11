@@ -34,10 +34,12 @@ export function flattenRecipeIngredients(
 
 	for (const entry of recipe.ingredients) {
 		if (entry.isSectionHeader) continue;
+
 		ingredients.push({
 			ingredientName: entry.ingredientName,
 			quantity: entry.quantity != null ? entry.quantity * scaleFactor : null,
 			unit: entry.unit,
+			complement: entry.form,
 		});
 	}
 

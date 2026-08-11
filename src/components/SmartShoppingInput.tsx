@@ -5,6 +5,7 @@ import { searchAllItemNames } from '../models/searchAllItemNames';
 import { addOtherItemNameIfMissing } from '../models/otherItemsNote';
 import { lowerFirstLetter } from '../models/textNormalize';
 import { normalizeNameForFile } from '../models/textNormalize';
+import { IngredientNameSuggestion } from '../models/searchIngredientNames';
 
 export interface SmartInputResult {
 	name: string;
@@ -29,12 +30,14 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 	const [currentInput, setCurrentInput] = useState('');
 
 	// Autocomplete state — only relevant during the 'name' step.
-	const [suggestions, setSuggestions] = useState<string[]>([]);
+	const [suggestions, setSuggestions] = useState<IngredientNameSuggestion[]>([]);
+	const [form, setForm] = useState('');
 	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1); // -1 = nothing highlighted yet
 
 	function reset() {
 		setStep('name');
 		setName('');
+		setForm('');
 		setComplement('');
 		setCurrentInput('');
 		setSuggestions([]);
@@ -56,9 +59,9 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 		}
 
 		const requestId = ++searchRequestId.current;
-		const results = await searchAllItemNames(app, ingredientsFolder, otherItemsNotePath, value);
+		const results = await searchAllItemNames(app, ingredientsFolder, otherItemsNotePath, [], [], value);
 
-		if (requestId !== searchRequestId.current) return; // a newer keystroke already superseded this search
+		if (requestId !== searchRequestId.current) return;
 		setSuggestions(results);
 		setHighlightedIndex(-1);
 	}
@@ -69,11 +72,12 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 	// Commits a name and moves to the next step. If the name doesn't match an
 // existing ingredient file, it's recorded in the "Autres" note so future
 // searches recognize it — this is what makes the "Autres" note grow on its own.
-	async function commitName(chosenName: string) {
+	async function commitName(chosenName: string, suggestedForm?: string) {
 		const trimmed = normalizeNameForFile(chosenName);
 		if (trimmed === '') return;
 
 		setName(trimmed);
+		setForm(suggestedForm ?? '');
 		setCurrentInput('');
 		setSuggestions([]);
 		setHighlightedIndex(-1);
@@ -122,7 +126,8 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 			if (e.key === 'Enter') {
 				// If a suggestion is highlighted, it wins over the raw typed text.
 				if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
-					commitName(suggestions[highlightedIndex]);
+					const s = suggestions[highlightedIndex];
+					commitName(s.name, s.form);
 				} else {
 					commitName(currentInput);
 				}
@@ -135,14 +140,14 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 
 		if (step === 'complement-or-quantity') {
 			if (currentInput.trim() === '') {
-				onAdd({ name, complement: '', parsedQuantity: null });
+				onAdd({ name, complement: form, parsedQuantity: null });
 				reset();
 				return;
 			}
 
 			const parsed = parseQuantityString(currentInput);
 			if (parsed) {
-				onAdd({ name, complement: '', parsedQuantity: parsed });
+				onAdd({ name, complement: form, parsedQuantity: parsed });
 				reset();
 				return;
 			}
@@ -155,14 +160,14 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 
 		// step === 'quantity'
 		if (currentInput.trim() === '') {
-			onAdd({ name, complement, parsedQuantity: null });
+			onAdd({ name, complement: complement || form, parsedQuantity: null });
 			reset();
 			return;
 		}
 
 		const parsed = parseQuantityString(currentInput);
 		if (parsed) {
-			onAdd({ name, complement, parsedQuantity: parsed });
+			onAdd({ name, complement: complement || form, parsedQuantity: parsed });
 			reset();
 			return;
 		}
@@ -180,6 +185,7 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 		<div className="smart-shopping-input-wrapper">
 			<div className="smart-shopping-input">
 				{name && <span>{name}, </span>}
+				{form && <span>{form}, </span>}
 				{complement && <span>{complement}, </span>}
 				<input
 					value={currentInput}
@@ -191,17 +197,16 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 				/>
 			</div>
 
-			{/* Suggestions popup — only shown during the 'name' step, capped and scrollable */}
 			{step === 'name' && suggestions.length > 0 && (
 				<ul className="smart-shopping-suggestions">
 					{suggestions.map((suggestion, index) => (
 						<li
-							key={suggestion}
+							key={`${suggestion.name}-${suggestion.form ?? ''}`}
 							className={index === highlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
 							onMouseEnter={() => setHighlightedIndex(index)}
-							onClick={() => commitName(suggestion)}
+							onClick={() => commitName(suggestion.name, suggestion.form)}
 						>
-							{suggestion}
+							{suggestion.name}{suggestion.form ? ` (${suggestion.form})` : ''}
 						</li>
 					))}
 				</ul>

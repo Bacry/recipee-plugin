@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { App } from 'obsidian';
 import { parseQuantityString, ParsedQuantity, findUnit, convertQuantity } from '../models/units';
-import { searchIngredientNames } from '../models/searchIngredientNames';
+import { searchIngredientNamesWithForms } from '../models/searchIngredientNames';
 import { searchBaseRecipes, getBaseRecipeServingsLabel } from '../models/searchBaseRecipes';
 import { normalizeNameForFile } from '../models/textNormalize';
 import { FormEntry } from '../models/formEntry';
@@ -19,12 +19,14 @@ type Step = 'name' | 'complement-or-quantity' | 'quantity';
 interface Suggestion {
 	name: string;
 	kind: 'ingredient' | 'baseRecipe';
+	form?: string;
 }
 
 export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFolder, onAdd }: SmartRecipeIngredientInputProps) {
 	const [step, setStep] = useState<Step>('name');
 	const [name, setName] = useState('');
 	const [kind, setKind] = useState<'ingredient' | 'baseRecipe'>('ingredient');
+	const [form, setForm] = useState('');
 	const [complement, setComplement] = useState('');
 	const [currentInput, setCurrentInput] = useState('');
 	const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 		setStep('name');
 		setName('');
 		setKind('ingredient');
+		setForm('');
 		setComplement('');
 		setCurrentInput('');
 		setError(null);
@@ -48,7 +51,8 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 		setError(null);
 		if (value.trim().length >= 2) {
 			const baseRecipeMatches = searchBaseRecipes(app, recipesFolder, value).map((n) => ({ name: n, kind: 'baseRecipe' as const }));
-			const ingredientMatches = searchIngredientNames(app, ingredientsFolder, value).map((n) => ({ name: n, kind: 'ingredient' as const }));
+			const ingredientMatches = searchIngredientNamesWithForms(app, ingredientsFolder, [], [], value)
+				.map((s) => ({ name: s.name, kind: 'ingredient' as const, form: s.form }));
 			setSuggestions([...baseRecipeMatches, ...ingredientMatches]);
 			setHighlightedIndex(-1);
 		} else {
@@ -61,7 +65,10 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 	// reference (mandatory quantity, unit checked against its own servings
 	// unit). Anything else is treated as a regular ingredient — free text
 	// allowed, nothing needs to exist yet, same as before the merge.
-	function commitName(chosenName: string, forcedKind?: 'ingredient' | 'baseRecipe') {
+	// `suggestedForm`, when set, pre-fills the editable form field — it
+	// came from the ingredient's own declared possible_forms, not typed
+	// freely, but the user can still change it before submitting.
+	function commitName(chosenName: string, forcedKind?: 'ingredient' | 'baseRecipe', suggestedForm?: string) {
 		const trimmedIngredient = chosenName.trim();
 		if (trimmedIngredient === '') return;
 
@@ -71,6 +78,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 
 		setName(resolvedKind === 'baseRecipe' ? normalizedForRecipe : trimmedIngredient);
 		setKind(resolvedKind);
+		setForm(resolvedKind === 'ingredient' ? (suggestedForm ?? '') : '');
 		setCurrentInput('');
 		setSuggestions([]);
 		setHighlightedIndex(-1);
@@ -88,6 +96,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 		onAdd({
 			kind: 'ingredient',
 			ingredientName: name,
+			form: form.trim() || undefined,
 			complement: complementValue.trim() || undefined,
 			quantity: normalized?.quantity ?? null,
 			unit: normalized?.unit?.name ?? '',
@@ -127,6 +136,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 			if (step === 'quantity' || step === 'complement-or-quantity') {
 				setCurrentInput(name);
 				setName('');
+				setForm('');
 				setError(null);
 				setSuggestions([]);
 				setHighlightedIndex(-1);
@@ -150,7 +160,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 			if (e.key === 'Enter') {
 				if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
 					const s = suggestions[highlightedIndex];
-					commitName(s.name, s.kind);
+					commitName(s.name, s.kind, s.form);
 				} else {
 					commitName(currentInput);
 				}
@@ -210,6 +220,14 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 				{name && (
 					<span>{name}{kind === 'baseRecipe' ? ' (recette)' : ''}, </span>
 				)}
+				{kind === 'ingredient' && (step === 'complement-or-quantity' || step === 'quantity') && (
+					<input
+						value={form}
+						onChange={(e) => setForm(e.target.value)}
+						placeholder="forme (optionnel)"
+						className="smart-shopping-form-input"
+					/>
+				)}
 				{complement && <span>{complement}, </span>}
 				<input
 					value={currentInput}
@@ -227,12 +245,14 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 				<ul className="smart-shopping-suggestions">
 					{suggestions.map((suggestion, index) => (
 						<li
-							key={`${suggestion.kind}-${suggestion.name}`}
+							key={`${suggestion.kind}-${suggestion.name}-${suggestion.form ?? ''}`}
 							className={index === highlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
 							onMouseEnter={() => setHighlightedIndex(index)}
-							onClick={() => commitName(suggestion.name, suggestion.kind)}
+							onClick={() => commitName(suggestion.name, suggestion.kind, suggestion.form)}
 						>
-							{suggestion.name}{suggestion.kind === 'baseRecipe' ? ' (recette)' : ''}
+							{suggestion.name}
+							{suggestion.kind === 'baseRecipe' ? ' (recette)' : ''}
+							{suggestion.form ? ` (${suggestion.form})` : ''}
 						</li>
 					))}
 				</ul>

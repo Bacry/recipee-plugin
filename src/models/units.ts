@@ -85,13 +85,30 @@ export function parseQuantityString(input: string): ParsedQuantity | null {
 	if (trimmed.length === 0) return null;
 	if (!/^[0-9]/.test(trimmed)) return null;
 
-	const match = trimmed.match(/^[0-9]+(\.[0-9]+)?/);
-	if (!match) return null;
+	// Try a mixed number or simple fraction first (e.g. "1 1/2", "1/2"),
+	// since it's a stricter, more specific pattern than a plain decimal.
+	const fractionMatch = trimmed.match(/^(\d+\s+)?(\d+)\/(\d+)/);
+	let numberPart: string;
+	let quantity: number;
 
-	const numberPart = match[0];
+	if (fractionMatch) {
+		const whole = fractionMatch[1] ? Number(fractionMatch[1].trim()) : 0;
+		const numerator = Number(fractionMatch[2]);
+		const denominator = Number(fractionMatch[3]);
+		if (denominator === 0) return null;
+
+		quantity = whole + numerator / denominator;
+		numberPart = fractionMatch[0];
+	} else {
+		const decimalMatch = trimmed.match(/^[0-9]+(\.[0-9]+)?/);
+		if (!decimalMatch) return null;
+
+		numberPart = decimalMatch[0];
+		quantity = Number(numberPart);
+		if (Number.isNaN(quantity)) return null;
+	}
+
 	const rest = trimmed.slice(numberPart.length).trim();
-	const quantity = Number(numberPart);
-	if (Number.isNaN(quantity)) return null;
 
 	if (rest === '') {
 		return { quantity, unit: null };

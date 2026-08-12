@@ -6,6 +6,7 @@ import { searchBaseRecipes, getBaseRecipeServingsLabel } from '../models/searchB
 import { normalizeNameForFile } from '../models/textNormalize';
 import { FormEntry } from '../models/formEntry';
 import { normalizeParsedQuantity } from '../models/normalizeQuantityUnit';
+import { SmartInputTokenBar } from './SmartInputTokenBar';
 
 interface SmartRecipeIngredientInputProps {
 	app: App;
@@ -26,7 +27,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 	const [step, setStep] = useState<Step>('name');
 	const [name, setName] = useState('');
 	const [kind, setKind] = useState<'ingredient' | 'baseRecipe'>('ingredient');
-	const [form, setForm] = useState('');
+	const [form, setForm] = useState<string | undefined>(undefined);
 	const [complement, setComplement] = useState('');
 	const [currentInput, setCurrentInput] = useState('');
 	const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 		setStep('name');
 		setName('');
 		setKind('ingredient');
-		setForm('');
+		setForm(undefined);
 		setComplement('');
 		setCurrentInput('');
 		setError(null);
@@ -61,14 +62,11 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 		}
 	}
 
-	// A name matching a known "base"-tagged recipe becomes a base recipe
-	// reference (mandatory quantity, unit checked against its own servings
-	// unit). Anything else is treated as a regular ingredient — free text
-	// allowed, nothing needs to exist yet, same as before the merge.
-	// `suggestedForm`, when set, pre-fills the editable form field — it
-	// came from the ingredient's own declared possible_forms, not typed
-	// freely, but the user can still change it before submitting.
-	function commitName(chosenName: string, forcedKind?: 'ingredient' | 'baseRecipe', suggestedForm?: string) {
+	// Picking a suggestion that carries a form (e.g. "Poulet (haché)") locks
+	// name+form together right here — there's no separate editable form
+	// step afterward, matching the plain "type it and hit Enter" case for
+	// an ingredient with no declared forms at all.
+	function commitName(chosenName: string, forcedKind?: 'ingredient' | 'baseRecipe', pickedForm?: string) {
 		const trimmedIngredient = chosenName.trim();
 		if (trimmedIngredient === '') return;
 
@@ -78,13 +76,11 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 
 		setName(resolvedKind === 'baseRecipe' ? normalizedForRecipe : trimmedIngredient);
 		setKind(resolvedKind);
-		setForm(resolvedKind === 'ingredient' ? (suggestedForm ?? '') : '');
+		setForm(resolvedKind === 'ingredient' ? pickedForm : undefined);
 		setCurrentInput('');
 		setSuggestions([]);
 		setHighlightedIndex(-1);
 		setError(null);
-		// Base recipes skip straight to the mandatory quantity step — no
-		// complement field, and can't be added without an amount.
 		setStep(resolvedKind === 'baseRecipe' ? 'quantity' : 'complement-or-quantity');
 	}
 
@@ -96,7 +92,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 		onAdd({
 			kind: 'ingredient',
 			ingredientName: name,
-			form: form.trim() || undefined,
+			form: form,
 			complement: complementValue.trim() || undefined,
 			quantity: normalized?.quantity ?? null,
 			unit: normalized?.unit?.name ?? '',
@@ -136,7 +132,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 			if (step === 'quantity' || step === 'complement-or-quantity') {
 				setCurrentInput(name);
 				setName('');
-				setForm('');
+				setForm(undefined);
 				setError(null);
 				setSuggestions([]);
 				setHighlightedIndex(-1);
@@ -214,49 +210,29 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 					? 'Complément ou quantité (optionnel)'
 					: 'Quantité (optionnel)';
 
+	const displayName = name ? `${name}${form ? ` (${form})` : ''}${kind === 'baseRecipe' ? ' (recette)' : ''}` : '';
+
+	const tokens = [
+		displayName,
+		step === 'quantity' ? complement : '',
+	];
+
 	return (
-		<div className="smart-shopping-input-wrapper">
-			<div className="smart-shopping-input">
-				{name && (
-					<span>{name}{kind === 'baseRecipe' ? ' (recette)' : ''}, </span>
-				)}
-				{kind === 'ingredient' && (step === 'complement-or-quantity' || step === 'quantity') && (
-					<input
-						value={form}
-						onChange={(e) => setForm(e.target.value)}
-						placeholder="forme (optionnel)"
-						className="smart-shopping-form-input"
-					/>
-				)}
-				{complement && <span>{complement}, </span>}
-				<input
-					value={currentInput}
-					onChange={(e) =>
-						step === 'name' ? handleNameInputChange(e.target.value) : setCurrentInput(e.target.value)
-					}
-					onKeyDown={handleKeyDown}
-					placeholder={placeholder}
-				/>
-			</div>
-
-			{error && <p className="ingredient-validation-error">{error}</p>}
-
-			{step === 'name' && suggestions.length > 0 && (
-				<ul className="smart-shopping-suggestions">
-					{suggestions.map((suggestion, index) => (
-						<li
-							key={`${suggestion.kind}-${suggestion.name}-${suggestion.form ?? ''}`}
-							className={index === highlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
-							onMouseEnter={() => setHighlightedIndex(index)}
-							onClick={() => commitName(suggestion.name, suggestion.kind, suggestion.form)}
-						>
-							{suggestion.name}
-							{suggestion.kind === 'baseRecipe' ? ' (recette)' : ''}
-							{suggestion.form ? ` (${suggestion.form})` : ''}
-						</li>
-					))}
-				</ul>
-			)}
-		</div>
+		<SmartInputTokenBar
+			tokens={tokens}
+			currentInput={currentInput}
+			onCurrentInputChange={(v) => (step === 'name' ? handleNameInputChange(v) : setCurrentInput(v))}
+			onKeyDown={handleKeyDown}
+			placeholder={placeholder}
+			error={error}
+			showSuggestions={step === 'name'}
+			suggestions={suggestions.map((s) => ({
+				key: `${s.kind}-${s.name}-${s.form ?? ''}`,
+				label: `${s.name}${s.kind === 'baseRecipe' ? ' (recette)' : ''}${s.form ? ` (${s.form})` : ''}`,
+				onClick: () => commitName(s.name, s.kind, s.form),
+			}))}
+			highlightedIndex={highlightedIndex}
+			onSuggestionHover={setHighlightedIndex}
+		/>
 	);
 }

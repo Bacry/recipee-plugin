@@ -129,14 +129,14 @@ export function IngredientListDisplay({
 						<div className="recipe-list-cell-name recipe-list-sortable" onClick={() => onToggleSort('name')}>
 							Nom{sortArrow('name')}
 						</div>
-						<div className="recipe-list-cell-duration recipe-list-sortable" onClick={() => onToggleSort('type')}>
+						<div className="recipe-list-cell-type recipe-list-sortable" onClick={() => onToggleSort('type')}>
 							Type{sortArrow('type')}
 						</div>
-						<div className="recipe-list-cell-duration recipe-list-sortable" onClick={() => onToggleSort('shopSection')}>
+						<div className="recipe-list-cell-shopsection recipe-list-sortable" onClick={() => onToggleSort('shopSection')}>
 							Rayon{sortArrow('shopSection')}
 						</div>
 						<div className="recipe-list-cell-cooked recipe-list-sortable" onClick={() => onToggleSort('usedInRecipesCount')}>
-							#Recettes{sortArrow('usedInRecipesCount')}
+							# {sortArrow('usedInRecipesCount')}
 						</div>
 					</div>
 				)}
@@ -183,8 +183,8 @@ export function IngredientListDisplay({
 					{ingredients.map((ing) => (
 						<div key={ing.filePath} className="recipe-list-row" onClick={() => onIngredientClick(ing.filePath)}>
 							<div className="recipe-list-cell-name">{ing.name}</div>
-							<div className="recipe-list-cell-duration">{ing.type}</div>
-							<div className="recipe-list-cell-duration">{ing.shopSection}</div>
+							<div className="recipe-list-cell-type">{ing.type}</div>
+							<div className="recipe-list-cell-shopsection">{ing.shopSection}</div>
 							<div className="recipe-list-cell-cooked">{ing.usedInRecipesCount}</div>
 						</div>
 					))}

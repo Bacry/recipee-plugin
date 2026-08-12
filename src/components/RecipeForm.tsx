@@ -396,7 +396,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 
 				<div className="ingredient-form-row-tags-source">
 					<div className="ingredient-form-field usda-search-wrapper">
-						<label>Tags (séparés par des virgules)</label>
+						<label>Tags</label>
 						<input
 							value={tags}
 							onChange={(e) => handleTagsChange(e.target.value)}
@@ -495,6 +495,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 										) : (
 											<span className="recipe-ingredient-name">
 												{entry.ingredientName}
+												{entry.form ? ` (${entry.form})` : ''}
 												{entry.complement ? ` (${entry.complement})` : ''}
 												{entry.quantity != null ? ` — ${entry.quantity}${entry.unit}` : ''}
 											</span>

@@ -88,13 +88,18 @@ export class IngredientListView extends ItemView {
 	}
 
 	async onOpen() {
+
+		// We add the close button at top right of the note.
 		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
-		this.closeAction.addClass('ingredient-recipe-view-actions');
+		this.closeAction.addClass('header-buttons');
+
+		// Create the container and root
 		const container = this.containerEl.children[1] as HTMLElement;
 		this.root = createRoot(container);
 
+		// We store the scroll state
 		container.addEventListener('scroll', () => {
 			this.scrollTop = container.scrollTop;
 		});

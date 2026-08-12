@@ -3,9 +3,9 @@ import { App } from 'obsidian';
 import { parseQuantityString, ParsedQuantity } from '../models/units';
 import { searchAllItemNames } from '../models/searchAllItemNames';
 import { addOtherItemNameIfMissing } from '../models/otherItemsNote';
-import { lowerFirstLetter } from '../models/textNormalize';
 import { normalizeNameForFile } from '../models/textNormalize';
 import { IngredientNameSuggestion } from '../models/searchIngredientNames';
+import { SmartInputTokenBar } from './SmartInputTokenBar';
 
 export interface SmartInputResult {
 	name: string;
@@ -13,11 +13,10 @@ export interface SmartInputResult {
 	parsedQuantity: ParsedQuantity | null;
 }
 
-
 interface SmartShoppingInputProps {
 	app: App;
 	ingredientsFolder: string;
-	otherItemsNotePath: string; // needed to search "Autres" note names too
+	otherItemsNotePath: string;
 	onAdd: (result: SmartInputResult) => void;
 }
 
@@ -26,30 +25,25 @@ type Step = 'name' | 'complement-or-quantity' | 'quantity';
 export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath, onAdd }: SmartShoppingInputProps) {
 	const [step, setStep] = useState<Step>('name');
 	const [name, setName] = useState('');
+	const [form, setForm] = useState<string | undefined>(undefined);
 	const [complement, setComplement] = useState('');
 	const [currentInput, setCurrentInput] = useState('');
 
-	// Autocomplete state — only relevant during the 'name' step.
 	const [suggestions, setSuggestions] = useState<IngredientNameSuggestion[]>([]);
-	const [form, setForm] = useState('');
-	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1); // -1 = nothing highlighted yet
+	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+
+	const searchRequestId = useRef(0);
 
 	function reset() {
 		setStep('name');
 		setName('');
-		setForm('');
+		setForm(undefined);
 		setComplement('');
 		setCurrentInput('');
 		setSuggestions([]);
 		setHighlightedIndex(-1);
 	}
 
-	// Now async since it reads the "Autres" note from disk. We track a request id
-	// (same pattern as the USDA search) to discard stale responses if the user
-	// keeps typing before a previous lookup finishes.
-	const searchRequestId = useRef(0);
-
-	// Called on every keystroke while typing the name — refreshes the suggestion list.
 	async function handleNameInputChange(value: string) {
 		setCurrentInput(value);
 		if (value.trim().length < 2) {
@@ -66,18 +60,17 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 		setHighlightedIndex(-1);
 	}
 
-	// Commits a name (whether it came from the free-typed text or a picked suggestion)
-	// and moves to the next step. Shared by both the "Enter with no selection" path
-	// and the "click/Enter on a suggestion" path.
-	// Commits a name and moves to the next step. If the name doesn't match an
-// existing ingredient file, it's recorded in the "Autres" note so future
-// searches recognize it — this is what makes the "Autres" note grow on its own.
-	async function commitName(chosenName: string, suggestedForm?: string) {
+	function combinedComplement(): string {
+		return [form, complement].filter(Boolean).join(', ');
+	}
+
+
+	async function commitName(chosenName: string, pickedForm?: string) {
 		const trimmed = normalizeNameForFile(chosenName);
 		if (trimmed === '') return;
 
 		setName(trimmed);
-		setForm(suggestedForm ?? '');
+		setForm(pickedForm);
 		setCurrentInput('');
 		setSuggestions([]);
 		setHighlightedIndex(-1);
@@ -91,8 +84,6 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 	}
 
 	function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-		// Backspace on an empty input steps back to the previous stage,
-		// restoring its text into the input so it can be edited again.
 		if (e.key === 'Backspace' && currentInput === '') {
 			if (step === 'quantity') {
 				setCurrentInput(complement);
@@ -103,16 +94,16 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 			if (step === 'complement-or-quantity') {
 				setCurrentInput(name);
 				setName('');
+				setForm(undefined);
 				setSuggestions([]);
 				setHighlightedIndex(-1);
 				setStep('name');
 				return;
 			}
-			return; // already at 'name' with nothing typed: nothing to go back to
+			return;
 		}
 
 		if (step === 'name') {
-			// Arrow keys move the highlighted suggestion, without touching the typed text.
 			if (e.key === 'ArrowDown' && suggestions.length > 0) {
 				e.preventDefault();
 				setHighlightedIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
@@ -124,7 +115,6 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 				return;
 			}
 			if (e.key === 'Enter') {
-				// If a suggestion is highlighted, it wins over the raw typed text.
 				if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
 					const s = suggestions[highlightedIndex];
 					commitName(s.name, s.form);
@@ -133,21 +123,21 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 				}
 				return;
 			}
-			return; // any other key: let the input handle it normally
+			return;
 		}
 
 		if (e.key !== 'Enter') return;
 
 		if (step === 'complement-or-quantity') {
 			if (currentInput.trim() === '') {
-				onAdd({ name, complement: form, parsedQuantity: null });
+				onAdd({ name, complement: combinedComplement(), parsedQuantity: null });
 				reset();
 				return;
 			}
 
 			const parsed = parseQuantityString(currentInput);
 			if (parsed) {
-				onAdd({ name, complement: form, parsedQuantity: parsed });
+				onAdd({ name, complement: combinedComplement(), parsedQuantity: parsed });
 				reset();
 				return;
 			}
@@ -160,18 +150,17 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 
 		// step === 'quantity'
 		if (currentInput.trim() === '') {
-			onAdd({ name, complement: complement || form, parsedQuantity: null });
+			onAdd({ name, complement: combinedComplement(), parsedQuantity: null });
 			reset();
 			return;
 		}
 
 		const parsed = parseQuantityString(currentInput);
 		if (parsed) {
-			onAdd({ name, complement: complement || form, parsedQuantity: parsed });
+			onAdd({ name, complement: combinedComplement(), parsedQuantity: parsed });
 			reset();
 			return;
 		}
-		// Non-empty but invalid: block on purpose, no state change.
 	}
 
 	const placeholder =
@@ -181,36 +170,28 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 				? 'Complément ou quantité (optionnel)'
 				: 'Quantité (optionnel)';
 
-	return (
-		<div className="smart-shopping-input-wrapper">
-			<div className="smart-shopping-input">
-				{name && <span>{name}, </span>}
-				{form && <span>{form}, </span>}
-				{complement && <span>{complement}, </span>}
-				<input
-					value={currentInput}
-					onChange={(e) =>
-						step === 'name' ? handleNameInputChange(e.target.value) : setCurrentInput(e.target.value)
-					}
-					onKeyDown={handleKeyDown}
-					placeholder={placeholder}
-				/>
-			</div>
+	const displayName = name ? `${name}${form ? ` (${form})` : ''}` : '';
 
-			{step === 'name' && suggestions.length > 0 && (
-				<ul className="smart-shopping-suggestions">
-					{suggestions.map((suggestion, index) => (
-						<li
-							key={`${suggestion.name}-${suggestion.form ?? ''}`}
-							className={index === highlightedIndex ? 'smart-shopping-suggestion-highlighted' : ''}
-							onMouseEnter={() => setHighlightedIndex(index)}
-							onClick={() => commitName(suggestion.name, suggestion.form)}
-						>
-							{suggestion.name}{suggestion.form ? ` (${suggestion.form})` : ''}
-						</li>
-					))}
-				</ul>
-			)}
-		</div>
+	const tokens = [
+		displayName,
+		step === 'quantity' ? complement : '',
+	];
+
+	return (
+		<SmartInputTokenBar
+			tokens={tokens}
+			currentInput={currentInput}
+			onCurrentInputChange={(v) => (step === 'name' ? handleNameInputChange(v) : setCurrentInput(v))}
+			onKeyDown={handleKeyDown}
+			placeholder={placeholder}
+			showSuggestions={step === 'name'}
+			suggestions={suggestions.map((s) => ({
+				key: `${s.name}-${s.form ?? ''}`,
+				label: `${s.name}${s.form ? ` (${s.form})` : ''}`,
+				onClick: () => commitName(s.name, s.form),
+			}))}
+			highlightedIndex={highlightedIndex}
+			onSuggestionHover={setHighlightedIndex}
+		/>
 	);
 }

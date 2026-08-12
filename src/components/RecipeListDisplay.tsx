@@ -27,32 +27,28 @@ function formatTotalDuration(recipe: RecipeSummary): string {
 }
 
 function formatCreatedDate(createdTime: number): string {
-	return new Date(createdTime).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+	const date = new Date(createdTime);
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const year = String(date.getFullYear()).slice(-2);
+	return `${month}/${year}`;
 }
 
 export function RecipeListDisplay({ app, recipes, onRecipeClick }: RecipeListDisplayProps) {
 	return (
-		<div>
+		<div className="recipe-list-scroll-padding">
 			{recipes.map((recipe) => {
 				const imagePath = recipe.image ? resolveImagePath(app, recipe.image) : null;
 
 				return (
 					<div key={recipe.filePath} className="recipe-list-row" onClick={() => onRecipeClick(recipe.filePath)}>
 						<div className="recipe-list-cell-name">{upperFirstLetter(recipe.name)}</div>
-						<div className="recipe-list-cell-thumb">
-							{imagePath ? (
-								<img src={imagePath} alt={recipe.name} className="recipe-list-thumbnail" />
-							) : (
-								<div className="recipe-list-thumbnail-placeholder" />
-							)}
-						</div>
 						<div className="recipe-list-cell-duration">{formatTotalDuration(recipe)}</div>
+						<div className="recipe-list-cell-created">{formatCreatedDate(recipe.createdTime)}</div>
 						<div className="recipe-list-cell-cooked">
 							{recipe.madeBeforeTracking
 								? `${recipe.cookedCount > 0 ? recipe.cookedCount : ''}+`
 								: (recipe.cookedCount > 0 ? recipe.cookedCount : '')}
 						</div>
-						<div className="recipe-list-cell-created">{formatCreatedDate(recipe.createdTime)}</div>
 					</div>
 				);
 			})}

@@ -1,90 +1,98 @@
 
 /* ============================================================
-   SOME GLOBAL VARIABLES
+   Common styles for all the views
    ============================================================ */
 
-:root {
-	/* Left padding for all the views */
-	--recipee-plugin-left-padding: 1rem;
-
-	/* small max wdith for some views */
-	--recipee-plugin-small-width: 600px;
-
-	/* Large max width for some views */
-	--recipee-plugin-large-width: 800px;
-
-	/* Font size of the header title */
-	--recipee-plugin-title-size: 1.3rem;
+/*
+ Hiding obsidian navigation buttons
+ */
+.workspace-leaf-content[data-type="ingredient-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="ingredient-list-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="recipe-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="recipe-list-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="new-recipe-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="manage-lists-view"] .view-header-nav-buttons,
+.workspace-leaf-content[data-type="shopping-list-view"] .view-header-nav-buttons {
+	display: none;
 }
 
-/* ============================================================
-   Generic css for both IngredientView.tsx and RecipeView.tsx
-   ============================================================ */
+/*
+  Padding and margins of views
+ */
+.workspace-leaf-content[data-type="ingredient-view"] .view-header-title,
+.workspace-leaf-content[data-type="ingredient-list-view"] .view-header-title,
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-title,
+.workspace-leaf-content[data-type="recipe-view"] .view-header-title,
+.workspace-leaf-content[data-type="recipe-list-view"] .view-header-title,
+.workspace-leaf-content[data-type="new-recipe-view"] .view-header-title,
+.workspace-leaf-content[data-type="manage-lists-view"] .view-header-title,
+.workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
+	padding-top: 10rem;
+	padding-bottom: 10rem;
+	margin: 0 auto;
+	display: block;
+	font-size: 1.3rem;
+	font-weight: 700;
+}
 
-/* The close and modifier action button */
-.ingredient-recipe-view-actions {
+/*
+  size of views
+ */
+.workspace-leaf-content[data-type="ingredient-list-view"] .view-header-title,
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-title,
+.workspace-leaf-content[data-type="recipe-view"] .view-header-title,
+.workspace-leaf-content[data-type="recipe-list-view"] .view-header-title,
+.workspace-leaf-content[data-type="new-recipe-view"] .view-header-title,
+.workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
+	max-width: 200px;
+}
+.workspace-leaf-content[data-type="ingredient-view"] .view-header-title,
+.workspace-leaf-content[data-type="manage-lists-view"] .view-header-title {
+	max-width: 600px;
+}
+
+/*
+ The header buttons style
+ */
+.header-buttons {
 	background: var(--background-secondary);
 	border-radius: 4px;
 	padding: 0.2rem 0.4rem;
 }
-.ingredient-recipe--view-actions.is-disabled {
+.header-buttons.is-disabled {
 	opacity: 0.35;
 	pointer-events: none;
 }
-.ingredient-recipe--view-actions:hover {
+.header-buttons:hover {
 	background: var(--background-modifier-hover);
 }
 
-/* Error when displaying an ingredient */
-.ingredient-recipe-validation-error {
-	color: var(--text-error);
-}
 
 
 /* ============================================================
-   Generic css for both NewIngredientView.tsx and NewRecipeView.tsx
+   INGREDIENT VIEW (read mode) — IngredientDetails.tsx / IngredientView.tsx
    ============================================================ */
 
-/* The close button in both NewIngredientView.tsx and NewRecipeView.tsx*/
-.new-ingredient-recipe-view-close-action {
-	background: var(--background-secondary);
-	border-radius: 4px;
-	padding: 0.2rem 0.4rem;
+
+/* For the nutrition table */
+.workspace-leaf-content[data-type="ingredient-view"] table {
+	border-collapse: collapse;
+	width: 100%;
+	max-width: 300px;
 }
-.new-ingredient-recipe-view-close-action:hover {
-	background: var(--background-modifier-hover);
+.workspace-leaf-content[data-type="ingredient-view"] table td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 4px 8px;
 }
 
-/* The footer in which the submit button is */
-.ingredient-recipe-form-footer {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
 
-/* The submit button */
-.ingredient-recipe-form-submit:hover {
-	background: var(--interactive-accent-hover);
-}
 
 
 /* ============================================================
    NEW INGREDIENT VIEW
    ============================================================ */
 
-/* Sets the max-width and left padding */
-.workspace-leaf-content[data-type="new-ingredient-view"] .view-content {
-	max-width: var(--recipee-plugin-large-width);
-	padding-left: var(--recipee-plugin-left-padding);
-	margin: 0 auto;
-	display: block;
-}
-
-/* Title size */
-.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-title {
-	font-size: var(--recipee-plugin-title-size);
-	font-weight: 700;
-}
 
 
 /* ============================================================
@@ -152,6 +160,7 @@
 	flex: 1;
 	min-width: 0;
 }
+
 
 .ingredient-form-nutrition-field input {
 	width: 100%;
@@ -339,34 +348,17 @@
 	background: var(--background-modifier-hover);
 }
 
-
-/* ============================================================
-   INGREDIENT VIEW (read mode) — IngredientDetails.tsx / IngredientView.tsx
-   ============================================================ */
-
-/* Sets the max-width and left padding */
-.workspace-leaf-content[data-type="ingredient-view"] .view-content {
-	max-width: var(--recipee-plugin-small-width);
-	padding-left: var(--recipee-plugin-left-padding);
-	margin: 0 auto;
-	display: block;
+.usda-search-row {
+	display: flex;
+	gap: 0.5rem;
 }
 
-/* Title size */
-.workspace-leaf-content[data-type="ingredient-view"] .view-header-title {
-	font-size: var(--recipee-plugin-title-size);
-	font-weight: 700;
-}
-
-/* For the nutrition table */
-.workspace-leaf-content[data-type="ingredient-view"] table {
-	border-collapse: collapse;
-	width: 100%;
-	max-width: 300px;
-}
-.workspace-leaf-content[data-type="ingredient-view"] table td {
-	border: 1px solid var(--background-modifier-border);
-	padding: 4px 8px;
+.usda-search-row button {
+	flex-shrink: 0;
+	height: 2.4rem;
+	padding: 0 0.8rem;
+	border-radius: 4px;
+	align-self: stretch;
 }
 
 /* ============================================================
@@ -388,38 +380,12 @@
    NEW RECIPE VIEW  NewRecipeView.tsx
    ============================================================ */
 
-/* Sets the max-width and left padding */
-.workspace-leaf-content[data-type="new-recipe-view"] .view-content {
-	max-width: var(--recipee-plugin-large-width);
-	padding-left: var(--recipee-plugin-left-padding);
-	margin: 0 auto;
-	display: block;
-}
-
-/* Title size */
-.workspace-leaf-content[data-type="new-recipe-view"] .view-header-title {
-	font-size: var(--recipee-plugin-title-size);
-	font-weight: 700;
-}
 
 
 /* ============================================================
    RECIPE VIEW  RecipeView.tsx
    ============================================================ */
 
-/* Sets the max-width and left padding */
-.workspace-leaf-content[data-type="recipe-view"] .view-content {
-	max-width: var(--recipee-plugin-large-width);
-	padding-left: var(--recipee-plugin-left-padding);
-	margin: 0 auto;
-	display: block;
-}
-
-/* Title size */
-.workspace-leaf-content[data-type="recipe-view"] .view-header-title {
-	font-size: var(--recipee-plugin-title-size);
-	font-weight: 700;
-}
 
 /* For the nutrition table */
 .workspace-leaf-content[data-type="recipe-view"] table {
@@ -472,8 +438,18 @@
 
 
 
+/* NewRecipe */
 
-
+/* The extract recipe info with Claude button (NewRecipe view) */
+.ingredient-recipe-form-footer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+/* The submit button */
+.ingredient-recipe-form-submit:hover {
+	background: var(--interactive-accent-hover);
+}
 
 
 /* ============================================================
@@ -550,20 +526,7 @@
    SHOPPING LIST VIEW — ShoppingListView.tsx / ShoppingListDisplay.tsx
    ============================================================ */
 
-/* Caps the content width and centers it, so the list doesn't stretch
-   across a very wide window. display:block is required for margin:auto
-   to actually center the element. */
-.workspace-leaf-content[data-type="shopping-list-view"] .view-content {
-	max-width: 600px;
-	margin: 0 auto;
-	display: block;
-}
 
-/* Enlarges Obsidian's native pane title ("Courses"). */
-.workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
-	font-size: 1.3rem;
-	font-weight: 700;
-}
 
 .shopping-list {
 	padding: 1rem;
@@ -837,23 +800,6 @@
    "ALL RECIPES" LIST VIEW — RecipeListView.tsx / RecipeListDisplay.tsx
    ============================================================ */
 
-.workspace-leaf-content[data-type="recipe-list-view"] .view-content {
-	padding-top: 0;
-}
-
-/* Sets the max-width and left padding */
-.workspace-leaf-content[data-type="recipe-list-view"] .view-content {
-	max-width: var(--recipee-plugin-large-width);
-	padding-left: var(--recipee-plugin-left-padding);
-	margin: 0 auto;
-	display: block;
-}
-
-/* Title size */
-.workspace-leaf-content[data-type="recipe-list-view"] .view-header-title {
-	font-size: var(--recipee-plugin-title-size);
-	font-weight: 700;
-}
 
 .recipe-list-thumbnail,
 .recipe-list-thumbnail-placeholder {
@@ -932,19 +878,21 @@
 	justify-content: center;
 }
 .recipe-list-cell-duration {
-	width: 120px;
+	width: 34px;
 	border-left: 1px solid var(--background-modifier-border);
 	padding-left: 0.6rem;
 	text-align: left;
+	color: var(--text-muted);
+	white-space: nowrap;
 }
 
 .recipe-list-cell-cooked {
-	width: 50px;
+	width: 30px;
 	flex-shrink: 0;
 	color: var(--text-muted);
 	white-space: nowrap;
 	border-left: 1px solid var(--background-modifier-border);
-	padding-left: 0.6rem;
+	padding-left: 0.4rem;
 	text-align: center;
 }
 
@@ -1018,24 +966,6 @@
 
 
 
-
-.workspace-leaf-content[data-type="manage-lists-view"] .view-content {
-	padding-top: 0;
-}
-
-/* Sets the max-width and left padding */
-.workspace-leaf-content[data-type="manage-lists-view"] .view-content {
-	max-width: var(--recipee-plugin-small-width);
-	padding-left: var(--recipee-plugin-left-padding);
-	margin: 0 auto;
-	display: block;
-}
-
-/* Title size */
-.workspace-leaf-content[data-type="manage-lists-view"] .view-header-title {
-	font-size: var(--recipee-plugin-title-size);
-	font-weight: 700;
-}
 
 
 .manage-lists-values {
@@ -1117,7 +1047,9 @@
 
 .recipe-list-filter-buttons-row {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5rem;
+	row-gap: 0.4rem;
 	margin-bottom: 0.75rem;
 }
 
@@ -1391,27 +1323,6 @@
 }
 
 
-.workspace-leaf-content[data-type="recipe-view"] .view-header-nav-buttons,
-.workspace-leaf-content[data-type="ingredient-view"] .view-header-nav-buttons,
-.workspace-leaf-content[data-type="new-recipe-view"] .view-header-nav-buttons,
-.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-nav-buttons,
-.workspace-leaf-content[data-type="shopping-list-view"] .view-header-nav-buttons,
-.workspace-leaf-content[data-type="recipe-list-view"] .view-header-nav-buttons {
-	display: none;
-}
-
-.workspace-leaf-content[data-type="ingredient-list-view"] .view-content {
-	padding-top: 0;
-	max-width: var(--recipee-plugin-large-width);
-	padding-left: var(--recipee-plugin-left-padding);
-	margin: 0 auto;
-	display: block;
-}
-
-.workspace-leaf-content[data-type="ingredient-list-view"] .view-header-title {
-	font-size: var(--recipee-plugin-title-size);
-	font-weight: 700;
-}
 
 .recipe-list-tag-menu-item input[type="checkbox"] {
 	width: 1rem !important;
@@ -1520,7 +1431,60 @@
 	cursor: pointer;
 }
 
-.smart-shopping-form-input {
-	width: 6rem;
+
+.recipe-list-cell-type {
+	width: 100px;
 	flex-shrink: 0;
+	border-left: 1px solid var(--background-modifier-border);
+	padding-left: 0.6rem;
+	text-align: left;
+}
+
+.recipe-list-cell-shopsection {
+	width: 120px;
+	flex-shrink: 0;
+	border-left: 1px solid var(--background-modifier-border);
+	padding-left: 0.6rem;
+	text-align: left;
+}
+
+@media (max-width: 480px) {
+	.recipe-list-cell-shopsection {
+		display: none;
+	}
+}
+
+
+.ingredient-form-diet-menu-wrapper {
+	width: 100%;
+}
+
+.ingredient-form-diet-menu-wrapper .recipe-list-tag-menu-button {
+	height: 1.8rem;
+	box-sizing: border-box;
+	padding: 0 0.8rem;
+	display: flex;
+	align-items: center;
+}
+.ingredient-form-claude-apply-all-wrapper {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+
+.ingredient-form-claude-apply-all {
+	flex: 0 0 auto;
+	padding: 0.3rem 0.6rem;
+	font-size: 0.8rem;
+	white-space: nowrap;
+	border-radius: 4px;
+	border: 1px solid var(--interactive-accent);
+	background: transparent;
+	color: var(--interactive-accent);
+	cursor: pointer;
+}
+
+.ingredient-form-claude-apply-all:hover {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
 }

@@ -164,7 +164,7 @@ export class RecipeListView extends ItemView {
 		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
-		this.closeAction.addClass('ingredient-recipe-view-actions');
+		this.closeAction.addClass('header-buttons');
 		const container = this.containerEl.children[1] as HTMLElement;
 		this.root = createRoot(container);
 
@@ -408,15 +408,14 @@ export class RecipeListView extends ItemView {
 						<div className="recipe-list-cell-name recipe-list-sortable" onClick={() => this.toggleSort('name')}>
 							Nom{this.sortKey === 'name' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
 						</div>
-						<div className="recipe-list-cell-thumb"></div>
 						<div className="recipe-list-cell-duration recipe-list-sortable" onClick={() => this.toggleSort('duration')}>
 							Durée{this.sortKey === 'duration' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
 						</div>
+						<div className="recipe-list-cell-created recipe-list-sortable" onClick={() => this.toggleSort('created')}>
+							Créée {this.sortKey === 'created' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+						</div>
 						<div className="recipe-list-cell-cooked recipe-list-sortable" onClick={() => this.toggleSort('cooked')}>
 							#{this.sortKey === 'cooked' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
-						</div>
-						<div className="recipe-list-cell-created recipe-list-sortable" onClick={() => this.toggleSort('created')}>
-							Créée le{this.sortKey === 'created' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
 						</div>
 					</div>
 				</div>

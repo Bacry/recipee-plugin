@@ -316,6 +316,15 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		);
 	}
 
+	function applyAllClaudeNutritionValues() {
+		if (!claudeNutritionSuggestions) return;
+		const next = { ...nutritionInputs };
+		for (const key of NUTRITION_KEYS) {
+			next[key] = claudeNutritionSuggestions[key].toString();
+		}
+		setNutritionInputs(next);
+	}
+
 	useImperativeHandle(ref, () => ({
 		triggerSubmit: handleSubmit,
 	}));
@@ -396,7 +405,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 
 						<div className="ingredient-form-field">
 							<label>Contraintes</label>
-							<div className="recipe-list-tag-menu-wrapper">
+							<div className="recipe-list-tag-menu-wrapper ingredient-form-diet-menu-wrapper">
 								<button
 									type="button"
 									onClick={() => setDietMenuOpen((open) => !open)}
@@ -495,6 +504,17 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 				<div className="ingredient-form-nutrition-rows">
 					<div className="ingredient-form-nutrition-row">
 						{renderNutritionField('kcal')}
+						{claudeNutritionSuggestions && (
+							<div className="ingredient-form-claude-apply-all-wrapper">
+								<button
+									type="button"
+									onClick={applyAllClaudeNutritionValues}
+									className="ingredient-form-claude-apply-all"
+								>
+									Copier les valeurs de Claude
+								</button>
+							</div>
+						)}
 					</div>
 					<div className="ingredient-form-nutrition-row">
 						{renderNutritionField('lipids')}

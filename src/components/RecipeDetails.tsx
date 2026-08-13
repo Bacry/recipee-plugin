@@ -377,6 +377,7 @@ export function RecipeDetails({
 					...ingredientEntriesWithOil,
 				].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 				let inSection = false;
+				let sectionSubtitleGap = false;
 
 				return (
 					<div className="section-content">
@@ -384,19 +385,25 @@ export function RecipeDetails({
 							if (entry.kind === 'ingredient' && entry.isSectionHeader) {
 								if ((entry.sectionTitle ?? '').trim() === '') {
 									inSection = false
+									sectionSubtitleGap = true
 									return null;
 								}
 								inSection = true
 								return (
-									<div key={index} className="section-content-subtitle">
+									<div key={index} className="section-content-subtitle section-subtitle-gap">
 										{entry.sectionTitle}
 									</div>
 								);
 							}
 							if (entry.kind === 'baseRecipe') {
 								const scaled = entry.quantity * factor;
+								const gapClass = sectionSubtitleGap ? 'section-subtitle-gap' : '';
+								sectionSubtitleGap = false;
 								return (
-									<div key={index} className={inSection ?  'section-content-subitem' : 'section-content-item'}>
+									<div
+										key={index}
+										className={`${inSection ? 'section-content-subitem' : 'section-content-item'} ${gapClass}`}
+									>
 										{formatScaledQuantity(entry.quantity, entry.unit, factor)}{entry.unit} de{' '}
 										<a
 											href="#"
@@ -414,9 +421,14 @@ export function RecipeDetails({
 
 							const exists = ingredientExists(entry.ingredientName);
 							const showAsLink = entry.quantity != null || exists;
+							const gapClass = sectionSubtitleGap ? 'section-subtitle-gap' : '';
+							sectionSubtitleGap = false;
 
 							return (
-								<div key={index} className={inSection ?  'section-content-subitem' : 'section-content-item'}>
+								<div
+									key={index}
+									className={`${inSection ? 'section-content-subitem' : 'section-content-item'} ${gapClass}`}
+								>
 									{renderIngredientQuantity(entry, index)}{' '}
 									{showAsLink ? (
 										<a
@@ -440,50 +452,50 @@ export function RecipeDetails({
 			})()}
 
 			<div className="section">
-			<InstructionsPreview app={app} content={recipe.instructions} />
+				<InstructionsPreview app={app} content={recipe.instructions} />
 			</div>
 			<div className="section">
-			<MarkdownEditableBlock
-				app={app}
-				title="Notes"
-				titleClass="section-title"
-				content={recipe.notes ?? ''}
-				contentClass="section-content"
-				placeholder="Pour insérer une note cliquer sur le titre 'Notes'. Puis écrivez votre note (en format markdown), puis ré-appuyer sur 'Notes' pour enregistrer"
-				onSave={(newContent) => onSaveNotes(newContent)}
-			/>
+				<MarkdownEditableBlock
+					app={app}
+					title="Notes"
+					titleClass="section-title"
+					content={recipe.notes ?? ''}
+					contentClass="section-content"
+					placeholder="Pour insérer une note cliquer sur le titre 'Notes'. Puis écrivez votre note (en format markdown), puis ré-appuyer sur 'Notes' pour enregistrer"
+					onSave={(newContent) => onSaveNotes(newContent)}
+				/>
 			</div>
 			<div className="section">
 				<div className="section-title">Historique {' '}
-				<button onClick={onMarkCookedToday} className="standard-buttons" title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
+					<button onClick={onMarkCookedToday} className="standard-buttons" title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
 				</div>
-			<div className="section-content">
-				{recipe.cookedDates.length === 0
-					? (recipe.madeBeforeTracking
-						? 'Déjà réalisée plusieurs fois par le passé (dates non enregistrées).'
-						: 'Jamais réalisée pour l\'instant.')
-					: `Réalisée au moins ${recipe.cookedDates.length} fois${recipe.madeBeforeTracking ? ' (+ plusieurs fois non datées avant)' : ''} — dernière fois le ${formatCookedDate([...recipe.cookedDates].sort().reverse()[0])}.`}
-			</div>
+				<div className="section-content">
+					{recipe.cookedDates.length === 0
+						? (recipe.madeBeforeTracking
+							? 'Déjà réalisée plusieurs fois par le passé (dates non enregistrées).'
+							: 'Jamais réalisée pour l\'instant.')
+						: `Réalisée au moins ${recipe.cookedDates.length} fois${recipe.madeBeforeTracking ? ' (+ plusieurs fois non datées avant)' : ''} — dernière fois le ${formatCookedDate([...recipe.cookedDates].sort().reverse()[0])}.`}
+				</div>
 			</div>
 
 			<div className="section">
-			<RecipeNutritionTable
-				titleClass="section-title"
-				contentClass="section-content"
-				per100g={per100g}
-				total={scaledTotal}
-				totalWeightG={scaledTotalWeightG}
-				perServing={nutritionResult.perServingNutrition}
-				servingsLabel={recipe.servingsLabel}
-				warnings={nutritionResult.warnings}
-				measuredTotalWeightG={recipe.totalWeightG}
-				per100gReliable={!recipe.requiresCooking || recipe.totalWeightG != null}
-				fryingInfo={nutritionResult.fryingInfo}
-				factor={factor}
-				absorptionPercent={absorptionPercent}
-				onAbsorptionPercentChange={setAbsorptionPercent}
-			/>
-		</div>
+				<RecipeNutritionTable
+					titleClass="section-title"
+					contentClass="section-content"
+					per100g={per100g}
+					total={scaledTotal}
+					totalWeightG={scaledTotalWeightG}
+					perServing={nutritionResult.perServingNutrition}
+					servingsLabel={recipe.servingsLabel}
+					warnings={nutritionResult.warnings}
+					measuredTotalWeightG={recipe.totalWeightG}
+					per100gReliable={!recipe.requiresCooking || recipe.totalWeightG != null}
+					fryingInfo={nutritionResult.fryingInfo}
+					factor={factor}
+					absorptionPercent={absorptionPercent}
+					onAbsorptionPercentChange={setAbsorptionPercent}
+				/>
+			</div>
 		</div>
 	);
 }

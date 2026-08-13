@@ -49,7 +49,8 @@
 .workspace-leaf-content[data-type="shopping-list-view"] .view-content {
 	padding-top: 0;
 	padding-bottom: 10rem;
-	justify-content: center; /* ?? centrer la view ! */
+	margin: 0 auto;
+	display: block;
 }
 
 /* Width of views */
@@ -151,6 +152,8 @@
 	flex-wrap: wrap;
 	gap: 0.4rem;
 	margin-bottom: 0.75rem;
+	width: 100%;
+	padding-right: 70px;
 }
 .recipe-tag {
 	font-size: 0.75rem;

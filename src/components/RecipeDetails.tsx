@@ -357,14 +357,14 @@ export function RecipeDetails({
 						type="button"
 						onClick={() => setServingsInput(recipe.baseServings.toString())}
 						title="Réinitialiser le nombre de portions"
-						className="standard-buttons"
+						className="standard-button"
 					>
 						↺
 					</button>
 					{' '}
 					{recipe.servingsLabel}{' '}
 					){' '}
-					<button ref={shopButtonRef} onClick={() => onShop(servings)} className="standard-buttons recipe-shop-inline-button" title="Ajouter à la liste de courses"></button>
+					<button ref={shopButtonRef} onClick={() => onShop(servings)} className="standard-button" title="Ajouter à la liste de courses"></button>
 				</div>
 			</div>
 
@@ -467,7 +467,7 @@ export function RecipeDetails({
 			</div>
 			<div className="section">
 				<div className="section-title">Historique {' '}
-					<button onClick={onMarkCookedToday} className="standard-buttons" title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
+					<button onClick={onMarkCookedToday} className="standard-button" title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
 				</div>
 				<div className="section-content">
 					{recipe.cookedDates.length === 0

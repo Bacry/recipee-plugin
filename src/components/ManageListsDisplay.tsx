@@ -23,11 +23,11 @@ const LIST_INFO: Record<ListField, { label: string; description: string }> = {
 		description: "Le rayon du magasin où trouver chaque ingrédient — utilisé pour organiser la liste de courses.",
 	},
 	diet_flag: {
-		label: 'Contraintes alimentaires',
+		label: 'Contraintes alimentaires pour les ingrédients',
 		description: "Signale qu'un ingrédient contient tel allergène ou correspond à telle contrainte (gluten, lactose...). Sert à filtrer les recettes qui en contiennent.",
 	},
 	diet_preset: {
-		label: 'Préréglages alimentaires',
+		label: 'Définition des contraintes alimentaires pour les recettes',
 		description: "Une combinaison nommée de plusieurs contraintes (ex: \"Végan\" = viande + poisson + œuf + lactose), pour filtrer en un clic sans tout recocher à chaque fois.",
 	},
 };
@@ -73,12 +73,12 @@ function DietPresetsEditor({
 				))}
 			</ul>
 
-			<div className="ingredient-form-field">
+			<div className="form-field">
 				<label>Nom du préréglage</label>
 				<input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="ex : Végan" />
 			</div>
 
-			<div className="ingredient-form-field">
+			<div className="form-field">
 				<label>Contraintes incluses</label>
 				<div className="manage-lists-preset-checkboxes">
 					{dietFlags.map((flag) => (
@@ -160,7 +160,7 @@ function ListSectionEditor({
 				))}
 			</ul>
 
-			<div className="ingredient-form-field usda-search-row">
+			<div className="form-field usda-search-row">
 				<input
 					value={newValue}
 					onChange={(e) => setNewValue(e.target.value)}
@@ -186,7 +186,6 @@ export function ManageListsDisplay({ types, shopSections, dietFlags, dietPresets
 
 	return (
 		<div className="ingredient-form">
-			<h3>Gérer les listes</h3>
 			<p>
 				Ces listes sont utilisées dans les formulaires (menus déroulants, autocomplétion) et pour organiser
 				vos fiches. Renommer une valeur met automatiquement à jour tous les ingrédients concernés.

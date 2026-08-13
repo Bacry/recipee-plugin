@@ -93,7 +93,7 @@ export class IngredientListView extends ItemView {
 		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
-		this.closeAction.addClass('standard-buttons');
+		this.closeAction.addClass('header-button');
 
 		// Create the container and root
 		const container = this.containerEl.children[1] as HTMLElement;

@@ -16,6 +16,7 @@ export interface ResolvedItem {
 interface ShoppingListDisplayProps {
 	resolvedItems: ResolvedItem[];
 	recipeEntries: ShoppingListRecipeEntry[];
+	recipeServingsLabels: Record<string, string>;
 	onToggleChecked: (itemId: string) => void;
 	onDelete: (itemId: string) => void;
 	onSetSection: (itemId: string, event: React.MouseEvent) => void;
@@ -101,6 +102,7 @@ function isFullyCovered(resolved: ResolvedItem): boolean {
 export function ShoppingListDisplay({
 										resolvedItems,
 										recipeEntries,
+										recipeServingsLabels,
 										onToggleChecked,
 										onDelete,
 										onSetSection,
@@ -145,11 +147,11 @@ export function ShoppingListDisplay({
 		<div>
 			{recipeEntries.length > 0 && (
 				<div className="shopping-list-recipes-section">
-					<h4>Recettes</h4>
+					<h4>Courses incluses pour les recettes suivantes</h4>
 					<ul>
 						{recipeEntries.map((entry) => (
 							<li key={entry.id}>
-								<span>{entry.recipeName} — {entry.servings} personnes</span>
+								<span>{entry.recipeName} — {entry.servings} {recipeServingsLabels[entry.recipeName] ?? 'personnes'}</span>
 								<button onClick={() => onRemoveRecipe(entry.id)} title="Annuler">✕</button>
 							</li>
 						))}

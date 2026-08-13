@@ -330,12 +330,11 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 	}));
 
 	return (
-		<div className="ingredient-form">
-
-			<section className="ingredient-form-section">
+		<div>
+			<section className="form-section section">
 				<h4>Informations générales</h4>
 
-				<div className="ingredient-form-field ingredient-form-field-wide">
+				<div className="form-field form-field-wide">
 					<label>Nom *</label>
 					<input
 						value={name}
@@ -346,20 +345,19 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 					/>
 				</div>
 
-
-				<div className="ingredient-form-field">
+				<div className="form-field">
 					<button
 						type="button"
 						onClick={handleSuggestWithClaude}
 						disabled={isSuggestingWithClaude}
-						className="ingredient-form-submit"
+						className="ingredient-form-claude-button"
 					>
 						{isSuggestingWithClaude ? 'Réflexion en cours...' : 'Suggérer avec Claude'}
 					</button>
 				</div>
 
-				<div className="ingredient-form-grid">
-					<div className="ingredient-form-field">
+				<div className="form-grid">
+					<div className="form-field">
 						<label>Type *</label>
 						<select value={type} onChange={(e) => setType(e.target.value)}>
 							<option value="">-- Choisir --</option>
@@ -369,7 +367,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 						</select>
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Rayon *</label>
 						<select value={shopSection} onChange={(e) => setShopSection(e.target.value)}>
 							<option value="">-- Choisir --</option>
@@ -379,22 +377,22 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 						</select>
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Densité (g/mL)</label>
 						<input value={densityGMl} onChange={(e) => setDensityGMl(sanitizeNumericInput(e.target.value))} />
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Poids unitaire (g)</label>
 						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />
 					</div>
 				</div>
 			</section>
-				<section className="ingredient-form-section">
+				<section className="form-section section">
 					<h4>Informations spécifiques</h4>
 
-					<div className="ingredient-form-grid">
-						<div className="ingredient-form-field">
+					<div className="form-grid">
+						<div className="form-field">
 							<label>Formes</label>
 							<input
 								value={possibleForms}
@@ -403,20 +401,20 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 							/>
 						</div>
 
-						<div className="ingredient-form-field">
+						<div className="form-field">
 							<label>Contraintes</label>
-							<div className="recipe-list-tag-menu-wrapper ingredient-form-diet-menu-wrapper">
+							<div className="list-tag-menu-wrapper ingredient-form-diet-menu-wrapper">
 								<button
 									type="button"
 									onClick={() => setDietMenuOpen((open) => !open)}
-									className="recipe-list-tag-menu-button"
+									className="list-tag-menu-button"
 								>
 									{dietFlagsSelected.length > 0 ? `Contraintes (${dietFlagsSelected.length})` : 'Aucune'}
 								</button>
 								{dietMenuOpen && (
-									<ul className="recipe-list-tag-menu">
+									<ul className="list-tag-menu">
 										{sortAlphabetically(dietFlags).map((flag) => (
-											<li key={flag} className="recipe-list-tag-menu-item">
+											<li key={flag} className="list-tag-menu-item">
 												<label>
 													<input
 														type="checkbox"
@@ -432,13 +430,13 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 							</div>
 						</div>
 
-						<div className="ingredient-form-field">
+						<div className="form-field">
 							<label>Marque</label>
 							<input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="ex : Kikkoman" />
 						</div>
 
 						{fruitIngredientTypes.includes(type) && (
-							<div className="ingredient-form-field">
+							<div className="form-field">
 								<label>Rendement jus</label>
 								<input value={juiceYieldMl} onChange={(e) => setJuiceYieldMl(sanitizeNumericInput(e.target.value))} placeholder="mL / fruit" />
 							</div>
@@ -446,10 +444,10 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 					</div>
 				</section>
 
-			<section className="ingredient-form-section">
+			<section className="form-section section">
 				<h4>Valeurs nutritionnelles (pour 100g)</h4>
 
-				<div className="ingredient-form-field usda-search-wrapper">
+				<div className="form-field usda-search-wrapper">
 					<label>Nom en anglais (pour la recherche USDA)</label>
 					<div className="usda-search-row">
 						<input

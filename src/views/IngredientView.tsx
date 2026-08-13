@@ -145,7 +145,7 @@ export class IngredientView extends ItemView {
 				this.setEditing(true);
 			}
 			);
-		this.modifyAction.addClass('standard-buttons');
+		this.modifyAction.addClass('header-button');
 
 		/* Adding the close button */
 		this.closeAction = this.addAction(
@@ -159,7 +159,7 @@ export class IngredientView extends ItemView {
 				this.handleClose();
 			}
 		);
-		this.closeAction.addClass('standard-buttons');
+		this.closeAction.addClass('header-button');
 
 		this.saveAction = this.addAction(
 			'save',
@@ -168,7 +168,7 @@ export class IngredientView extends ItemView {
 				this.formRef.current?.triggerSubmit();
 			}
 		);
-		this.saveAction.addClass('standard-buttons');
+		this.saveAction.addClass('header-button');
 		this.updateSaveButtonVisibility();
 
 

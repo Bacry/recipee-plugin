@@ -152,7 +152,7 @@ export class RecipeView extends ItemView {
 		this.modifyAction = this.addAction('pencil', 'Modifier la recette', () => {
 			this.setEditing(true);
 		});
-		this.modifyAction.addClass('standard-buttons');
+		this.modifyAction.addClass('header-button');
 
 		this.closeAction = this.addAction(
 			'arrow-left',
@@ -165,12 +165,12 @@ export class RecipeView extends ItemView {
 				this.handleClose();
 			}
 		);
-		this.closeAction.addClass('standard-buttons');
+		this.closeAction.addClass('header-button');
 
 		this.saveAction = this.addAction('save', 'Enregistrer les modifications', () => {
 			this.formRef.current?.triggerSubmit();
 		});
-		this.saveAction.addClass('standard-buttons');
+		this.saveAction.addClass('header-button');
 		this.updateSaveButtonVisibility();
 
 		if (this.filePath) {

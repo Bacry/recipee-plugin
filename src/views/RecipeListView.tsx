@@ -164,7 +164,7 @@ export class RecipeListView extends ItemView {
 		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
-		this.closeAction.addClass('standard-buttons');
+		this.closeAction.addClass('header-button');
 		const container = this.containerEl.children[1] as HTMLElement;
 		this.root = createRoot(container);
 

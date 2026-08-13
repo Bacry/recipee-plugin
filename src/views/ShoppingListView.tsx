@@ -17,7 +17,8 @@ import { toggleShoppingListItemChecked, deleteShoppingListItem, setItemAlreadyOw
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
 import { readIngredientForCalc } from '../models/computeRecipeNutrition';
 import { findIngredientFileByName } from '../models/findIngredientFile';
-
+import { findRecipeFileByName } from '../models/findRecipeFile';
+import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
 
@@ -76,7 +77,7 @@ export class ShoppingListView extends ItemView {
 		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
-		this.closeAction.addClass('standard-buttons');
+		this.closeAction.addClass('header-button');
 
 		// Re-render whenever the shopping list note is modified elsewhere
 		// (e.g. once we wire in the add-item form later).
@@ -144,6 +145,15 @@ export class ShoppingListView extends ItemView {
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 		const { list, warnings } = parseShoppingList(frontmatter);
 
+		const recipeServingsLabels: Record<string, string> = {};
+		for (const entry of list.recipes) {
+			const file = findRecipeFileByName(this.app, this.plugin.settings.recipesFolder, entry.recipeName);
+			if (!file) continue;
+			const recipeFrontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+			const { recipe } = parseRecipeFromFrontmatter(recipeFrontmatter, file.basename);
+			if (recipe) recipeServingsLabels[entry.recipeName] = recipe.servingsLabel;
+		}
+
 		this.currentItems = list.items;
 
 		// Resolve each item's shop section before rendering, since resolution
@@ -197,6 +207,7 @@ export class ShoppingListView extends ItemView {
 				<ShoppingListDisplay
 					resolvedItems={resolvedItems}
 					recipeEntries={list.recipes}
+					recipeServingsLabels={recipeServingsLabels}
 					onToggleChecked={(id) => this.handleToggleChecked(id)}
 					onDelete={(id) => this.handleDelete(id)}
 					onSetSection={(id, event) => this.handleSetSection(id, event)}

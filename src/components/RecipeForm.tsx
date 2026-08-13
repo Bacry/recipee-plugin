@@ -294,30 +294,30 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	return (
 		<div className="ingredient-form">
 
-			<div className="ingredient-recipe-form-footer">
-				<button type="button" onClick={openParseTextModal} className="ingredient-recipe-form-submit">
+			<div className="recipe-form-claude-section">
+				<button type="button" onClick={openParseTextModal} className="recipe-form-claude-submit">
 					Extraire les informations depuis un texte à l'aide de Claude
 				</button>
 			</div>
 
-			<section className="ingredient-form-section">
+			<section className="form-section section">
 				<h4>Informations générales</h4>
 
-				<div className="ingredient-form-field ingredient-form-field-wide">
+				<div className="form-field form-field-wide">
 					<label>Nom</label>
 					<input value={name} onChange={(e) => setName(e.target.value)} />
 				</div>
-				<div className="recipe-made-before-row">
+				<div className="recipe-form-made-before-row">
 					<label>Recette déjà réalisée (dates inconnues)</label>
 					<input
 						type="checkbox"
 						checked={madeBeforeTracking}
 						onChange={(e) => setMadeBeforeTracking(e.target.checked)}
-						className="recipe-made-before-checkbox"
+						className="recipe-form-made-before-checkbox"
 					/>
 				</div>
-				<div className="ingredient-form-grid">
-					<div className="ingredient-form-field">
+				<div className="form-grid">
+					<div className="form-field">
 						<label>Portions de base</label>
 						<input
 							value={baseServings}
@@ -325,12 +325,12 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 						/>
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Unité de portion (ex : crèmes, parts)</label>
 						<input value={servingsLabel} onChange={(e) => setServingsLabel(e.target.value)} />
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Préparation (min)</label>
 						<input
 							value={preparationDurationMin}
@@ -338,37 +338,37 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 						/>
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Nécessite cuisson</label>
-						<div className="recipe-cooking-row">
+						<div className="recipe-form-cooking-row">
 							<input
 								type="checkbox"
 								checked={requiresCooking}
 								onChange={(e) => setRequiresCooking(e.target.checked)}
-								className="recipe-cooking-checkbox"
+								className="recipe-form-cooking-checkbox"
 							/>
-							<span className="recipe-cooking-duration-wrapper">
+							<span className="recipe-form-cooking-duration-wrapper">
 								<input
 									value={cookingDurationMin}
 									onChange={(e) => setCookingDurationMin(sanitizeNumericInput(e.target.value))}
 									disabled={!requiresCooking}
 									placeholder="Temps"
-									className="recipe-cooking-duration-input"
+									className="recipe-form-cooking-duration-input"
 								/>
 							</span>
-							<span className="recipe-cooking-weight-wrapper">
+							<span className="recipe-form-cooking-weight-wrapper">
 								<input
 									value={totalWeightG}
 									onChange={(e) => setTotalWeightG(sanitizeNumericInput(e.target.value))}
 									disabled={!requiresCooking}
 									placeholder="Poids"
-									className="recipe-cooking-weight-input"
+									className="recipe-form-cooking-weight-input"
 								/>
 							</span>
 						</div>
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Sous-dossier</label>
 						<select value={subfolder} onChange={(e) => setSubfolder(e.target.value)}>
 							<option value="">-- Racine --</option>
@@ -378,7 +378,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 						</select>
 					</div>
 
-					<div className="ingredient-form-field">
+					<div className="form-field">
 						<label>Image</label>
 						<div className="usda-search-row">
 							<input value={image} onChange={(e) => setImage(e.target.value)} placeholder="ex : crème brûlée.png" />
@@ -399,8 +399,8 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 				</div>
 
-				<div className="ingredient-form-row-tags-source">
-					<div className="ingredient-form-field usda-search-wrapper">
+				<div className="recipe-form-row-tags-source">
+					<div className="form-field usda-search-wrapper">
 						<label>Tags</label>
 						<input
 							value={tags}
@@ -424,7 +424,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 						)}
 					</div>
 
-					<div className="ingredient-form-field usda-search-wrapper ingredient-form-field-source">
+					<div className="form-field usda-search-wrapper recipe-form-field-source">
 						<label>Source (texte libre ou URL)</label>
 						<input
 							value={source}
@@ -449,7 +449,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 				</div>
 			</section>
 
-			<section className="ingredient-form-section">
+			<section className="form-section section">
 				<h4>Ingrédients et recettes de base</h4>
 				{entries.length === 0 && (
 					<p className="recipe-empty-entries">Aucun ingrédient ou recettes de base pour l'instant</p>
@@ -550,7 +550,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 				</div>
 			</section>
 
-			<section className="ingredient-form-section">
+			<section className="form-section section">
 				<h4>Instructions</h4>
 				<textarea
 					value={instructions}
@@ -560,7 +560,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 				/>
 			</section>
 
-			<section className="ingredient-form-section">
+			<section className="form-section section">
 				<h4>Notes</h4>
 				<textarea
 					value={notes}

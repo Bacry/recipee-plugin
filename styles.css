@@ -71,18 +71,32 @@
 /*
  The buttons style
  */
-.standard-buttons {
+.header-button {
 	background: var(--background-secondary);
 	border-radius: 4px;
 	padding: 0.2rem 0.4rem;
 }
-.standard-buttons.is-disabled {
+.header-button.is-disabled {
 	opacity: 0.35;
 	pointer-events: none;
 }
-.standard-buttons:hover {
+.header-button:hover {
 	background: var(--background-modifier-hover);
 }
+
+.standard-button {
+	background: var(--background-secondary);
+	border-radius: 1px;
+	padding: 0.1rem 0.1rem;
+}
+.standard-button.is-disabled {
+	opacity: 0.35;
+	pointer-events: none;
+}
+.standard-button:hover {
+	background: var(--background-modifier-hover);
+}
+
 
 /*
  Sections
@@ -94,6 +108,10 @@
 	margin-bottom: 0.4rem;
 	margin-top: 1.3rem;
 	/*letter-spacing: 0.05em;*/
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.2rem;
 }
 .section-content, .section li {
 	margin-left: 1.5rem;
@@ -120,6 +138,7 @@
 
 .warning-text {
 }
+
 
 /* ============================================================
    Nutrition table for both Ingredient and Recipe View
@@ -179,81 +198,148 @@
 	margin: 0.5rem 0;
 }
 
-
-/* Managing the ingredients section */
-
-/* The servings input inside "Ingrédients (pour [X] personnes)". */
+/* Managing the servings input */
 .recipe-servings-input {
-	width: 2.5rem;
+	width: 4rem;
 	text-align: center;
 	margin: 0 0.4rem;
 }
 
-.recipe-shop-inline-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0.3rem;
-	vertical-align: middle;
-	margin-left: 0.6rem;
-	background: transparent;
-	box-shadow: none;
+
+/*****/
+/* For recipe and ingredient */
+.list-tag-menu-button {
+	padding: 0.4rem 0.8rem;
+	border-radius: 4px;
 	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	cursor: pointer;
+}
+.list-tag-menu-wrapper {
+	position: relative;
+	margin-bottom: 0.75rem;
 }
 
+.list-tag-menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 100;
+	margin: 2px 0 0 0;
+	padding: 0.25rem 0;
+	list-style: none;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	box-shadow: var(--shadow-s);
+	min-width: 180px;
+	max-height: 220px;
+	overflow-y: auto;
+}
+.list-tag-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3rem 0.6rem;
+	cursor: pointer;
+}
 
+.list-tag-menu-item:hover {
+	background: var(--background-modifier-hover);
+}
 
-/* ============================================================
-   NEW INGREDIENT VIEW
-   ============================================================ */
+.list-tag-menu-item input[type="checkbox"] {
+	width: 1rem !important;
+	max-width: 1rem !important;
+	height: 1rem !important;
+	padding: 0 !important;
+	margin: 0;
+	flex-shrink: 0;
+	appearance: auto;
+	-webkit-appearance: auto;
+}
 
+.list-tag-menu-item label {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	cursor: pointer;
+	width: 100%;
+}
 
-
-/* ============================================================
-   INGREDIENT FORM (create + edit) — IngredientForm.tsx
-   Classes prefixed "ingredient-form-" are also reused by
-   RecipeForm.tsx for visual consistency (see RECIPE FORM section).
-   ============================================================ */
-
-/* A visual "section" block within the form (e.g. "Informations générales",
-   "Valeurs nutritionnelles") — separated by a bottom border. */
-.ingredient-form-section {
+.form-section {
 	margin-bottom: 1.5rem;
 	padding-bottom: 1.5rem;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.ingredient-form-section h4 {
+.form-section h4 {
 	margin-bottom: 0.75rem;
-	color: var(--text-muted);
 	font-size: 0.85rem;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 }
-.ingredient-form-section li {
+
+
+
+/* Each field in the form (composed of label and an input or select) */
+.form-field {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 0.45rem;
+}
+
+/* A label */
+.form-field label {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+}
+
+/* The input or select of a label */
+.form-field input,
+.form-field select {
+	width: 100%;
+	max-width: 90px;
+	padding: 0.4rem 0.6rem;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+/* Nom de la recette : pleine largeur */
+.form-field.form-field-wide input {
+	width: 100%;
+	max-width: none;
+	box-sizing: border-box;
+}
+
+/* 2-column grid for Type / Shop section / Density / Entity weight. */
+.form-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.05rem 0.15rem;
+}
+.form-section li {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.1rem 0;
 }
-.recipe-ingredient-name {
-	flex: 1;
-	text-align: left;
-}
 
-/* 2-column grid for Type / Shop section / Density / Entity weight. */
-.ingredient-form-grid {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 0.75rem 0.5rem;
-}
+/* ============================================================
+   NEW INGREDIENT
+   ============================================================ */
 
-/* Each field in the form (composed of label and an input or select) */
-.ingredient-form-field {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	margin-bottom: 0.75rem;
+
+.ingredient-form-claude-button {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 4px;
+	padding: 0.6rem 1.2rem;
+	font-weight: 600;
+	cursor: pointer;
 }
 
 .ingredient-form-nutrition-rows {
@@ -281,18 +367,6 @@
 	max-width: 90px;
 }
 
-.ingredient-form-claude-suggestion {
-	font-size: 0.75rem;
-	color: var(--text-muted);
-	cursor: pointer;
-	white-space: nowrap;
-}
-
-.ingredient-form-claude-suggestion:hover {
-	color: var(--interactive-accent);
-	text-decoration: underline;
-}
-
 .ingredient-form-nutrition-row input {
 	flex-shrink: 0;
 	width: 70px;
@@ -314,86 +388,48 @@
 	text-decoration: underline;
 }
 
-/* A label */
-.ingredient-form-field label {
-	font-size: 0.85rem;
-	color: var(--text-muted);
-}
-
-/* The input or select of a label */
-.ingredient-form-field input,
-.ingredient-form-field select {
+.ingredient-form-diet-menu-wrapper {
 	width: 100%;
-	max-width: 90px;
-	padding: 0.4rem 0.6rem;
-	border-radius: 4px;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-primary);
-	color: var(--text-normal);
 }
 
-/* Main submit button ("Créer l'ingrédient", "Créer la recette"...) —
-   uses the active theme's accent color rather than a hardcoded color,
-   so it stays consistent with whatever theme the user has chosen. */
-.ingredient-form-submit {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border: none;
+.ingredient-form-diet-menu-wrapper .list-tag-menu-button {
+	height: 1.8rem;
+	box-sizing: border-box;
+	padding: 0 0.8rem;
+	display: flex;
+	align-items: center;
+}
+
+
+.ingredient-form-claude-apply-all-wrapper {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+
+.ingredient-form-claude-apply-all {
+	flex: 0 0 auto;
+	padding: 0.3rem 0.6rem;
+	font-size: 0.8rem;
+	white-space: nowrap;
 	border-radius: 4px;
-	padding: 0.6rem 1.2rem;
-	font-weight: 600;
+	border: 1px solid var(--interactive-accent);
+	background: transparent;
+	color: var(--interactive-accent);
 	cursor: pointer;
 }
 
-/* Block of validation errors shown at the top of the form when submit fails */
-.ingredient-form-errors {
-	background: var(--background-modifier-error);
-	color: var(--text-error);
-	border-radius: 4px;
-	padding: 0.5rem 1rem;
-	margin-bottom: 1rem;
+.ingredient-form-claude-apply-all:hover {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
 }
 
-/******************/
+
 /* The USDA block */
 
 /* Positioning anchor for the results popup below the input. */
 .usda-search-wrapper {
 	position: relative;
-}
-
-/* English suggestion line : input and magnifying button */
-.usda-search-input-row {
-	display: flex;
-	gap: 0.5rem;
-}
-
-/* The suggestion input */
-.usda-search-input-row input {
-	flex: 1;
-}
-
-/* The magnifying-glass / spinner button to the right of the input. */
-.usda-search-input-row button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 2.2rem;
-	height: 2.2rem;
-	flex-shrink: 0;
-	padding: 0;
-	border-radius: 4px;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-secondary);
-	color: var(--text-normal);
-	cursor: pointer;
-}
-.usda-search-input-row button:hover {
-	background: var(--background-modifier-hover);
-}
-.usda-search-input-row button:disabled {
-	cursor: default;
-	opacity: 0.7;
 }
 
 /* Small spinning ring shown while a search/translation is in flight. */
@@ -407,16 +443,6 @@
 }
 @keyframes usda-spin {
 	to { transform: rotate(360deg); }
-}
-
-/* The popup is ALWAYS rendered (never conditionally
-   hidden) — it shows either a clickable one-line summary of the top
-   result, or an "empty" placeholder message. This keeps the layout
-   stable instead of jumping around as results appear/disappear. */
-
-/* A wrapper to the popup block */
-.usda-popup-wrapper {
-	margin-top: 4px;
 }
 
 /* The popup menu itself */
@@ -475,9 +501,204 @@
 	align-self: stretch;
 }
 
+
 /* ============================================================
-   RECIPE FORM  RecipeForm.tsx
+   NEW RECIPE VIEW  NewRecipeView.tsx
    ============================================================ */
+
+/* The extract recipe info with Claude button (NewRecipe view) */
+.recipe-form-claude-section {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+/* The submit button */
+.recipe-form-claude-submit:hover {
+	background: var(--interactive-accent-hover);
+}
+
+
+.recipe-form-field-source input {
+	width: auto !important;
+	max-width: 150px !important;
+}
+
+.recipe-form-made-before-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.recipe-form-made-before-row label {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.recipe-form-made-before-checkbox {
+	width: 1.1rem;
+	height: 1.1rem;
+	margin: 0;
+	cursor: pointer;
+	flex-shrink: 0;
+	/* neutralise le style de checkbox hérité de .form-field input
+	   (bordure/fond de champ texte), pour garder l'apparence native carrée */
+	appearance: auto;
+	-webkit-appearance: auto;
+}
+
+
+/* Ligne "Nécessite cuisson" : case à cocher carrée + deux inputs élargis */
+.recipe-form-cooking-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.recipe-form-cooking-row input.recipe-form-cooking-checkbox {
+	width: 1.2rem;
+	max-width: 1.2rem;
+	height: 1.2rem;
+	margin: 0;
+	cursor: pointer;
+}
+
+.recipe-form-cooking-duration-wrapper,
+.recipe-form-cooking-weight-wrapper {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+
+.recipe-form-cooking-row input.recipe-form-cooking-duration-input,
+.recipe-form-cooking-row input.recipe-form-cooking-weight-input {
+	width: 6rem !important;
+	max-width: 6rem !important;
+	box-sizing: border-box;
+	padding-right: 1.4rem !important;
+	font-size: 0.85rem;
+}
+
+.recipe-form-cooking-duration-wrapper::after,
+.recipe-form-cooking-weight-wrapper::after {
+	content: 'min';
+	position: absolute;
+	right: 0.5rem;
+	pointer-events: none;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+
+.recipe-form-cooking-weight-wrapper::after {
+	content: 'g';
+}
+
+.recipe-form-cooking-duration-input:disabled,
+.recipe-form-cooking-weight-input:disabled {
+	opacity: 0.5;
+}
+
+/* Tags / Source : alignés, tags nettement plus large */
+.recipe-form-row-tags-source {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.75rem 0.5rem;
+	align-items: start;
+}
+
+.recipe-empty-entries {
+	color: var(--text-faint);
+	font-style: italic;
+	margin: 0.5rem 0;
+}
+
+
+.recipe-ingredient-drag-handle {
+	cursor: grab;
+	color: var(--text-faint);
+	flex-shrink: 0;
+	margin-right: 0.3rem;
+}
+
+.recipe-ingredient-drag-handle:active {
+	cursor: grabbing;
+}
+
+.recipe-ingredient-dragging {
+	opacity: 0.4;
+}
+
+.recipe-section-header-row {
+	margin-top: 0.5rem;
+	padding-top: 0.4rem;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.recipe-ingredient-indented {
+	margin-left: 1.5rem;
+}
+
+
+.recipe-add-section-button {
+	padding: 0.4rem 0.7rem;
+	font-size: 0.85rem;
+	border-radius: 4px;
+	border: 1px dashed var(--background-modifier-border);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	height: 2.4rem;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	align-self: stretch;
+}
+
+.recipe-add-section-button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+
+.recipe-section-title-input {
+	flex: 1;
+	font-weight: 600;
+	border: none !important;
+	background: transparent !important;
+	padding: 0 !important;
+}
+
+.recipe-ingredient-name {
+	flex: 1;
+	text-align: left;
+}
+
+.recipe-ingredient-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex-shrink: 0;
+}
+
+.recipe-ingredient-fried,
+.recipe-ingredient-fried-active {
+	padding: 0.15rem 0.6rem;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	cursor: pointer;
+	flex-shrink: 0;
+	white-space: nowrap;
+	opacity: 0.5;
+}
+
+.recipe-ingredient-fried-active {
+	opacity: 1;
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
 
 .recipe-ingredient-remove {
 	padding: 0.1rem 0.4rem;
@@ -490,36 +711,46 @@
 	flex-shrink: 0;
 }
 
-/* ============================================================
-   NEW RECIPE VIEW  NewRecipeView.tsx
-   ============================================================ */
+.recipe-ingredient-input-row {
+	display: flex;
+	align-items: stretch;
+	gap: 0.5rem;
+}
 
+.recipe-ingredient-input-grow {
+	flex: 1;
+	min-width: 0;
+}
 
-
-/* ============================================================
-   RECIPE VIEW  RecipeView.tsx
-   ============================================================ */
-
-
-
-
-
-
-
-
-/* NewRecipe */
-
-/* The extract recipe info with Claude button (NewRecipe view) */
-.ingredient-recipe-form-footer {
+.recipe-frying-oil-row {
 	display: flex;
 	align-items: center;
-	justify-content: center;
-}
-/* The submit button */
-.ingredient-recipe-form-submit:hover {
-	background: var(--interactive-accent-hover);
+	gap: 0.5rem;
+	margin-top: 0.4rem;
 }
 
+.recipe-frying-oil-row label {
+	color: var(--text-faint);
+	font-size: 0.75rem;
+	margin: 0;
+	flex-shrink: 0;
+}
+
+.recipe-frying-oil-row select {
+	width: auto;
+	max-width: 12rem;
+	flex: none;
+	font-size: 0.75rem;
+	padding: 0.15rem 0.4rem;
+	color: var(--text-faint);
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: none;
+}
+
+.recipe-frying-oil-row select:hover {
+	color: var(--text-muted);
+}
 
 /* ============================================================
    "SMART" INPUT FIELDS — shared visual style
@@ -527,6 +758,8 @@
    SmartBaseRecipeInput, and the ingredient filter in the recipe
    list view — all built on the same multi-step (name → complement
    → quantity) interaction pattern.
+
+   TOUT CE BLOC EST UTILISE !
    ============================================================ */
 
 .smart-shopping-input {
@@ -590,6 +823,13 @@
 	background: var(--background-modifier-hover);
 }
 
+/********************/
+
+
+
+
+
+
 
 /* ============================================================
    SHOPPING LIST VIEW — ShoppingListView.tsx / ShoppingListDisplay.tsx
@@ -612,7 +852,7 @@
 	font-size: 1rem;
 	font-style: italic;
 	font-weight: 800;
-	color: #4db74d; /* intentionally a fixed color, not a theme variable */
+	color: green;
 }
 
 .shopping-list-section ul {
@@ -695,7 +935,7 @@
 .shopping-list-recipes-section ul {
 	list-style: none;
 	padding: 0;
-	margin: 0;
+	margin: 0 1rem 0 1rem;
 }
 
 .shopping-list-recipes-section li {
@@ -706,13 +946,15 @@
 }
 
 .shopping-list-recipes-section li button {
-	padding: 0.2rem 0.4rem;
+	padding: 0.2rem 0.75rem;
+	font-size: 0.9rem;
 	border-radius: 4px;
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-secondary);
 	cursor: pointer;
+	height: 1.5rem;
+	min-height: unset;
 }
-
 
 /* ============================================================
    MARKDOWN EDITABLE BLOCK — MarkdownEditableBlock.tsx
@@ -727,6 +969,11 @@
 
 .markdown-editable-title-clickable:hover {
 	text-decoration: underline;
+}
+
+.markdown-editable-placeholder {
+	color: var(--text-faint);
+	font-style: italic;
 }
 
 .markdown-editable-textarea {
@@ -1061,166 +1308,8 @@
 	white-space: nowrap;
 }
 
-/* Nom de la recette : pleine largeur */
-.ingredient-form-field.ingredient-form-field-wide input {
-	width: 100%;
-	max-width: none;
-	box-sizing: border-box;
-}
 
-/* Ligne "Nécessite cuisson" : case à cocher carrée + deux inputs élargis */
-.recipe-cooking-row {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
 
-.recipe-cooking-row input.recipe-cooking-checkbox {
-	width: 1.2rem;
-	max-width: 1.2rem;
-	height: 1.2rem;
-	margin: 0;
-	cursor: pointer;
-}
-
-.recipe-cooking-row {
-	position: relative;
-}
-
-.recipe-cooking-duration-wrapper,
-.recipe-cooking-weight-wrapper {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-}
-
-.recipe-cooking-row input.recipe-cooking-duration-input,
-.recipe-cooking-row input.recipe-cooking-weight-input {
-	width: 6rem !important;
-	max-width: 6rem !important;
-	box-sizing: border-box;
-	padding-right: 1.4rem !important;
-	font-size: 0.85rem;
-}
-
-.recipe-cooking-duration-wrapper::after,
-.recipe-cooking-weight-wrapper::after {
-	content: 'min';
-	position: absolute;
-	right: 0.5rem;
-	pointer-events: none;
-	color: var(--text-muted);
-	font-size: 0.8rem;
-}
-
-.recipe-cooking-weight-wrapper::after {
-	content: 'g';
-}
-
-.recipe-cooking-duration-input:disabled,
-.recipe-cooking-weight-input:disabled {
-	opacity: 0.5;
-}
-
-/* Tags / Source : alignés, tags nettement plus large */
-.ingredient-form-row-tags-source {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 0.75rem 0.5rem;
-	align-items: start;
-}
-
-.ingredient-form-field-source input {
-	width: auto !important;
-	max-width: 150px !important;
-}
-
-.ingredient-form-row-tags-source .ingredient-form-field input {
-	width: 100%;
-	max-width: none;
-	box-sizing: border-box;
-}
-
-.recipe-made-before-row {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin-bottom: 0.75rem;
-}
-
-.recipe-made-before-row label {
-	font-size: 0.85rem;
-	color: var(--text-muted);
-	margin: 0;
-}
-
-.recipe-made-before-checkbox {
-	width: 1.1rem;
-	height: 1.1rem;
-	margin: 0;
-	cursor: pointer;
-	flex-shrink: 0;
-	/* neutralise le style de checkbox hérité de .ingredient-form-field input
-	   (bordure/fond de champ texte), pour garder l'apparence native carrée */
-	appearance: auto;
-	-webkit-appearance: auto;
-}
-.recipe-frying-oil-row {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin-top: 0.4rem;
-}
-
-.recipe-frying-oil-row label {
-	color: var(--text-faint);
-	font-size: 0.75rem;
-	margin: 0;
-	flex-shrink: 0;
-}
-
-.recipe-frying-oil-row select {
-	width: auto;
-	max-width: 12rem;
-	flex: none;
-	font-size: 0.75rem;
-	padding: 0.15rem 0.4rem;
-	color: var(--text-faint);
-	background: transparent;
-	border: 1px solid var(--background-modifier-border);
-	box-shadow: none;
-}
-
-.recipe-frying-oil-row select:hover {
-	color: var(--text-muted);
-}
-
-.recipe-ingredient-fried,
-.recipe-ingredient-fried-active {
-	padding: 0.15rem 0.6rem;
-	font-size: 0.75rem;
-	line-height: 1.4;
-	border-radius: 4px;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-secondary);
-	cursor: pointer;
-	flex-shrink: 0;
-	white-space: nowrap;
-	opacity: 0.5;
-}
-
-.recipe-ingredient-fried-active {
-	opacity: 1;
-	border-color: var(--interactive-accent);
-	color: var(--interactive-accent);
-}
-
-.recipe-ingredient-actions {
-	display: flex;
-	align-items: center;
-	gap: 0.4rem;
-	flex-shrink: 0;
-}
 
 .recipe-frying-percent-input {
 	width: 3.5rem;
@@ -1252,61 +1341,6 @@
 }
 
 
-.recipe-ingredient-drag-handle {
-	cursor: grab;
-	color: var(--text-faint);
-	flex-shrink: 0;
-	margin-right: 0.3rem;
-}
-
-.recipe-ingredient-drag-handle:active {
-	cursor: grabbing;
-}
-
-.recipe-ingredient-dragging {
-	opacity: 0.4;
-}
-
-.recipe-add-section-button {
-	padding: 0.4rem 0.7rem;
-	font-size: 0.85rem;
-	border-radius: 4px;
-	border: 1px dashed var(--background-modifier-border);
-	background: transparent;
-	color: var(--text-muted);
-	cursor: pointer;
-	height: 2.4rem;
-	box-sizing: border-box;
-	flex-shrink: 0;
-	align-self: stretch;
-}
-
-.recipe-add-section-button:hover {
-	background: var(--background-modifier-hover);
-	color: var(--text-normal);
-}
-
-.recipe-section-header-row {
-	margin-top: 0.5rem;
-	padding-top: 0.4rem;
-	border-top: 1px solid var(--background-modifier-border);
-}
-
-.recipe-section-title-input {
-	flex: 1;
-	font-weight: 600;
-	border: none !important;
-	background: transparent !important;
-	padding: 0 !important;
-}
-
-
-.recipe-ingredient-indented {
-	margin-left: 1.5rem;
-}
-
-
-
 
 .recipe-list-tag-menu-item input[type="checkbox"] {
 	width: 1rem !important;
@@ -1327,27 +1361,8 @@
 	width: 100%;
 }
 
-.recipe-empty-entries {
-	color: var(--text-faint);
-	font-style: italic;
-	margin: 0.5rem 0;
-}
 
-.recipe-ingredient-input-row {
-	display: flex;
-	align-items: stretch;
-	gap: 0.5rem;
-}
 
-.recipe-ingredient-input-grow {
-	flex: 1;
-	min-width: 0;
-}
-
-.markdown-editable-placeholder {
-	color: var(--text-faint);
-	font-style: italic;
-}
 
 .recipe-list-pinned-tag {
 	padding: 0.3rem 0.7rem;
@@ -1439,36 +1454,5 @@
 }
 
 
-.ingredient-form-diet-menu-wrapper {
-	width: 100%;
-}
 
-.ingredient-form-diet-menu-wrapper .recipe-list-tag-menu-button {
-	height: 1.8rem;
-	box-sizing: border-box;
-	padding: 0 0.8rem;
-	display: flex;
-	align-items: center;
-}
-.ingredient-form-claude-apply-all-wrapper {
-	flex: 1;
-	display: flex;
-	align-items: center;
-}
 
-.ingredient-form-claude-apply-all {
-	flex: 0 0 auto;
-	padding: 0.3rem 0.6rem;
-	font-size: 0.8rem;
-	white-space: nowrap;
-	border-radius: 4px;
-	border: 1px solid var(--interactive-accent);
-	background: transparent;
-	color: var(--interactive-accent);
-	cursor: pointer;
-}
-
-.ingredient-form-claude-apply-all:hover {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-}

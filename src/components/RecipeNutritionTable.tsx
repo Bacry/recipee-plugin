@@ -32,17 +32,17 @@ function fmt(value: number): string {
 	return Number(value.toFixed(1)).toString();
 }
 
-export function NutritionTable({ per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG, per100gReliable, fryingInfo, factor,
+export function RecipeNutritionTable({ titleClass, contentClass, per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG, per100gReliable, fryingInfo, factor,
 								   absorptionPercent, onAbsorptionPercentChange }: NutritionTableProps) {
 	return (
 		<div>
-			<h4>
+			<div className={titleClass}>
 				Nutrition{' '}
 				{measuredTotalWeightG != null
-					? `(poids total mesuré : ${totalWeightG}g)`
-					: `(poids total calulé : ${totalWeightG}g)`}
-			</h4>
-			<div className="recipe-section-indent">
+					? `(poids total mesuré : ${fmt(totalWeightG)}g)`
+					: `(poids total calculé : ${fmt(totalWeightG)}g)`}
+			</div>
+			<div className={contentClass}>
 				{fryingInfo && (
 					<p className="recipe-frying-hypothesis">
 						Hypothèse d'absorption de {fryingInfo.oilName} par les aliments frits :{' '}
@@ -84,7 +84,7 @@ export function NutritionTable({ per100g, total, totalWeightG, perServing, servi
 				</table>
 
 				{warnings.length > 0 && (
-					<ul className="ingredient-validation-warnings">
+					<ul>
 						{warnings.map((warning, index) => (
 							<li key={index}>{warning}</li>
 						))}

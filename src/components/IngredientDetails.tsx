@@ -39,35 +39,37 @@ export function IngredientDetails({
 								  }: IngredientDetailsProps) {
 	return (
 		<div>
+			<div className="section">
 
-			<h4> Caractéristiques </h4>
-			<ul>
-				<li>Type : {type}</li>
-				<li>Rayon : {shopSection}</li>
+
+			<div className="section-title"> Caractéristiques </div>
+			<div className="section-content">
+				<div className="section-content-item"> Type : {type} </div>
+				<div className="section-content-item"> Rayon : {shopSection} </div>
 				{brand &&
-					<li>Marque : {brand}</li>
+					<div className="section-content-item"> Marque : {brand} </div>
 				}
 				{densityGMl != null &&
-					<li> Densité : {densityGMl} g/mL</li>
+					<div className="section-content-item"> Densité : {densityGMl} g/mL </div>
 				}
 				{entityWeightG != null &&
-					<li>Poids unitaire : {entityWeightG} g</li>
+					<div className="section-content-item"> Poids unitaire : {entityWeightG} g </div>
 				}
 				{juiceYieldMl != null &&
-					<li>Rendement en jus : {juiceYieldMl} mL / fruit</li>
+					<div className="section-content-item"> Rendement en jus : {juiceYieldMl} mL / fruit</div>
 				}
 				{possibleForms != null && possibleForms.length > 0 &&
-					<li>Formes possibles : {possibleForms.join(', ')} </li>
+					<div className="section-content-item"> Formes possibles : {possibleForms.join(', ')} </div>
 				}
 				{dietFlags != null && dietFlags.length > 0 &&
-					<li>Contraintes alimentaires : {dietFlags.join(', ')} </li>
+					<div className="section-content-item"> Contraintes alimentaires : {dietFlags.join(', ')} </div>
 				}
 				{isOilIngredient(type, oilIngredientTypes) &&
-					<li>Peut être utilisé pour la friture</li>
+					<div className="section-content-item"> Peut être utilisé pour la friture </div>
 				}
-			</ul>
-
-			<h4>Valeurs nutritionnelles (pour 100g)</h4>
+			</div>
+			<div className="section-title"> Valeurs nutritionnelles (pour 100g)</div>
+			<div className="section-content">
 			<table>
 				<tbody>
 				<tr><td>Calories</td><td>{fmt(nutrition.kcal)} kcal</td></tr>
@@ -81,20 +83,26 @@ export function IngredientDetails({
 				<tr><td>Cholestérol</td><td>{fmt(nutrition.cholesterol)} mg</td></tr>
 				</tbody>
 			</table>
+			</div>
+			</div>
 
-			{usedInRecipes.length > 0 && (
-				<p>
-					Utilisé dans :{' '}
+			<div className="section">
+			<div className="section-title"> Ingrédient utilisé dans </div>
+			<div className="section-content">
+				{usedInRecipes.length > 0 && (
+					<span>
 					{usedInRecipes.map((recipeName, index) => (
-						<span key={recipeName}>
+							<span key={recipeName}>
 							<a href="#" onClick={(e) => { e.preventDefault(); onRecipeClick(recipeName); }}>
 								{recipeName}
 							</a>
-							{index < usedInRecipes.length - 1 ? ', ' : ''}
+								{index < usedInRecipes.length - 1 ? ', ' : ''}
 						</span>
-					))}
-				</p>
-			)}
+						))}
+					</span>
+				)}
+			</div>
+		</div>
 		</div>
 	);
 }

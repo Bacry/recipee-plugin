@@ -24,6 +24,9 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			if (entry.isSectionHeader) {
 				lines.push(`  - is_section_header: true`);
 				lines.push(`    section_title: ${escapeYamlString(entry.sectionTitle ?? '')}`);
+				if (entry.order != null) {
+					lines.push(`    order: ${entry.order}`);
+				}
 				continue;
 			}
 
@@ -39,6 +42,9 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			if (entry.fried) {
 				lines.push(`    fried: true`);
 			}
+			if (entry.order != null) {
+				lines.push(`    order: ${entry.order}`);
+			}
 		}
 	}
 
@@ -50,6 +56,9 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			lines.push(`  - recipe_name: ${escapeYamlString(entry.recipeName)}`);
 			lines.push(`    quantity: ${entry.quantity}`);
 			lines.push(`    unit: ${escapeYamlString(entry.unit)}`);
+			if (entry.order != null) {
+				lines.push(`    order: ${entry.order}`);
+			}
 		}
 	}
 

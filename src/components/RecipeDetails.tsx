@@ -3,7 +3,7 @@ import { App, Component, MarkdownRenderer, setIcon } from 'obsidian';
 import { Recipe } from '../models/recipe';
 import { MarkdownEditableBlock } from './MarkdownEditableBlock';
 import { computeRecipeNutrition } from '../models/computeRecipeNutrition';
-import { NutritionTable } from './NutritionTable';
+import { RecipeNutritionTable } from './RecipeNutritionTable';
 import { findIngredientFileByName } from '../models/findIngredientFile';
 import { readIngredientForCalc } from '../models/computeRecipeNutrition';
 import { findUnit, roundQuantityForUnit, convertQuantity, UNITS, Unit, formatRoundedQuantity } from '../models/units';
@@ -291,25 +291,25 @@ export function RecipeDetails({
 				</div>
 			)}
 
-			<div className="recipe-top-row">
-				<div className="recipe-top-row-column">
-					<h4>Temps</h4>
-					<ul>
+			<div className="recipe-time-source-row section">
+				<div className="recipe-time-source-column">
+					<div className="section-title">Temps</div>
+					<div className="section-content">
 						{recipe.preparationDurationMin != null && (
-							<li>Préparation : {formatDuration(recipe.preparationDurationMin)}</li>
+							<div className="section-content-item"> Préparation : {formatDuration(recipe.preparationDurationMin)} </div>
 						)}
 						{recipe.cookingDurationMin != null && (
-							<li>Cuisson : {formatDuration(recipe.cookingDurationMin)}</li>
+							<div className="section-content-item"> Cuisson : {formatDuration(recipe.cookingDurationMin)} </div>
 						)}
-						{totalDuration > 0 && <li>Total : {formatDuration(totalDuration)}</li>}
+						{totalDuration > 0 && <div className="section-content-item"> Total : {formatDuration(totalDuration)} </div>}
 						{recipe.preparationDurationMin == null && recipe.cookingDurationMin == null && (
-							<li>Non renseigné</li>
+							<div>Non renseigné</div>
 						)}
-					</ul>
+					</div>
 				</div>
 
-				<div className="recipe-top-row-column">
-					<h4>
+				<div className="recipe-time-source-column">
+					<div className="section-title">
 						Source{recipe.source ? (
 						<>
 							{' : '}
@@ -322,14 +322,14 @@ export function RecipeDetails({
 					) : (
 						' : Non renseignée'
 					)}
-					</h4>
+					</div>
 					{recipe.image &&
 						(() => {
 							const imagePath = resolveImagePath(app, recipe.image);
 							return imagePath ? (
 								<img src={imagePath} alt={recipe.name} className="recipe-image" />
 							) : (
-								<p className="ingredient-validation-warnings">
+								<p className="warning-text">
 									Image "{recipe.image}" introuvable dans le vault.
 								</p>
 							);
@@ -338,8 +338,8 @@ export function RecipeDetails({
 			</div>
 
 
-			<div className="recipe-ingredients-header-row">
-				<h4>
+			<div className="section">
+				<div className="section-title">
 					Ingrédients (pour{' '}
 					<input
 						type="number"
@@ -353,119 +353,137 @@ export function RecipeDetails({
 						}}
 						className="recipe-servings-input"
 					/>{' '}
-					{recipe.servingsLabel}{' '}
 					<button
 						type="button"
 						onClick={() => setServingsInput(recipe.baseServings.toString())}
 						title="Réinitialiser le nombre de portions"
-						className="recipe-servings-reset"
+						className="standard-buttons"
 					>
 						↺
 					</button>
+					{' '}
+					{recipe.servingsLabel}{' '}
 					){' '}
-					<button ref={shopButtonRef} onClick={() => onShop(servings)} className="recipe-shop-inline-button" title="Ajouter à la liste de courses"></button>
-				</h4>
+					<button ref={shopButtonRef} onClick={() => onShop(servings)} className="standard-buttons recipe-shop-inline-button" title="Ajouter à la liste de courses"></button>
+				</div>
 			</div>
 
 			{(() => {
 				type UnifiedEntry =
-					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string }
-					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string };
+					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string; order?: number }
+					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string; order?: number };
 				const unifiedEntries: UnifiedEntry[] = [
 					...recipe.baseRecipes.map((entry): UnifiedEntry => ({ kind: 'baseRecipe', ...entry })),
 					...ingredientEntriesWithOil,
-				];
+				].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+				let inSection = false;
+
 				return (
-					<ul>
+					<div className="section-content">
 						{unifiedEntries.map((entry, index) => {
 							if (entry.kind === 'ingredient' && entry.isSectionHeader) {
+								if ((entry.sectionTitle ?? '').trim() === '') {
+									inSection = false
+									return null;
+								}
+								inSection = true
 								return (
-									<li key={index} className="recipe-section-header-item">
+									<div key={index} className="section-content-subtitle">
 										{entry.sectionTitle}
-									</li>
+									</div>
 								);
 							}
 							if (entry.kind === 'baseRecipe') {
 								const scaled = entry.quantity * factor;
 								return (
-									<li key={index}>
+									<div key={index} className={inSection ?  'section-content-subitem' : 'section-content-item'}>
 										{formatScaledQuantity(entry.quantity, entry.unit, factor)}{entry.unit} de{' '}
 										<a
-										href="#"
-										onClick={(e) => {
-										e.preventDefault();
-										onBaseRecipeClick(entry.recipeName, scaled, entry.unit);
-									}}
+											href="#"
+											onClick={(e) => {
+												e.preventDefault();
+												onBaseRecipeClick(entry.recipeName, scaled, entry.unit);
+											}}
 										>
-										{entry.recipeName}
-									</a>
-								{' (recette de base)'}
-							</li>
-							);
+											{entry.recipeName}
+										</a>
+										{' (recette de base)'}
+									</div>
+								);
 							}
 
 							const exists = ingredientExists(entry.ingredientName);
 							const showAsLink = entry.quantity != null || exists;
 
 							return (
-								<li key={index}>
+								<div key={index} className={inSection ?  'section-content-subitem' : 'section-content-item'}>
 									{renderIngredientQuantity(entry, index)}{' '}
 									{showAsLink ? (
-									<a
+										<a
 											href="#"
-										className={exists ? '' : 'recipe-ingredient-missing'}
-										onClick={(e) => { e.preventDefault(); onIngredientClick(entry.ingredientName); }}
+											className={exists ? '' : 'recipe-ingredient-missing'}
+											onClick={(e) => { e.preventDefault(); onIngredientClick(entry.ingredientName); }}
 										>
-									{entry.ingredientName}
+											{entry.ingredientName}
 										</a>
-										) : (
+									) : (
 										<span>{entry.ingredientName}</span>
-							)}
-						{entry.complement ? ' (' + entry.complement + ')' : ''}
-						{entry.form ? ' (' + entry.form + ')' : ''}
+									)}
+									{entry.complement ? ' (' + entry.complement + ')' : ''}
+									{entry.form ? ' (' + entry.form + ')' : ''}
 									{entry.isFryingOil ? ' (pour la friture)' : ''}
-							</li>
+								</div>
 							);
 						})}
-		</ul>
-	);
-})()}
+					</div>
+				);
+			})()}
 
-<InstructionsPreview app={app} content={recipe.instructions} />
-
+			<div className="section">
+			<InstructionsPreview app={app} content={recipe.instructions} />
+			</div>
+			<div className="section">
 			<MarkdownEditableBlock
 				app={app}
 				title="Notes"
+				titleClass="section-title"
 				content={recipe.notes ?? ''}
-				placeholder="- Pour insérer une note cliquer sur le titre 'Notes'. Puis écrivez votre note (en format markdown), puis ré-appuyer sur 'Notes' pour enregistrer"
+				contentClass="section-content"
+				placeholder="Pour insérer une note cliquer sur le titre 'Notes'. Puis écrivez votre note (en format markdown), puis ré-appuyer sur 'Notes' pour enregistrer"
 				onSave={(newContent) => onSaveNotes(newContent)}
 			/>
-			<div className="recipe-history-header">
-				<h4>Historique</h4>
-				<button onClick={onMarkCookedToday} title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
 			</div>
-			<p className="recipe-section-indent">
+			<div className="section">
+				<div className="section-title">Historique {' '}
+				<button onClick={onMarkCookedToday} className="standard-buttons" title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
+				</div>
+			<div className="section-content">
 				{recipe.cookedDates.length === 0
 					? (recipe.madeBeforeTracking
 						? 'Déjà réalisée plusieurs fois par le passé (dates non enregistrées).'
 						: 'Jamais réalisée pour l\'instant.')
 					: `Réalisée au moins ${recipe.cookedDates.length} fois${recipe.madeBeforeTracking ? ' (+ plusieurs fois non datées avant)' : ''} — dernière fois le ${formatCookedDate([...recipe.cookedDates].sort().reverse()[0])}.`}
-			</p>
+			</div>
+			</div>
 
-<NutritionTable
-	per100g={per100g}
-	total={scaledTotal}
-	totalWeightG={scaledTotalWeightG}
-	perServing={nutritionResult.perServingNutrition}
-	servingsLabel={recipe.servingsLabel}
-	warnings={nutritionResult.warnings}
-	measuredTotalWeightG={recipe.totalWeightG}
-	per100gReliable={!recipe.requiresCooking || recipe.totalWeightG != null}
-	fryingInfo={nutritionResult.fryingInfo}
-	factor={factor}
-	absorptionPercent={absorptionPercent}
-	onAbsorptionPercentChange={setAbsorptionPercent}
-/>
-</div>
-);
+			<div className="section">
+			<RecipeNutritionTable
+				titleClass="section-title"
+				contentClass="section-content"
+				per100g={per100g}
+				total={scaledTotal}
+				totalWeightG={scaledTotalWeightG}
+				perServing={nutritionResult.perServingNutrition}
+				servingsLabel={recipe.servingsLabel}
+				warnings={nutritionResult.warnings}
+				measuredTotalWeightG={recipe.totalWeightG}
+				per100gReliable={!recipe.requiresCooking || recipe.totalWeightG != null}
+				fryingInfo={nutritionResult.fryingInfo}
+				factor={factor}
+				absorptionPercent={absorptionPercent}
+				onAbsorptionPercentChange={setAbsorptionPercent}
+			/>
+		</div>
+		</div>
+	);
 }

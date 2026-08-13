@@ -55,12 +55,12 @@ export class NewIngredientView extends ItemView {
 		const saveAction = this.addAction('save', 'Enregistrer', () => {
 			this.formRef.current?.triggerSubmit();
 		});
-		saveAction.addClass('header-buttons');
+		saveAction.addClass('standard-buttons');
 
 		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
 			this.handleClose();
 		});
-		closeAction.addClass('header-buttons');
+		closeAction.addClass('standard-buttons');
 
 		this.render();
 	}

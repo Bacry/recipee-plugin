@@ -124,20 +124,20 @@ export function computeRecipeNutrition(
 
 		const file = findIngredientFileByName(app, ingredientsFolder, entry.ingredientName)
 		if (!(file instanceof TFile)) {
-			warnings.push(`Ingrédient "${entry.ingredientName}" sans fiche — exclu du calcul.`);
+			warnings.push(`Ingrédient "${entry.ingredientName}" sans fiche : exclu du calcul.`);
 			continue;
 		}
 
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const ingredientData = readIngredientForCalc(frontmatter);
 		if (!ingredientData) {
-			warnings.push(`Ingrédient "${entry.ingredientName}" invalide — exclu du calcul.`);
+			warnings.push(`Ingrédient "${entry.ingredientName}" invalide : exclu du calcul.`);
 			continue;
 		}
 
 		const grams = convertIngredientEntryToGrams(app, ingredientsFolder, entry);
 		if (grams === null) {
-			warnings.push(`Impossible de convertir "${entry.ingredientName}" en grammes (densité/poids unitaire manquant) — exclu du calcul.`);
+			warnings.push(`Impossible de convertir "${entry.ingredientName}" en grammes (densité/poids unitaire manquant) : exclu du calcul.`);
 			continue;
 		}
 

@@ -18,7 +18,7 @@
 }
 
 /*
-  Padding and margins of views
+ Managing note titles
  */
 .workspace-leaf-content[data-type="ingredient-view"] .view-header-title,
 .workspace-leaf-content[data-type="ingredient-list-view"] .view-header-title,
@@ -28,64 +28,174 @@
 .workspace-leaf-content[data-type="new-recipe-view"] .view-header-title,
 .workspace-leaf-content[data-type="manage-lists-view"] .view-header-title,
 .workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
-	padding-top: 10rem;
-	padding-bottom: 10rem;
-	margin: 0 auto;
-	display: block;
 	font-size: 1.3rem;
 	font-weight: 700;
+	margin: 0 auto;
+	display: block;
 }
 
 /*
-  size of views
+ Managing note contents
  */
-.workspace-leaf-content[data-type="ingredient-list-view"] .view-header-title,
-.workspace-leaf-content[data-type="new-ingredient-view"] .view-header-title,
-.workspace-leaf-content[data-type="recipe-view"] .view-header-title,
-.workspace-leaf-content[data-type="recipe-list-view"] .view-header-title,
-.workspace-leaf-content[data-type="new-recipe-view"] .view-header-title,
-.workspace-leaf-content[data-type="shopping-list-view"] .view-header-title {
-	max-width: 200px;
+
+/* Some padding */
+.workspace-leaf-content[data-type="ingredient-view"] .view-content,
+.workspace-leaf-content[data-type="ingredient-list-view"] .view-content,
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-content,
+.workspace-leaf-content[data-type="recipe-view"] .view-content,
+.workspace-leaf-content[data-type="recipe-list-view"] .view-content,
+.workspace-leaf-content[data-type="new-recipe-view"] .view-content,
+.workspace-leaf-content[data-type="manage-lists-view"] .view-content,
+.workspace-leaf-content[data-type="shopping-list-view"] .view-content {
+	padding-top: 0;
+	padding-bottom: 10rem;
+	justify-content: center; /* ?? centrer la view ! */
 }
-.workspace-leaf-content[data-type="ingredient-view"] .view-header-title,
-.workspace-leaf-content[data-type="manage-lists-view"] .view-header-title {
+
+/* Width of views */
+.workspace-leaf-content[data-type="ingredient-list-view"] .view-content,
+.workspace-leaf-content[data-type="new-ingredient-view"] .view-content,
+.workspace-leaf-content[data-type="recipe-view"] .view-content,
+.workspace-leaf-content[data-type="recipe-list-view"] .view-content,
+.workspace-leaf-content[data-type="new-recipe-view"] .view-content,
+.workspace-leaf-content[data-type="shopping-list-view"] .view-content {
+	max-width: 800px;
+}
+.workspace-leaf-content[data-type="ingredient-view"] .view-content,
+.workspace-leaf-content[data-type="manage-lists-view"] .view-content {
 	max-width: 600px;
 }
 
 /*
- The header buttons style
+ The buttons style
  */
-.header-buttons {
+.standard-buttons {
 	background: var(--background-secondary);
 	border-radius: 4px;
 	padding: 0.2rem 0.4rem;
 }
-.header-buttons.is-disabled {
+.standard-buttons.is-disabled {
 	opacity: 0.35;
 	pointer-events: none;
 }
-.header-buttons:hover {
+.standard-buttons:hover {
 	background: var(--background-modifier-hover);
 }
 
+/*
+ Sections
+ */
+.section-title, .section h4 {
+	font-size: 1rem;
+	font-weight: 600;
+	color: green;
+	margin-bottom: 0.4rem;
+	margin-top: 1.3rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+.section-content, .section li {
+	margin-left: 1.5rem;
+}
+.section ul {
+	list-style: none;
+	padding-left: 0;
+	margin-left: 0;
+}
+.section-content-item::before, .section-content-subitem::before, .section li:before  {
+	content: '• ';
+}
+.section-content-subtitle {
+	list-style: none;
+	font-weight: 400;
+	color: var(--text-muted);
+	margin-top: .3rem;
+	letter-spacing: 0.05em;
+}
+.section-content-subitem {
+	margin-left: 2.5rem;
+}
 
+.warning-text {
+}
 
 /* ============================================================
-   INGREDIENT VIEW (read mode) — IngredientDetails.tsx / IngredientView.tsx
+   Nutrition table for both Ingredient and Recipe View
    ============================================================ */
 
-
 /* For the nutrition table */
-.workspace-leaf-content[data-type="ingredient-view"] table {
+.workspace-leaf-content[data-type="ingredient-view"] table,
+.workspace-leaf-content[data-type="recipe-view"] table {
 	border-collapse: collapse;
-	width: 100%;
-	max-width: 300px;
+	max-width: 600px;
+	margin-top: 5px;
 }
-.workspace-leaf-content[data-type="ingredient-view"] table td {
+.workspace-leaf-content[data-type="ingredient-view"] table td
+.workspace-leaf-content[data-type="recipe-view"] table td {
 	border: 1px solid var(--background-modifier-border);
-	padding: 4px 8px;
+	padding-right: 15px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+	padding-left: 10px;
 }
 
+/* ============================================================
+   RECIPE VIEW
+   RecipeDetails.tsx
+   ============================================================ */
+
+/* The line with the list of tags */
+.recipe-tags-row {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-bottom: 0.75rem;
+}
+.recipe-tag {
+	font-size: 0.75rem;
+	padding: 0.1rem 0.5rem;
+	border-radius: 12px;
+	background: var(--background-secondary);
+	color: var(--text-muted);
+}
+
+/* Two side-by-side columns: "Temps" on the left, "Source"+"Image" on the right. */
+.recipe-time-source-row {
+	display: flex;
+	gap: 2rem;
+}
+.recipe-time-source-column {
+	flex: 1;
+}
+.recipe-image {
+	max-width: 100%;
+	max-height: 120px; /* intentionally small — just a preview thumbnail */
+	border-radius: 4px;
+	margin: 0.5rem 0;
+}
+
+
+/* Managing the ingredients section */
+
+/* The servings input inside "Ingrédients (pour [X] personnes)". */
+.recipe-servings-input {
+	width: 2.5rem;
+	text-align: center;
+	margin: 0 0.4rem;
+}
+
+.recipe-shop-inline-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.3rem;
+	vertical-align: middle;
+	margin-left: 0.6rem;
+	background: transparent;
+	box-shadow: none;
+	border: 1px solid var(--background-modifier-border);
+}
 
 
 
@@ -387,52 +497,7 @@
    ============================================================ */
 
 
-/* For the nutrition table */
-.workspace-leaf-content[data-type="recipe-view"] table {
-	border-collapse: collapse;
-	width: 100%;
-	max-width: 500px;
-}
 
-.recipe-tags-row {
-	display: flex;
-	justify-content: center;
-	flex-wrap: wrap;
-	gap: 0.4rem;
-	margin-bottom: 0.75rem;
-}
-
-.recipe-ingredients-header-row h4 {
-	margin: 0;
-}
-
-.recipe-servings-reset {
-	background: none;
-	border: none;
-	cursor: pointer;
-	padding: 0 0.2rem;
-	font-size: 0.9rem;
-}
-
-.recipe-servings-reset:hover {
-	color: var(--interactive-accent);
-}
-
-.recipe-shop-inline-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0.3rem;
-	vertical-align: middle;
-	margin-left: 0.6rem;
-	background: transparent;
-	box-shadow: none;
-	border: 1px solid var(--background-modifier-border);
-}
-
-.recipe-shop-inline-button:hover {
-	background: var(--background-modifier-hover);
-}
 
 
 
@@ -647,24 +712,8 @@
 
 /* ============================================================
    MARKDOWN EDITABLE BLOCK — MarkdownEditableBlock.tsx
-   Used in the recipe view for the editable "Notes" field, and for
-   the read-only rendered "Instructions" block.
+   Used in the recipe view for the editable "Notes" field
    ============================================================ */
-
-.markdown-editable-block {
-	margin-bottom: 0.5rem;
-}
-
-.markdown-editable-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem;
-}
-
-.markdown-editable-header h4 {
-	margin: 0;
-}
 
 /* The block's title (e.g. "Notes") doubles as the toggle button — clicking
    it either starts editing or saves, depending on the current state. */
@@ -686,23 +735,6 @@
 	background: var(--background-primary);
 	color: var(--text-normal);
 }
-
-.markdown-editable-actions {
-	display: flex;
-	gap: 0.5rem;
-	margin-top: 0.25rem;
-}
-
-/* The 💾/✏️ button next to the title, only shown while editing. */
-.markdown-editable-toggle {
-	padding: 0.2rem 0.4rem;
-	border-radius: 4px;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-secondary);
-	cursor: pointer;
-	flex-shrink: 0;
-}
-
 
 /* ============================================================
    RECIPE VIEW (read mode) — RecipeDetails.tsx / RecipeView.tsx
@@ -726,16 +758,6 @@
 	text-align: left;
 }
 
-/* Two side-by-side columns: "Temps" on the left, "Source"+"Image" on the right. */
-.recipe-top-row {
-	display: flex;
-	gap: 2rem;
-	margin-bottom: 1rem;
-}
-
-.recipe-top-row-column {
-	flex: 1;
-}
 
 .recipe-source-row {
 	display: flex;
@@ -747,43 +769,13 @@
 	margin: 0;
 }
 
-.recipe-image {
-	max-width: 100%;
-	max-height: 120px; /* intentionally small — just a preview thumbnail */
-	border-radius: 4px;
-	margin: 0.5rem 0;
-}
 
-.recipe-tag {
-	font-size: 0.75rem;
-	padding: 0.1rem 0.5rem;
-	border-radius: 12px;
-	background: var(--background-secondary);
-	color: var(--text-muted);
-}
-
-/* The servings input inside "Ingrédients (pour [X] personnes)". */
-.recipe-servings-input {
-	width: 2.5rem;
-	text-align: center;
-	margin: 0 0.4rem;
-}
 
 /* Applied to an ingredient link when it has a quantity (so it matters
    for the recipe) but no ingredient sheet yet — signals that a fiche
    needs to be created for the nutrition calculation to include it. */
 .recipe-ingredient-missing {
 	color: var(--text-error);
-}
-.recipe-history-header {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	margin-bottom: 0.25rem;
-}
-
-.recipe-history-header h4 {
-	margin: 0;
 }
 
 .recipe-list-sortable {
@@ -1304,23 +1296,11 @@
 	padding: 0 !important;
 }
 
-.recipe-section-header-item {
-	list-style: none;
-	margin: 0.6rem 0 0.3rem -1.5em;
-	font-weight: 600;
-	color: var(--text-muted);
-	font-size: 0.85rem;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
 
 .recipe-ingredient-indented {
 	margin-left: 1.5rem;
 }
 
-.recipe-section-indent {
-	margin-left: 1.5rem;
-}
 
 
 

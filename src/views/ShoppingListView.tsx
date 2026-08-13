@@ -76,7 +76,7 @@ export class ShoppingListView extends ItemView {
 		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
-		this.closeAction.addClass('header-buttons');
+		this.closeAction.addClass('standard-buttons');
 
 		// Re-render whenever the shopping list note is modified elsewhere
 		// (e.g. once we wire in the add-item form later).

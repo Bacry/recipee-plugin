@@ -9,6 +9,7 @@ export interface RecipeIngredientEntry {
 	fried?: boolean;
 	isSectionHeader?: boolean; // si vrai, cette entrée n'est pas un ingrédient mais un titre de section (ex: "Pour la pâte") — les autres champs sont ignorés
 	sectionTitle?: string;
+	order?: number; // position dans la liste unifiée (ingrédients + recettes de base) affichée/éditée
 }
 
 // A reference to another recipe (tagged "base") used as a component of this
@@ -20,6 +21,7 @@ export interface RecipeBaseRecipeEntry {
 	recipeName: string;
 	quantity: number;
 	unit: string;
+	order?: number;
 }
 
 export interface Recipe {

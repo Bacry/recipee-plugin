@@ -9,7 +9,7 @@ interface MarkdownEditableBlockProps {
 	onSave: (newContent: string) => void;
 }
 
-export function MarkdownEditableBlock({ app, title, content, placeholder, onSave }: MarkdownEditableBlockProps) {
+export function MarkdownEditableBlock({ app, title, titleClass, content, contentClass, placeholder, onSave }: MarkdownEditableBlockProps) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [draft, setDraft] = useState(content);
 	const previewRef = useRef<HTMLDivElement>(null);
@@ -47,12 +47,9 @@ export function MarkdownEditableBlock({ app, title, content, placeholder, onSave
 		<div className="markdown-editable-block">
 			<div className="markdown-editable-header">
 				{title && (
-					<h4 onClick={handleToggle} className="markdown-editable-title-clickable">
+					<div onClick={handleToggle} className={`markdown-editable-title-clickable ${titleClass}`}>
 						{title}
-					</h4>
-				)}
-				{isEditing && (
-					<button className="markdown-editable-toggle" onClick={handleToggle} title="Enregistrer">💾</button>
+					</div>
 				)}
 			</div>
 
@@ -64,7 +61,7 @@ export function MarkdownEditableBlock({ app, title, content, placeholder, onSave
 					rows={8}
 				/>
 			) : (
-				<div ref={previewRef} className="markdown-editable-preview" />
+				<div ref={previewRef} className={`markdown-editable-preview ${contentClass}`} />
 			)}
 		</div>
 	);

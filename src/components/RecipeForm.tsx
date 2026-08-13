@@ -111,15 +111,20 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
 	function handleSubmit() {
-		const ingredients: RecipeIngredientEntry[] = entries
+		// Tag each entry with its position in the unified list before splitting
+		// it back into two arrays for storage — this is what lets RecipeDetails
+		// later reconstruct the same interleaved order (ingredients and base
+		// recipes mixed together) instead of always showing base recipes first.
+		const entriesWithOrder = entries.map((entry, index) => ({ ...entry, order: index }));
+
+		const ingredients: RecipeIngredientEntry[] = entriesWithOrder
 			.filter((e): e is Extract<FormEntry, { kind: 'ingredient' }> => e.kind === 'ingredient')
 			.map(({ kind, ...rest }) => rest);
-		const baseRecipes: RecipeBaseRecipeEntry[] = entries
+		const baseRecipes: RecipeBaseRecipeEntry[] = entriesWithOrder
 			.filter((e): e is Extract<FormEntry, { kind: 'baseRecipe' }> => e.kind === 'baseRecipe')
 			.map(({ kind, ...rest }) => rest);
 
-		onSubmit({
-			name,
+		onSubmit({			name,
 			baseServings,
 			servingsLabel,
 			preparationDurationMin,
@@ -455,7 +460,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 						<ul>
 							{entries.map((entry, index) => {
 								if (entry.kind === 'ingredient' && entry.isSectionHeader) {
-									currentlyInSection = true;
+									currentlyInSection = (entry.sectionTitle ?? '').trim() !== '';
 								}
 								const isIndented = !(entry.kind === 'ingredient' && entry.isSectionHeader) && currentlyInSection;
 

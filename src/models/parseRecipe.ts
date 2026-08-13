@@ -202,15 +202,17 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 	if (typeof raw !== 'object' || raw === null) return null;
 	const obj = raw as Record<string, unknown>;
 
-
 	if (obj.is_section_header === true) {
-		if (typeof obj.section_title !== 'string' || obj.section_title.trim() === '') return null;
+		// Empty title is valid — it's used as a deliberate "reset" marker to
+		// de-indent back out of a section, not just a malformed header.
+		if (typeof obj.section_title !== 'string') return null;
 		return {
 			ingredientName: '',
 			quantity: null,
 			unit: '',
 			isSectionHeader: true,
 			sectionTitle: obj.section_title,
+			order: typeof obj.order === 'number' ? obj.order : undefined,
 		};
 	}
 
@@ -241,7 +243,15 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 		fried = obj.fried;
 	}
 
-	return { ingredientName: obj.ingredient_name, complement, quantity, unit: obj.unit, form, fried };
+	return {
+		ingredientName: obj.ingredient_name,
+		complement,
+		quantity,
+		unit: obj.unit,
+		form,
+		fried,
+		order: typeof obj.order === 'number' ? obj.order : undefined,
+	};
 }
 
 // Unlike ingredients, quantity is required here (no null case) — a base
@@ -254,7 +264,12 @@ function parseBaseRecipeEntry(raw: unknown): RecipeBaseRecipeEntry | null {
 	if (typeof obj.unit !== 'string') return null;
 	if (typeof obj.quantity !== 'number' || Number.isNaN(obj.quantity)) return null;
 
-	return { recipeName: obj.recipe_name, quantity: obj.quantity, unit: obj.unit };
+	return {
+		recipeName: obj.recipe_name,
+		quantity: obj.quantity,
+		unit: obj.unit,
+		order: typeof obj.order === 'number' ? obj.order : undefined,
+	};
 }
 
 // Permissive reading of a template file — unlike parseRecipeFromFrontmatter,
@@ -296,6 +311,7 @@ export function parseRecipeTemplate(
 						unit: '',
 						isSectionHeader: true,
 						sectionTitle: typeof obj.section_title === 'string' ? obj.section_title : '',
+						order: typeof obj.order === 'number' ? obj.order : undefined,
 					};
 				}
 
@@ -307,6 +323,7 @@ export function parseRecipeTemplate(
 					unit: typeof obj.unit === 'string' ? obj.unit : '',
 					form: typeof obj.form === 'string' ? obj.form : undefined,
 					fried: typeof obj.fried === 'boolean' ? obj.fried : undefined,
+					order: typeof obj.order === 'number' ? obj.order : undefined,
 				};
 			})
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
@@ -318,7 +335,12 @@ export function parseRecipeTemplate(
 				if (typeof raw !== 'object' || raw === null) return null;
 				const obj = raw as Record<string, unknown>;
 				if (typeof obj.recipe_name !== 'string' || typeof obj.quantity !== 'number' || typeof obj.unit !== 'string') return null;
-				return { recipeName: obj.recipe_name, quantity: obj.quantity, unit: obj.unit };
+				return {
+					recipeName: obj.recipe_name,
+					quantity: obj.quantity,
+					unit: obj.unit,
+					order: typeof obj.order === 'number' ? obj.order : undefined,
+				};
 			})
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
 		: [];

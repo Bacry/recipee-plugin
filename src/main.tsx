@@ -70,7 +70,7 @@ export default class MyPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'ingredient-list',
-			name: 'Liste des ingrédients',
+			name: 'Open ingredient list',
 			callback: () => {
 				this.activateIngredientListView();
 			},
@@ -79,7 +79,7 @@ export default class MyPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'manage-lists',
-			name: 'Manage lists (types, shop sections, diet flags)',
+			name: 'Manage lists preferences',
 			callback: () => {
 				this.activateManageListsView();
 			},
@@ -152,12 +152,12 @@ export default class MyPlugin extends Plugin {
 		});
 
 
-		this.addRibbonIcon('book-open', 'Ouvre la liste des recettes', () => {
+		this.addRibbonIcon('chef-hat', 'Liste des recettes', () => {
 			this.activateRecipeListView();
 		});
 
 
-		this.addRibbonIcon('shopping-cart', 'Ouvre la liste de courses', () => {
+		this.addRibbonIcon('shopping-cart', 'Liste de courses', () => {
 			this.activateShoppingListView();
 		});
 
@@ -165,7 +165,7 @@ export default class MyPlugin extends Plugin {
 			this.activateIngredientListView();
 		});
 
-		this.addRibbonIcon('tags', 'Gérer les listes', () => {
+		this.addRibbonIcon('tags', 'Préférences des listes', () => {
 			this.activateManageListsView();
 		});
 

@@ -9,6 +9,7 @@ import type MyPlugin from '../main';
 import { createRecipe } from '../models/recipePersistence';
 import { createRef } from 'react';
 import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
+import { t } from '../i18n/strings';
 
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
@@ -36,7 +37,7 @@ export class NewRecipeView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Nouvelle recette';
+		return t('newRecipeView.title', this.plugin.settings.language);
 	}
 
 	async setState(state: NewRecipeViewState, result: unknown) {
@@ -103,7 +104,7 @@ export class NewRecipeView extends ItemView {
 		const { recipe, errors } = formValuesToRecipe(values);
 
 		if (errors.length > 0) {
-			new ErrorModal(this.app, errors).open();
+			new ErrorModal(this.app, errors, this.plugin.settings.language).open();
 			return;
 		}
 

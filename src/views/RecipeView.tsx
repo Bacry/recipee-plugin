@@ -23,6 +23,7 @@ import { createRef } from 'react';
 import { RecipeForm, RecipeFormValues, RecipeFormHandle } from '../components/RecipeForm';
 import { recordRecipeCookedTodayRecursive } from '../models/recordRecipeCookedRecursive';
 import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
+import { t } from '../i18n/strings';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -55,14 +56,16 @@ export class RecipeView extends ItemView {
 	}
 
 	getDisplayText(): string {
+		const language = this.plugin.settings.language;
+
 		if (!this.filePath) {
-			return this.isEditing ? 'Modification de la recette' : 'Recette';
+			return this.isEditing ? t('recipeView.title.editingGeneric', language) : t('recipeView.title.generic', language);
 		}
 
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
-		const name = file instanceof TFile ? upperFirstLetter(file.basename) : 'Recette';
+		const name = file instanceof TFile ? upperFirstLetter(file.basename) : t('recipeView.title.generic', language);
 
-		return this.isEditing ? `Modification — ${name}` : name;
+		return this.isEditing ? t('recipeView.title.editingNamed', language).replace('{name}', name) : name;
 	}
 
 	private updateTitle(): void {
@@ -314,7 +317,7 @@ export class RecipeView extends ItemView {
 		const { recipe, errors } = formValuesToRecipe(values);
 
 		if (errors.length > 0) {
-			new ErrorModal(this.app, errors).open();
+			new ErrorModal(this.app, errors, this.plugin.settings.language).open();
 			return;
 		}
 

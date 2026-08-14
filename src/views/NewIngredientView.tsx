@@ -7,6 +7,8 @@ import { NavigableViewState, NavigationEntry, closeOrGoBack, canNavigateBack } f
 import { INGREDIENT_VIEW_TYPE } from './IngredientView';
 import { createRef } from 'react';
 import { IngredientForm, IngredientFormValues, IngredientFormHandle } from '../components/IngredientForm';
+import { LanguageProvider } from '../i18n/LanguageContext';
+import { t } from '../i18n/strings';
 
 export const NEW_INGREDIENT_VIEW_TYPE = 'new-ingredient-view';
 
@@ -33,7 +35,7 @@ export class NewIngredientView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Formulaire ingrédient';
+		return t('newIngredientView.title', this.plugin.settings.language);
 	}
 
 	async setState(state: NewIngredientViewState, result: unknown) {
@@ -79,40 +81,43 @@ export class NewIngredientView extends ItemView {
 		if (!this.root) return;
 
 		this.root.render(
-			<IngredientForm
-				ref={this.formRef}
-				key={this.prefilledName ?? 'empty'}
-				app={this.app}
-				onSubmit={(values) => this.handleSubmit(values)}
-				ingredientTypes={this.plugin.settings.ingredientTypes}
-				shopSections={this.plugin.settings.shopSections}
-				dietFlags={this.plugin.settings.dietFlags}
-				fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
-				usdaApiKey={this.plugin.settings.usdaApiKey}
-				anthropicApiKey={this.plugin.settings.anthropicApiKey}
-				anthropicModel={this.plugin.settings.anthropicModel}
-				autoSearchOnMount={!!this.prefilledName}
-				initialValues={
-					this.prefilledName
-						? {
-							name: this.prefilledName,
-							nameEn: '',
-							type: '',
-							shopSection: '',
-							densityGMl: '',
-							entityWeightG: '',
-							brand: '',
-							dietFlags: '',
-							possibleForms: '',
-							juiceYieldMl: '',
-							nutrition: {
-								kcal: 0, lipids: 0, non_saturated_lipids: 0, glucids: 0,
-								sugar: 0, proteins: 0, salt: 0, fibers: 0, cholesterol: 0,
-							},
-						}
-						: undefined
-				}
-			/>
+			<LanguageProvider value={this.plugin.settings.language}>
+				<IngredientForm
+					ref={this.formRef}
+					key={this.prefilledName ?? 'empty'}
+					app={this.app}
+					onSubmit={(values) => this.handleSubmit(values)}
+					ingredientTypes={this.plugin.settings.ingredientTypes}
+					shopSections={this.plugin.settings.shopSections}
+					dietFlags={this.plugin.settings.dietFlags}
+					fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
+					usdaApiKey={this.plugin.settings.usdaApiKey}
+					anthropicApiKey={this.plugin.settings.anthropicApiKey}
+					anthropicModel={this.plugin.settings.anthropicModel}
+					autoSearchOnMount={!!this.prefilledName}
+					submitLabel={t('ingredientForm.submitLabel.create', this.plugin.settings.language)}
+					initialValues={
+						this.prefilledName
+							? {
+								name: this.prefilledName,
+								nameEn: '',
+								type: '',
+								shopSection: '',
+								densityGMl: '',
+								entityWeightG: '',
+								brand: '',
+								dietFlags: '',
+								possibleForms: '',
+								juiceYieldMl: '',
+								nutrition: {
+									kcal: 0, lipids: 0, non_saturated_lipids: 0, glucids: 0,
+									sugar: 0, proteins: 0, salt: 0, fibers: 0, cholesterol: 0,
+								},
+							}
+							: undefined
+					}
+				/>
+			</LanguageProvider>
 		);
 	}
 

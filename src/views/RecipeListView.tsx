@@ -10,6 +10,8 @@ import { normalizeForSearch } from '../models/textNormalize';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
 import { computeRecipeDietFlags } from '../models/computeRecipeDietFlags';
 import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
+import { t } from '../i18n/strings';
+
 
 export const RECIPE_LIST_VIEW_TYPE = 'recipe-list-view';
 
@@ -119,7 +121,7 @@ export class RecipeListView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Liste des recettes';
+		return t('recipeListView.title', this.plugin.settings.language);
 	}
 
 	async setState(state: RecipeListViewState, result: unknown) {

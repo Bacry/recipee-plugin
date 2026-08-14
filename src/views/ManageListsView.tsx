@@ -5,6 +5,7 @@ import { ManageListsDisplay } from '../components/ManageListsDisplay';
 import { wouldMergeWithExisting, renameListValue, ListField } from '../models/renameListValue';
 import { ConfirmModal } from '../components/ConfirmModal';
 import type MyPlugin from '../main';
+import { t } from '../i18n/strings';
 
 export const MANAGE_LISTS_VIEW_TYPE = 'manage-lists-view';
 
@@ -26,7 +27,7 @@ export class ManageListsView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Gérer les listes';
+		return t('manageListsView.title', this.plugin.settings.language);
 	}
 
 	private updateCloseAction(): void {

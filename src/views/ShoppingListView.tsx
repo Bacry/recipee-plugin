@@ -19,6 +19,7 @@ import { readIngredientForCalc } from '../models/computeRecipeNutrition';
 import { findIngredientFileByName } from '../models/findIngredientFile';
 import { findRecipeFileByName } from '../models/findRecipeFile';
 import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
+import { t } from '../i18n/strings';
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
 
@@ -45,7 +46,7 @@ export class ShoppingListView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Courses';
+		return t('shoppingListView.title', this.plugin.settings.language);
 	}
 
 	async setState(state: ShoppingListViewState, result: unknown) {

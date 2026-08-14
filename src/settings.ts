@@ -19,6 +19,7 @@ export interface MyPluginSettings {
 	oilIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "huile" (affiche "Peut être utilisé pour la friture" dans le formulaire ingrédient)
 	defaultFryingAbsorptionPercent: number;
 	fruitIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "fruit" (affiche "Rendement en jus")
+	language: 'fr' | 'en';
 }
 
 export interface DietPreset {
@@ -45,6 +46,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	oilIngredientTypes: ['oil'],
 	defaultFryingAbsorptionPercent: 15,
 	fruitIngredientTypes: ['fruit juice'],
+	language: 'en',
 };
 
 
@@ -98,6 +100,20 @@ export class SampleSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+
+		new Setting(containerEl)
+			.setName('Langue')
+			.setDesc('Langue de l\'interface du plugin.')
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption('fr', 'Français')
+					.addOption('en', 'English')
+					.setValue(this.plugin.settings.language)
+					.onChange(async (value) => {
+						this.plugin.settings.language = value as 'fr' | 'en';
+						await this.plugin.saveSettings();
+					}),
+			);
 
 		new Setting(containerEl)
 			.setName('Ingredients folder')

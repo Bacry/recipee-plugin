@@ -14,6 +14,8 @@ import { IngredientForm, IngredientFormHandle } from '../components/IngredientFo
 import { findRecipeFileByName } from '../models/findRecipeFile';
 import { countRecipesUsingIngredient, renameIngredientInRecipes } from '../models/renameIngredientInRecipes';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { LanguageProvider } from '../i18n/LanguageContext';
+import { t } from '../i18n/strings';
 
 export const INGREDIENT_VIEW_TYPE = 'ingredient-view';
 
@@ -45,10 +47,12 @@ export class IngredientView extends ItemView {
 	}
 
 	getDisplayText(): string {
+		const language = this.plugin.settings.language;
+
 		if (!this.filePath) {
 			return this.isEditing
-				? "Modification de l’ingrédient"
-				: "Ingrédient";
+				? t('ingredientView.title.editingGeneric', language)
+				: t('ingredientView.title.generic', language);
 		}
 
 		const file =
@@ -57,10 +61,10 @@ export class IngredientView extends ItemView {
 		const name =
 			file instanceof TFile
 				? upperFirstLetter(file.basename)
-				: "Ingrédient";
+				: t('ingredientView.title.generic', language);
 
 		return this.isEditing
-			? `Modification — ${name}`
+			? t('ingredientView.title.editingNamed', language).replace('{name}', name)
 			: name;
 	}
 
@@ -274,13 +278,21 @@ export class IngredientView extends ItemView {
 		if (!this.root) return;
 
 		if (!this.filePath) {
-			this.root.render(<p>Aucun fichier sélectionné.</p>);
+			this.root.render(
+				<LanguageProvider value={this.plugin.settings.language}>
+					<p>Aucun fichier sélectionné.</p>
+				</LanguageProvider>
+			);
 			return;
 		}
 
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
 		if (!(file instanceof TFile)) {
-			this.root.render(<p>Fichier introuvable : {this.filePath}</p>);
+			this.root.render(
+				<LanguageProvider value={this.plugin.settings.language}>
+					<p>Fichier introuvable : {this.filePath}</p>
+				</LanguageProvider>
+			);
 			return;
 		}
 
@@ -295,52 +307,60 @@ export class IngredientView extends ItemView {
 
 		if (errors.length > 0) {
 			this.root.render(
-				<div>
-					<h4>Cette note contient des erreurs :</h4>
-					<ul>
-						{errors.map((error, index) => (
-							<li key={index} className="recipe-ingredient-validation-error">{error}</li>
-						))}
-					</ul>
-				</div>
+				<LanguageProvider value={this.plugin.settings.language}>
+					<div>
+						<h4>Cette note contient des erreurs :</h4>
+						<ul>
+							{errors.map((error, index) => (
+								<li key={index} className="recipe-ingredient-validation-error">{error}</li>
+							))}
+						</ul>
+					</div>
+				</LanguageProvider>
 			);
 			return;
 		}
 
 		if (this.isEditing) {
 			this.root.render(
-				<IngredientForm
-					ref={this.formRef}
-					app={this.app}
-					onSubmit={(values) => this.handleSave(values)}
-					ingredientTypes={this.plugin.settings.ingredientTypes}
-					shopSections={this.plugin.settings.shopSections}
-					dietFlags={this.plugin.settings.dietFlags}
-					fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
-					usdaApiKey={this.plugin.settings.usdaApiKey}
-					initialValues={ingredientToFormValues(ingredient)}
-					submitLabel="Enregistrer les modifications"
-					autoSearchOnMount = {false}
-				/>
+				<LanguageProvider value={this.plugin.settings.language}>
+					<IngredientForm
+						ref={this.formRef}
+						app={this.app}
+						onSubmit={(values) => this.handleSave(values)}
+						ingredientTypes={this.plugin.settings.ingredientTypes}
+						shopSections={this.plugin.settings.shopSections}
+						dietFlags={this.plugin.settings.dietFlags}
+						fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
+						usdaApiKey={this.plugin.settings.usdaApiKey}
+						anthropicApiKey={this.plugin.settings.anthropicApiKey}
+						anthropicModel={this.plugin.settings.anthropicModel}
+						initialValues={ingredientToFormValues(ingredient)}
+						submitLabel={t('ingredientForm.submitLabel.update', this.plugin.settings.language)}
+						autoSearchOnMount = {false}
+					/>
+				</LanguageProvider>
 			);
 		}
 		else {
 			this.root.render(
-				<IngredientDetails
-					name={ingredient.name}
-					type={ingredient.type}
-					shopSection={ingredient.shop_section}
-					densityGMl={ingredient.density_g_ml}
-					entityWeightG={ingredient.entity_weight_g}
-					brand={ingredient.brand}
-					possibleForms={ingredient.possible_forms}
-					dietFlags={ingredient.diet_flags}
-					juiceYieldMl={ingredient.juice_yield_ml}
-					nutrition={ingredient.nutrition_per_100g}
-					usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
-					onRecipeClick={(name) => this.handleRecipeClick(name)}
-					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
-				/>
+				<LanguageProvider value={this.plugin.settings.language}>
+					<IngredientDetails
+						name={ingredient.name}
+						type={ingredient.type}
+						shopSection={ingredient.shop_section}
+						densityGMl={ingredient.density_g_ml}
+						entityWeightG={ingredient.entity_weight_g}
+						brand={ingredient.brand}
+						possibleForms={ingredient.possible_forms}
+						dietFlags={ingredient.diet_flags}
+						oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
+						juiceYieldMl={ingredient.juice_yield_ml}
+						nutrition={ingredient.nutrition_per_100g}
+						usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
+						onRecipeClick={(name) => this.handleRecipeClick(name)}
+					/>
+				</LanguageProvider>
 			)
 		}
 	}

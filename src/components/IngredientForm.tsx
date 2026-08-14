@@ -7,6 +7,9 @@ import { ErrorModal } from './ErrorModal';
 import { sortAlphabetically } from '../models/textNormalize';
 import { suggestIngredientFields } from '../services/claudeIngredientExtraction';
 import { forwardRef, useImperativeHandle } from 'react';
+import { useT } from '../i18n/LanguageContext';
+import { useContext } from 'react';
+import { LanguageContext } from '../i18n/LanguageContext';
 
 export interface IngredientFormHandle {
 	triggerSubmit: () => void;
@@ -53,17 +56,6 @@ const emptyNutrition: NutritionPer100g = {
 	cholesterol: 0,
 };
 
-const nutritionLabels: Record<keyof NutritionPer100g, string> = {
-	kcal: 'Calories (kcal)',
-	lipids: 'Lipides (g)',
-	non_saturated_lipids: 'dont insaturés (g)',
-	glucids: 'Glucides (g)',
-	sugar: 'dont sucres (g)',
-	proteins: 'Protéines (g)',
-	salt: 'Sel (g)',
-	fibers: 'Fibres (g)',
-	cholesterol: 'Cholestérol (mg)',
-};
 
 const NUTRITION_KEYS = Object.keys(emptyNutrition) as (keyof NutritionPer100g)[];
 
@@ -91,6 +83,24 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		autoSearchOnMount,
 	},
 	ref) {
+	const t = useT();
+	const language = useContext(LanguageContext);
+
+	function nutritionLabel(field: keyof NutritionPer100g): string {
+		const keys: Record<keyof NutritionPer100g, string> = {
+			kcal: 'ingredientForm.nutrition.kcal',
+			lipids: 'ingredientForm.nutrition.lipids',
+			non_saturated_lipids: 'ingredientForm.nutrition.nonSaturatedLipids',
+			glucids: 'ingredientForm.nutrition.glucids',
+			sugar: 'ingredientForm.nutrition.sugar',
+			proteins: 'ingredientForm.nutrition.proteins',
+			salt: 'ingredientForm.nutrition.salt',
+			fibers: 'ingredientForm.nutrition.fibers',
+			cholesterol: 'ingredientForm.nutrition.cholesterol',
+		};
+		return t(keys[field]);
+	}
+
 	const [name, setName] = useState(initialValues?.name ?? '');
 	const [nameEn, setNameEn] = useState(initialValues?.nameEn ?? '');
 	const [type, setType] = useState(initialValues?.type ?? '');
@@ -129,9 +139,19 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		if (!claudeNutritionSuggestions) return;
 		updateNutritionField(field, claudeNutritionSuggestions[field].toString());
 	}
+
+	function applyAllClaudeSuggestions() {
+		if (!claudeNutritionSuggestions) return;
+		const next = { ...nutritionInputs };
+		for (const key of NUTRITION_KEYS) {
+			next[key] = claudeNutritionSuggestions[key].toString();
+		}
+		setNutritionInputs(next);
+	}
+
 	async function handleSuggestWithClaude() {
 		if (name.trim() === '') {
-			new Notice('Renseigne le nom de l\'ingrédient avant de demander une suggestion.');
+			new Notice(t('ingredientForm.error.nameRequiredForSuggestion'));
 			return;
 		}
 
@@ -168,26 +188,26 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		const errors: string[] = [];
 
 		if (name.trim() === '') {
-			errors.push('Le nom est obligatoire.');
+			errors.push(t('ingredientForm.error.nameRequired'));
 		}
 		if (type.trim() === '') {
-			errors.push('Le type est obligatoire.');
+			errors.push(t('ingredientForm.error.typeRequired'));
 		}
 		if (shopSection.trim() === '') {
-			errors.push('Le rayon est obligatoire.');
+			errors.push(t('ingredientForm.error.shopSectionRequired'));
 		}
 		const d = Number(densityGMl)
 		if (densityGMl.trim() !== "" && (Number.isNaN(d) ||  d <= 0)) {
-			errors.push('La densité doit être un nombre strictement positif');
+			errors.push(t('ingredientForm.error.densityInvalid'));
 		}
 		const e = Number(entityWeightG)
 		if (entityWeightG.trim() !== "" && (Number.isNaN(e) ||  e <= 0)) {
-			errors.push('Le poids unitaire doit être un nombre strictement positif');
+			errors.push(t('ingredientForm.error.entityWeightInvalid'));
 		}
 
 		const j = Number(juiceYieldMl)
 		if (juiceYieldMl.trim() !== "" && (Number.isNaN(j) || j <= 0)) {
-			errors.push('Le rendement en jus doit être un nombre strictement positif');
+			errors.push(t('ingredientForm.error.juiceYieldInvalid'));
 		}
 
 		const parsedNutrition = {} as NutritionPer100g;
@@ -195,14 +215,14 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 			const raw = nutritionInputs[key];
 			const value = Number(raw);
 			if (raw.trim() === '' || Number.isNaN(value)) {
-				errors.push(`"${nutritionLabels[key]}" n'est pas un nombre valide.`);
+				errors.push(t('ingredientForm.error.nutritionInvalid').replace('{label}', nutritionLabel(key)));
 			} else {
 				parsedNutrition[key] = value;
 			}
 		}
 
 		if (errors.length > 0) {
-			new ErrorModal(app, errors).open();
+			new ErrorModal(app, errors, language).open();
 			return;
 		}
 
@@ -299,7 +319,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 	function renderNutritionField(field: keyof NutritionPer100g) {
 		return (
 			<div className="ingredient-form-nutrition-field" key={field}>
-				<label>{nutritionLabels[field]}</label>
+				<label>{nutritionLabel(field)}</label>
 				<input
 					value={nutritionInputs[field]}
 					onChange={(e) => updateNutritionField(field, e.target.value)}
@@ -332,10 +352,10 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 	return (
 		<div>
 			<section className="form-section section">
-				<h4>Informations générales</h4>
+				<h4>{t('ingredientForm.generalInfo')}</h4>
 
 				<div className="form-field form-field-wide">
-					<label>Nom *</label>
+					<label>{t('ingredientForm.name')}</label>
 					<input
 						value={name}
 						onChange={(e) => setName(e.target.value)}
@@ -350,105 +370,107 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 						type="button"
 						onClick={handleSuggestWithClaude}
 						disabled={isSuggestingWithClaude}
-						className="ingredient-form-claude-button"
+						className="ingredient-form-submit"
 					>
-						{isSuggestingWithClaude ? 'Réflexion en cours...' : 'Suggérer avec Claude'}
+						{isSuggestingWithClaude ? t('ingredientForm.suggestWithClaude.thinking') : t('ingredientForm.suggestWithClaude')}
 					</button>
 				</div>
 
 				<div className="form-grid">
 					<div className="form-field">
-						<label>Type *</label>
+						<label>{t('ingredientForm.type')}</label>
 						<select value={type} onChange={(e) => setType(e.target.value)}>
-							<option value="">-- Choisir --</option>
-							{sortAlphabetically(ingredientTypes).map((t) => (
-								<option key={t} value={t}>{t}</option>
+							<option value="">{t('ingredientForm.choose')}</option>
+							{sortAlphabetically(ingredientTypes).map((typeOption) => (
+								<option key={typeOption} value={typeOption}>{typeOption}</option>
 							))}
 						</select>
 					</div>
 
 					<div className="form-field">
-						<label>Rayon *</label>
+						<label>{t('ingredientForm.shopSection')}</label>
 						<select value={shopSection} onChange={(e) => setShopSection(e.target.value)}>
-							<option value="">-- Choisir --</option>
-							{sortAlphabetically(shopSections).map((s) => (
-								<option key={s} value={s}>{s}</option>
+							<option value="">{t('ingredientForm.choose')}</option>
+							{sortAlphabetically(shopSections).map((sectionOption) => (
+								<option key={sectionOption} value={sectionOption}>{sectionOption}</option>
 							))}
 						</select>
 					</div>
 
 					<div className="form-field">
-						<label>Densité (g/mL)</label>
+						<label>{t('ingredientForm.density')}</label>
 						<input value={densityGMl} onChange={(e) => setDensityGMl(sanitizeNumericInput(e.target.value))} />
 					</div>
 
 					<div className="form-field">
-						<label>Poids unitaire (g)</label>
+						<label>{t('ingredientForm.entityWeight')}</label>
 						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />
 					</div>
 				</div>
 			</section>
-				<section className="form-section section">
-					<h4>Informations spécifiques</h4>
+			<section className="form-section section">
+				<h4>{t('ingredientForm.specificInfo')}</h4>
 
-					<div className="form-grid">
-						<div className="form-field">
-							<label>Formes</label>
-							<input
-								value={possibleForms}
-								onChange={(e) => setPossibleForms(e.target.value)}
-								placeholder="ex : feuilles, haché"
-							/>
-						</div>
-
-						<div className="form-field">
-							<label>Contraintes</label>
-							<div className="list-tag-menu-wrapper ingredient-form-diet-menu-wrapper">
-								<button
-									type="button"
-									onClick={() => setDietMenuOpen((open) => !open)}
-									className="list-tag-menu-button"
-								>
-									{dietFlagsSelected.length > 0 ? `Contraintes (${dietFlagsSelected.length})` : 'Aucune'}
-								</button>
-								{dietMenuOpen && (
-									<ul className="list-tag-menu">
-										{sortAlphabetically(dietFlags).map((flag) => (
-											<li key={flag} className="list-tag-menu-item">
-												<label>
-													<input
-														type="checkbox"
-														checked={dietFlagsSelected.includes(flag)}
-														onChange={() => toggleDietFlag(flag)}
-													/>
-													{' '}{flag}
-												</label>
-											</li>
-										))}
-									</ul>
-								)}
-							</div>
-						</div>
-
-						<div className="form-field">
-							<label>Marque</label>
-							<input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="ex : Kikkoman" />
-						</div>
-
-						{fruitIngredientTypes.includes(type) && (
-							<div className="form-field">
-								<label>Rendement jus</label>
-								<input value={juiceYieldMl} onChange={(e) => setJuiceYieldMl(sanitizeNumericInput(e.target.value))} placeholder="mL / fruit" />
-							</div>
-						)}
+				<div className="form-grid">
+					<div className="form-field">
+						<label>{t('ingredientForm.forms')}</label>
+						<input
+							value={possibleForms}
+							onChange={(e) => setPossibleForms(e.target.value)}
+							placeholder={t('ingredientForm.forms.placeholder')}
+						/>
 					</div>
-				</section>
+
+					<div className="form-field">
+						<label>{t('ingredientForm.constraints')}</label>
+						<div className="list-tag-menu-wrapper ingredient-form-diet-menu-wrapper">
+							<button
+								type="button"
+								onClick={() => setDietMenuOpen((open) => !open)}
+								className="list-tag-menu-button"
+							>
+								{dietFlagsSelected.length > 0
+									? t('ingredientForm.constraints.count').replace('{count}', dietFlagsSelected.length.toString())
+									: t('ingredientForm.constraints.none')}
+							</button>
+							{dietMenuOpen && (
+								<ul className="list-tag-menu">
+									{sortAlphabetically(dietFlags).map((flag) => (
+										<li key={flag} className="list-tag-menu-item">
+											<label>
+												<input
+													type="checkbox"
+													checked={dietFlagsSelected.includes(flag)}
+													onChange={() => toggleDietFlag(flag)}
+												/>
+												{' '}{flag}
+											</label>
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
+					</div>
+
+					<div className="form-field">
+						<label>{t('ingredientForm.brand')}</label>
+						<input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder={t('ingredientForm.brand.placeholder')} />
+					</div>
+
+					{fruitIngredientTypes.includes(type) && (
+						<div className="form-field">
+							<label>{t('ingredientForm.juiceYield')}</label>
+							<input value={juiceYieldMl} onChange={(e) => setJuiceYieldMl(sanitizeNumericInput(e.target.value))} placeholder={t('ingredientForm.juiceYield.placeholder')} />
+						</div>
+					)}
+				</div>
+			</section>
 
 			<section className="form-section section">
-				<h4>Valeurs nutritionnelles (pour 100g)</h4>
+				<h4>{t('ingredientForm.nutrition')}</h4>
 
 				<div className="form-field usda-search-wrapper">
-					<label>Nom en anglais (pour la recherche USDA)</label>
+					<label>{t('ingredientForm.nameEn')}</label>
 					<div className="usda-search-row">
 						<input
 							value={nameEn}
@@ -494,7 +516,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 								)}
 							</>
 						) : (
-							<span className="usda-popup-empty">Aucune suggestion pour l'instant</span>
+							<span className="usda-popup-empty">{t('ingredientForm.usda.noSuggestion')}</span>
 						)}
 					</div>
 				</div>
@@ -506,10 +528,10 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 							<div className="ingredient-form-claude-apply-all-wrapper">
 								<button
 									type="button"
-									onClick={applyAllClaudeNutritionValues}
+									onClick={applyAllClaudeSuggestions}
 									className="ingredient-form-claude-apply-all"
 								>
-									Copier les valeurs de Claude
+									{t('ingredientForm.claude.copyAll')}
 								</button>
 							</div>
 						)}

@@ -8,6 +8,7 @@ import { INGREDIENT_VIEW_TYPE } from './IngredientView';
 import { NEW_INGREDIENT_VIEW_TYPE } from './NewIngredientView';
 import { RECIPE_VIEW_TYPE } from './RecipeView';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
+import { t } from '../i18n/strings';
 
 export const INGREDIENT_LIST_VIEW_TYPE = 'ingredient-list-view';
 
@@ -48,7 +49,7 @@ export class IngredientListView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Liste des ingrédients';
+		return t('ingredientListView.title', this.plugin.settings.language);
 	}
 
 	private updateCloseAction(): void {

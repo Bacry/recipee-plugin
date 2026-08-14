@@ -22,6 +22,8 @@ export interface MyPluginSettings {
 	defaultFryingAbsorptionPercent: number;
 	fruitIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "fruit" (affiche "Rendement en jus")
 	language: 'fr' | 'en';
+	usdaEnabled: boolean;
+	claudeEnabled: boolean;
 }
 
 export interface DietPreset {
@@ -50,6 +52,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	defaultFryingAbsorptionPercent: 15,
 	fruitIngredientTypes: ['fruit juice'],
 	language: 'en',
+	usdaEnabled: false,
+	claudeEnabled: false,
 };
 
 
@@ -215,45 +219,76 @@ export class SampleSettingTab extends PluginSettingTab {
 		this.renderCategoryPicker(containerEl, t('settings.fruitTypes.label', language), 'fruitIngredientTypes');
 
 		new Setting(containerEl)
-			.setName(t('settings.usdaApiKey.name', language))
-			.setDesc(t('settings.usdaApiKey.desc', language))
-			.addText((text) =>
-				text
-					.setPlaceholder(t('settings.usdaApiKey.placeholder', language))
-					.setValue(this.plugin.settings.usdaApiKey)
+			.setName(t('settings.usdaEnabled.name', language))
+			.setDesc(t('settings.usdaEnabled.desc', language))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.usdaEnabled)
 					.onChange(async (value) => {
-						this.plugin.settings.usdaApiKey = value;
+						this.plugin.settings.usdaEnabled = value;
 						await this.plugin.saveSettings();
+						this.display();
 					}),
 			);
 
+		if (this.plugin.settings.usdaEnabled) {
+			new Setting(containerEl)
+				.setName(t('settings.usdaApiKey.name', language))
+				.setDesc(t('settings.usdaApiKey.desc', language))
+				.addText((text) =>
+					text
+						.setPlaceholder(t('settings.usdaApiKey.placeholder', language))
+						.setValue(this.plugin.settings.usdaApiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.usdaApiKey = value;
+							await this.plugin.saveSettings();
+						}),
+				);
+		}
+
+
 		new Setting(containerEl)
-			.setName(t('settings.anthropicApiKey.name', language))
-			.setDesc(t('settings.anthropicApiKey.desc', language))
-			.addText((text) =>
-				text
-					.setPlaceholder('sk-ant-...')
-					.setValue(this.plugin.settings.anthropicApiKey)
+			.setName(t('settings.claudeEnabled.name', language))
+			.setDesc(t('settings.claudeEnabled.desc', language))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.claudeEnabled)
 					.onChange(async (value) => {
-						this.plugin.settings.anthropicApiKey = value;
+						this.plugin.settings.claudeEnabled = value;
 						await this.plugin.saveSettings();
+						this.display();
 					}),
 			);
 
-		new Setting(containerEl)
-			.setName(t('settings.anthropicModel.name', language))
-			.setDesc(t('settings.anthropicModel.desc', language))
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption('claude-haiku-4-5-20251001', t('settings.anthropicModel.haiku', language))
-					.addOption('claude-sonnet-5', t('settings.anthropicModel.sonnet', language))
-					.addOption('claude-opus-4-8', t('settings.anthropicModel.opus', language))
-					.setValue(this.plugin.settings.anthropicModel)
-					.onChange(async (value) => {
-						this.plugin.settings.anthropicModel = value;
-						await this.plugin.saveSettings();
-					}),
-			);
+		if (this.plugin.settings.claudeEnabled) {
+			new Setting(containerEl)
+				.setName(t('settings.anthropicApiKey.name', language))
+				.setDesc(t('settings.anthropicApiKey.desc', language))
+				.addText((text) =>
+					text
+						.setPlaceholder('sk-ant-...')
+						.setValue(this.plugin.settings.anthropicApiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.anthropicApiKey = value;
+							await this.plugin.saveSettings();
+						}),
+				);
+
+			new Setting(containerEl)
+				.setName(t('settings.anthropicModel.name', language))
+				.setDesc(t('settings.anthropicModel.desc', language))
+				.addDropdown((dropdown) =>
+					dropdown
+						.addOption('claude-haiku-4-5-20251001', t('settings.anthropicModel.haiku', language))
+						.addOption('claude-sonnet-5', t('settings.anthropicModel.sonnet', language))
+						.addOption('claude-opus-4-8', t('settings.anthropicModel.opus', language))
+						.setValue(this.plugin.settings.anthropicModel)
+						.onChange(async (value) => {
+							this.plugin.settings.anthropicModel = value;
+							await this.plugin.saveSettings();
+						}),
+				);
+		}
 
 		new Setting(containerEl)
 			.setName(t('settings.shoppingListPath.name', language))

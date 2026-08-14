@@ -1251,7 +1251,22 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "US (oz, cup, lb)",
 		en: "US (oz, cup, lb)",
 	},
-
+	'settings.usdaEnabled.name': {
+		fr: "Activer la recherche USDA",
+		en: "Enable USDA search",
+	},
+	'settings.usdaEnabled.desc': {
+		fr: "Affiche la recherche de données nutritionnelles USDA dans le formulaire ingrédient. Désactive-la si tu n'as pas de clé API ou préfères remplir les valeurs manuellement.",
+		en: "Shows the USDA nutritional data search in the ingredient form. Turn this off if you don't have an API key or prefer to fill in values manually.",
+	},
+	'settings.claudeEnabled.name': {
+		fr: "Activer les fonctionnalités Claude",
+		en: "Enable Claude features",
+	},
+	'settings.claudeEnabled.desc': {
+		fr: "Affiche les boutons \"Suggérer avec Claude\" et \"Extraire depuis un texte\" dans les formulaires. Désactive-les si tu n'as pas de clé API Anthropic.",
+		en: "Shows the \"Suggest with Claude\" and \"Extract from text\" buttons in the forms. Turn this off if you don't have an Anthropic API key.",
+	},
 
 };
 

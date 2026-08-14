@@ -48,6 +48,7 @@ interface RecipeFormProps {
 	initialValues?: RecipeFormValues;
 	submitLabel?: string;
 	oilIngredientTypes: string[];
+	claudeEnabled: boolean;
 }
 
 function emptyValues(): RecipeFormValues {
@@ -87,7 +88,7 @@ function toEntries(ingredients: RecipeIngredientEntry[], baseRecipes: RecipeBase
 
 export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function RecipeForm(
 	{ app, recipesFolder, ingredientsFolder, recipeImagesFolder, anthropicApiKey,
-		anthropicModel, onSubmit, initialValues, submitLabel, oilIngredientTypes },
+		anthropicModel, onSubmit, initialValues, submitLabel, oilIngredientTypes, claudeEnabled  },
 	ref
 ) {
 	const t = useT();
@@ -300,11 +301,13 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	return (
 		<div className="ingredient-form">
 
-			<div className="recipe-form-claude-section">
-				<button type="button" onClick={openParseTextModal} className="recipe-form-claude-submit">
-					{t('recipeForm.claude.extract')}
-				</button>
-			</div>
+			{claudeEnabled && (
+				<div className="recipe-form-claude-section">
+					<button type="button" onClick={openParseTextModal} className="recipe-form-claude-submit">
+						{t('recipeForm.claude.extract')}
+					</button>
+				</div>
+			)}
 
 			<section className="form-section section">
 				<h4>{t('recipeForm.generalInfo')}</h4>

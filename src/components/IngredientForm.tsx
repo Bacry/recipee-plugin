@@ -36,6 +36,8 @@ interface IngredientFormProps {
 	shopSections: string[];
 	dietFlags: string[];
 	fruitIngredientTypes: string[];
+	usdaEnabled: boolean;
+	claudeEnabled: boolean;
 	usdaApiKey: string;
 	anthropicApiKey: string;
 	anthropicModel: string;
@@ -78,6 +80,8 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		usdaApiKey,
 		anthropicApiKey,
 		anthropicModel,
+		usdaEnabled,
+		claudeEnabled,
 		initialValues,
 		submitLabel = 'Créer l\'ingrédient',
 		autoSearchOnMount,
@@ -324,7 +328,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 					value={nutritionInputs[field]}
 					onChange={(e) => updateNutritionField(field, e.target.value)}
 				/>
-				{claudeNutritionSuggestions && (
+				{claudeEnabled && claudeNutritionSuggestions && (
 					<span
 						className="ingredient-form-claude-suggestion"
 						onClick={() => applyClaudeNutritionValue(field)}
@@ -365,16 +369,18 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 					/>
 				</div>
 
-				<div className="form-field">
-					<button
-						type="button"
-						onClick={handleSuggestWithClaude}
-						disabled={isSuggestingWithClaude}
-						className="ingredient-form-submit"
-					>
-						{isSuggestingWithClaude ? t('ingredientForm.suggestWithClaude.thinking') : t('ingredientForm.suggestWithClaude')}
-					</button>
-				</div>
+				{claudeEnabled && (
+					<div className="form-field">
+						<button
+							type="button"
+							onClick={handleSuggestWithClaude}
+							disabled={isSuggestingWithClaude}
+							className="ingredient-form-submit"
+						>
+							{isSuggestingWithClaude ? t('ingredientForm.suggestWithClaude.thinking') : t('ingredientForm.suggestWithClaude')}
+						</button>
+					</div>
+				)}
 
 				<div className="form-grid">
 					<div className="form-field">
@@ -469,62 +475,64 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 			<section className="form-section section">
 				<h4>{t('ingredientForm.nutrition')}</h4>
 
-				<div className="form-field usda-search-wrapper">
-					<label>{t('ingredientForm.nameEn')}</label>
-					<div className="usda-search-row">
-						<input
-							value={nameEn}
-							onChange={(e) => handleNameEnChange(e.target.value)}
-							onBlur={handleNameEnBlur}
-						/>
-						<button
-							type="button"
-							className="usda-search-button"
-							onClick={() => runSearch(nameEn)}
-							disabled={isSearching}
-						>
-							{isSearching ? <span className="usda-spinner" /> : '🔍'}
-						</button>
-					</div>
+				{usdaEnabled && (
+					<div className="form-field usda-search-wrapper">
+						<label>{t('ingredientForm.nameEn')}</label>
+						<div className="usda-search-row">
+							<input
+								value={nameEn}
+								onChange={(e) => handleNameEnChange(e.target.value)}
+								onBlur={handleNameEnBlur}
+							/>
+							<button
+								type="button"
+								className="usda-search-button"
+								onClick={() => runSearch(nameEn)}
+								disabled={isSearching}
+							>
+								{isSearching ? <span className="usda-spinner" /> : '🔍'}
+							</button>
+						</div>
 
-					<div className="usda-popup">
-						{searchResults.length > 0 ? (
-							<>
-								<button
-									type="button"
-									className="usda-popup-summary"
-									onClick={() => setIsPopupOpen((open) => !open)}
-								>
-									{(() => {
-										const shown = searchResults[selectedIndex ?? 0];
-										return `${shown.description} (${shown.dataType}) — ${shown.kcal ?? '?'} kcal`;
-									})()}
-								</button>
+						<div className="usda-popup">
+							{searchResults.length > 0 ? (
+								<>
+									<button
+										type="button"
+										className="usda-popup-summary"
+										onClick={() => setIsPopupOpen((open) => !open)}
+									>
+										{(() => {
+											const shown = searchResults[selectedIndex ?? 0];
+											return `${shown.description} (${shown.dataType}) — ${shown.kcal ?? '?'} kcal`;
+										})()}
+									</button>
 
-								{isPopupOpen && (
-									<ul className="usda-popup-list">
-										{searchResults.map((result, index) => (
-											<li
-												key={index}
-												className={index === (selectedIndex ?? 0) ? 'usda-popup-selected' : ''}
-												onClick={() => applyResult(index)}
-											>
-												{result.description} ({result.dataType}) — {result.kcal ?? '?'} kcal
-											</li>
-										))}
-									</ul>
-								)}
-							</>
-						) : (
-							<span className="usda-popup-empty">{t('ingredientForm.usda.noSuggestion')}</span>
-						)}
+									{isPopupOpen && (
+										<ul className="usda-popup-list">
+											{searchResults.map((result, index) => (
+												<li
+													key={index}
+													className={index === (selectedIndex ?? 0) ? 'usda-popup-selected' : ''}
+													onClick={() => applyResult(index)}
+												>
+													{result.description} ({result.dataType}) — {result.kcal ?? '?'} kcal
+												</li>
+											))}
+										</ul>
+									)}
+								</>
+							) : (
+								<span className="usda-popup-empty">{t('ingredientForm.usda.noSuggestion')}</span>
+							)}
+						</div>
 					</div>
-				</div>
+				)}
 
 				<div className="ingredient-form-nutrition-rows">
 					<div className="ingredient-form-nutrition-row">
 						{renderNutritionField('kcal')}
-						{claudeNutritionSuggestions && (
+						{claudeEnabled && claudeNutritionSuggestions && (
 							<div className="ingredient-form-claude-apply-all-wrapper">
 								<button
 									type="button"

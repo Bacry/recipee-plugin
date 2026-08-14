@@ -423,6 +423,7 @@ export class RecipeView extends ItemView {
 						onSubmit={(values) => this.handleSave(values)}
 						initialValues={recipeToFormValues(recipe!, this.filePath, this.plugin.settings.recipesFolder)}
 						oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
+						claudeEnabled={this.plugin.settings.claudeEnabled}
 					/>
 					</UnitSystemProvider>
 				</LanguageProvider>

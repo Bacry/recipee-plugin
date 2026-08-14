@@ -101,6 +101,7 @@ export class NewRecipeView extends ItemView {
 					onSubmit={(values) => this.handleSubmit(values)}
 					initialValues={this.prefilledValues}
 					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
+					claudeEnabled={this.plugin.settings.claudeEnabled}
 				/>
 				</UnitSystemProvider>
 			</LanguageProvider>

@@ -94,6 +94,8 @@ export class NewIngredientView extends ItemView {
 					usdaApiKey={this.plugin.settings.usdaApiKey}
 					anthropicApiKey={this.plugin.settings.anthropicApiKey}
 					anthropicModel={this.plugin.settings.anthropicModel}
+					usdaEnabled={this.plugin.settings.usdaEnabled}
+					claudeEnabled={this.plugin.settings.claudeEnabled}
 					autoSearchOnMount={!!this.prefilledName}
 					submitLabel={t('ingredientForm.submitLabel.create', this.plugin.settings.language)}
 					initialValues={

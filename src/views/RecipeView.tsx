@@ -24,6 +24,7 @@ import { RecipeForm, RecipeFormValues, RecipeFormHandle } from '../components/Re
 import { recordRecipeCookedTodayRecursive } from '../models/recordRecipeCookedRecursive';
 import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
 import { t } from '../i18n/strings';
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -96,7 +97,8 @@ export class RecipeView extends ItemView {
 
 	private updateCloseAction(): void {
 		if (!this.closeAction) return;
-		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+		const language = this.plugin.settings.language;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? t('recipeView.closeAction.back', language) : t('recipeView.closeAction.close', language));
 	}
 
 	private setEditing(isEditing: boolean): void {
@@ -152,14 +154,16 @@ export class RecipeView extends ItemView {
 			})
 		);
 
-		this.modifyAction = this.addAction('pencil', 'Modifier la recette', () => {
+		const language = this.plugin.settings.language;
+
+		this.modifyAction = this.addAction('pencil', t('recipeView.modifyAction', language), () => {
 			this.setEditing(true);
 		});
 		this.modifyAction.addClass('header-button');
 
 		this.closeAction = this.addAction(
 			'arrow-left',
-			'Fermer',
+			t('recipeView.closeAction.close', language),
 			() => {
 				if (this.isEditing) {
 					this.setEditing(false);
@@ -170,7 +174,7 @@ export class RecipeView extends ItemView {
 		);
 		this.closeAction.addClass('header-button');
 
-		this.saveAction = this.addAction('save', 'Enregistrer les modifications', () => {
+		this.saveAction = this.addAction('save', t('recipeView.saveAction', language), () => {
 			this.formRef.current?.triggerSubmit();
 		});
 		this.saveAction.addClass('header-button');
@@ -235,10 +239,11 @@ export class RecipeView extends ItemView {
 		if (alreadyAdded) {
 			new ConfirmModal(
 				this.app,
-				`"${recipe.name}" est déjà dans votre liste de courses. Ajouter quand même ?`,
+				t('recipeView.shop.alreadyAdded', this.plugin.settings.language).replace('{name}', recipe.name),
 				async () => {
 					await this.performShop(recipe, servings, shoppingListPath);
-				}
+				},
+				this.plugin.settings.language
 			).open();
 		} else {
 			await this.performShop(recipe, servings, shoppingListPath);
@@ -256,11 +261,12 @@ export class RecipeView extends ItemView {
 			servings
 		);
 
+		const language = this.plugin.settings.language;
 		if (warnings.length > 0) {
-			new Notice(`Ajouté avec ${warnings.length} avertissement(s) — voir la console.`);
+			new Notice(t('recipeView.shop.addedWithWarnings', language).replace('{count}', warnings.length.toString()));
 			console.warn('Shop warnings:', warnings);
 		} else {
-			new Notice(`"${recipe.name}" ajouté à la liste de courses.`);
+			new Notice(t('recipeView.shop.added', language).replace('{name}', recipe.name));
 		}
 
 		const { workspace } = this.app;
@@ -285,10 +291,11 @@ export class RecipeView extends ItemView {
 
 		const result = await recordRecipeCookedTodayRecursive(this.app, this.plugin.settings.recipesFolder, file);
 
+		const language = this.plugin.settings.language;
 		if (result.recordedNames.length === 0) {
-			new Notice('Déjà marquée comme réalisée aujourd\'hui.');
+			new Notice(t('recipeView.cooked.alreadyToday', language));
 		} else {
-			new Notice(`Réalisée aujourd'hui : ${result.recordedNames.join(', ')}.`);
+			new Notice(t('recipeView.cooked.today', language).replace('{names}', result.recordedNames.join(', ')));
 		}
 
 		this.render();
@@ -347,28 +354,37 @@ export class RecipeView extends ItemView {
 			this.updateSaveButtonVisibility();
 			this.updateTitle();
 
-			new Notice(`Recette "${updatedFile.basename}" mise à jour.`);
+			new Notice(t('recipeView.updated', this.plugin.settings.language).replace('{name}', updatedFile.basename));
 			if (recipeWithHistory.madeBeforeTracking) {
 				await propagateMadeBeforeTracking(this.app, this.plugin.settings.recipesFolder, recipeWithHistory.baseRecipes);
 			}
 			this.render();
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Impossible de modifier la recette.";
+			const message = error instanceof Error ? error.message : t('recipeView.error.update', this.plugin.settings.language);
 			new Notice(message);
 		}
 	}
 
 	render() {
 		if (!this.root) return;
+		const language = this.plugin.settings.language;
 
 		if (!this.filePath) {
-			this.root.render(<p>Aucun fichier sélectionné.</p>);
+			this.root.render(
+				<LanguageProvider value={language}>
+					<p>{t('recipeView.noFileSelected', language)}</p>
+				</LanguageProvider>
+			);
 			return;
 		}
 
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
 		if (!(file instanceof TFile)) {
-			this.root.render(<p>Fichier introuvable : {this.filePath}</p>);
+			this.root.render(
+				<LanguageProvider value={language}>
+					<p>{t('recipeView.fileNotFound', language).replace('{path}', this.filePath)}</p>
+				</LanguageProvider>
+			);
 			return;
 		}
 
@@ -377,60 +393,65 @@ export class RecipeView extends ItemView {
 
 		if (errors.length > 0) {
 			this.root.render(
-				<div>
-					<h4>Cette recette contient des erreurs :</h4>
-					<ul>
-						{errors.map((error, index) => (
-							<li key={index} className="recipe-ingredient-validation-error">{error}</li>
-						))}
-					</ul>
-				</div>
+				<LanguageProvider value={language}>
+					<div>
+						<h4>{t('recipeView.errors.title', language)}</h4>
+						<ul>
+							{errors.map((error, index) => (
+								<li key={index} className="recipe-ingredient-validation-error">{error}</li>
+							))}
+						</ul>
+					</div>
+				</LanguageProvider>
 			);
 			return;
 		}
 
 		if (this.isEditing) {
 			this.root.render(
-				<RecipeForm
-					ref={this.formRef}
-					app={this.app}
-					recipesFolder={this.plugin.settings.recipesFolder}
-					ingredientsFolder={this.plugin.settings.ingredientsFolder}
-					recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
-					anthropicApiKey={this.plugin.settings.anthropicApiKey}
-					anthropicModel={this.plugin.settings.anthropicModel}
-					onSubmit={(values) => this.handleSave(values)}
-					initialValues={recipeToFormValues(recipe!, this.filePath, this.plugin.settings.recipesFolder)}
-					submitLabel="Enregistrer les modifications"
-					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
-				/>
+				<LanguageProvider value={language}>
+					<RecipeForm
+						ref={this.formRef}
+						app={this.app}
+						recipesFolder={this.plugin.settings.recipesFolder}
+						ingredientsFolder={this.plugin.settings.ingredientsFolder}
+						recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
+						anthropicApiKey={this.plugin.settings.anthropicApiKey}
+						anthropicModel={this.plugin.settings.anthropicModel}
+						onSubmit={(values) => this.handleSave(values)}
+						initialValues={recipeToFormValues(recipe!, this.filePath, this.plugin.settings.recipesFolder)}
+						oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
+					/>
+				</LanguageProvider>
 			);
 			return;
 		}
 
 		this.root.render(
-			<div>
-				{warnings.length > 0 && (
-					<ul className="ingredient-validation-warnings">
-						{warnings.map((warning, index) => (
-							<li key={index}>{warning}</li>
-						))}
-					</ul>
-				)}
-				<RecipeDetails
-					app={this.app}
-					recipe={recipe!}
-					ingredientsFolder={this.plugin.settings.ingredientsFolder}
-					recipesFolder={this.plugin.settings.recipesFolder}
-					initialServings={this.initialServings}
-					onIngredientClick={(name) => this.handleIngredientClick(name)}
-					ingredientExists={(name) => this.ingredientExists(name)}
-					onBaseRecipeClick={(name, qty, unit) => this.handleBaseRecipeClick(name, qty, unit)}
-					onSaveNotes={(content) => this.handleSaveNotes(content)}
-					onShop={(servings) => this.handleShop(servings)}
-					onMarkCookedToday={() => this.handleMarkCookedToday()}
-				/>
-			</div>
+			<LanguageProvider value={language}>
+				<div>
+					{warnings.length > 0 && (
+						<ul className="ingredient-validation-warnings">
+							{warnings.map((warning, index) => (
+								<li key={index}>{warning}</li>
+							))}
+						</ul>
+					)}
+					<RecipeDetails
+						app={this.app}
+						recipe={recipe!}
+						ingredientsFolder={this.plugin.settings.ingredientsFolder}
+						recipesFolder={this.plugin.settings.recipesFolder}
+						initialServings={this.initialServings}
+						onIngredientClick={(name) => this.handleIngredientClick(name)}
+						ingredientExists={(name) => this.ingredientExists(name)}
+						onBaseRecipeClick={(name, qty, unit) => this.handleBaseRecipeClick(name, qty, unit)}
+						onSaveNotes={(content) => this.handleSaveNotes(content)}
+						onShop={(servings) => this.handleShop(servings)}
+						onMarkCookedToday={() => this.handleMarkCookedToday()}
+					/>
+				</div>
+			</LanguageProvider>
 		);
 	}
 

@@ -6,6 +6,7 @@ import { addOtherItemNameIfMissing } from '../models/otherItemsNote';
 import { normalizeNameForFile } from '../models/textNormalize';
 import { IngredientNameSuggestion } from '../models/searchIngredientNames';
 import { SmartInputTokenBar } from './SmartInputTokenBar';
+import { useT } from '../i18n/LanguageContext';
 
 export interface SmartInputResult {
 	name: string;
@@ -23,6 +24,7 @@ interface SmartShoppingInputProps {
 type Step = 'name' | 'complement-or-quantity' | 'quantity';
 
 export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath, onAdd }: SmartShoppingInputProps) {
+	const t = useT();
 	const [step, setStep] = useState<Step>('name');
 	const [name, setName] = useState('');
 	const [form, setForm] = useState<string | undefined>(undefined);
@@ -165,10 +167,10 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 
 	const placeholder =
 		step === 'name'
-			? "Nom de l'article"
+			? t('smartShoppingInput.placeholder.name')
 			: step === 'complement-or-quantity'
-				? 'Complément ou quantité (optionnel)'
-				: 'Quantité (optionnel)';
+				? t('smartShoppingInput.placeholder.complementOrQuantity')
+				: t('smartShoppingInput.placeholder.quantityOptional');
 
 	const displayName = name ? `${name}${form ? ` (${form})` : ''}` : '';
 

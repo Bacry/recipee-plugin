@@ -1,7 +1,10 @@
 import { NutritionPer100g } from '../models/Ingredient';
 import { findUnit, roundQuantityForUnit } from '../models/units';
+import { useT } from '../i18n/LanguageContext';
 
 interface NutritionTableProps {
+	titleClass?: string;
+	contentClass?: string;
 	per100g: NutritionPer100g;
 	total: NutritionPer100g;
 	totalWeightG: number;
@@ -16,36 +19,38 @@ interface NutritionTableProps {
 	onAbsorptionPercentChange: (value: number) => void;
 }
 
-const ROWS: { key: keyof NutritionPer100g; label: string; unit: string; indent?: boolean }[] = [
-	{ key: 'kcal', label: 'Calories', unit: 'kcal' },
-	{ key: 'lipids', label: 'Lipides', unit: 'g' },
-	{ key: 'non_saturated_lipids', label: 'dont insaturés', unit: 'g', indent: true },
-	{ key: 'glucids', label: 'Glucides', unit: 'g' },
-	{ key: 'sugar', label: 'dont sucres', unit: 'g', indent: true },
-	{ key: 'proteins', label: 'Protéines', unit: 'g' },
-	{ key: 'salt', label: 'Sel', unit: 'g' },
-	{ key: 'fibers', label: 'Fibres', unit: 'g' },
-	{ key: 'cholesterol', label: 'Cholestérol', unit: 'mg' },
-];
-
 function fmt(value: number): string {
 	return Number(value.toFixed(0)).toString();
 }
 
 export function RecipeNutritionTable({ titleClass, contentClass, per100g, total, totalWeightG, perServing, servingsLabel, warnings, measuredTotalWeightG, per100gReliable, fryingInfo, factor,
-								   absorptionPercent, onAbsorptionPercentChange }: NutritionTableProps) {
+										 absorptionPercent, onAbsorptionPercentChange }: NutritionTableProps) {
+	const t = useT();
+
+	const ROWS: { key: keyof NutritionPer100g; label: string; unit: string; indent?: boolean }[] = [
+		{ key: 'kcal', label: t('recipeNutritionTable.row.kcal'), unit: 'kcal' },
+		{ key: 'lipids', label: t('recipeNutritionTable.row.lipids'), unit: 'g' },
+		{ key: 'non_saturated_lipids', label: t('recipeNutritionTable.row.nonSaturatedLipids'), unit: 'g', indent: true },
+		{ key: 'glucids', label: t('recipeNutritionTable.row.glucids'), unit: 'g' },
+		{ key: 'sugar', label: t('recipeNutritionTable.row.sugar'), unit: 'g', indent: true },
+		{ key: 'proteins', label: t('recipeNutritionTable.row.proteins'), unit: 'g' },
+		{ key: 'salt', label: t('recipeNutritionTable.row.salt'), unit: 'g' },
+		{ key: 'fibers', label: t('recipeNutritionTable.row.fibers'), unit: 'g' },
+		{ key: 'cholesterol', label: t('recipeNutritionTable.row.cholesterol'), unit: 'mg' },
+	];
+
 	return (
 		<div>
 			<div className={titleClass}>
-				Nutrition{' '}
+				{t('recipeNutritionTable.title')}{' '}
 				{measuredTotalWeightG != null
-					? `(poids total mesuré : ${fmt(totalWeightG)}g)`
-					: `(poids total calculé : ${fmt(totalWeightG)}g)`}
+					? t('recipeNutritionTable.title.measured').replace('{weight}', fmt(totalWeightG))
+					: t('recipeNutritionTable.title.calculated').replace('{weight}', fmt(totalWeightG))}
 			</div>
 			<div className={contentClass}>
 				{fryingInfo && (
 					<p className="recipe-frying-hypothesis">
-						Hypothèse d'absorption de {fryingInfo.oilName} par les aliments frits :{' '}
+						{t('recipeNutritionTable.frying.hypothesis').replace('{oilName}', fryingInfo.oilName)}{' '}
 						<input
 							type="number"
 							min={0}
@@ -54,21 +59,23 @@ export function RecipeNutritionTable({ titleClass, contentClass, per100g, total,
 							onChange={(e) => onAbsorptionPercentChange(Number(e.target.value) || 0)}
 							className="recipe-frying-percent-input"
 						/>
-						% (= {roundQuantityForUnit(fryingInfo.oilAbsorbedG * factor, findUnit('g'))}g de {fryingInfo.oilName})
+						{t('recipeNutritionTable.frying.amount')
+							.replace('{amount}', roundQuantityForUnit(fryingInfo.oilAbsorbedG * factor, findUnit('g')).toString())
+							.replace('{oilName}', fryingInfo.oilName)}
 					</p>
 				)}
 				{!per100gReliable && (
 					<p className="ingredient-validation-warnings">
-						Cette recette nécessite une cuisson et son poids final n'a pas été mesuré — la colonne "Pour 100g" n'est pas fiable.
+						{t('recipeNutritionTable.unreliable')}
 					</p>
 				)}
 				<table>
 					<thead>
 					<tr>
 						<th></th>
-						<th>Pour 100g</th>
-						{perServing && <th>Pour 1 {servingsLabel}</th>}
-						<th>Total ({fmt(totalWeightG)}g)</th>
+						<th>{t('recipeNutritionTable.column.per100g')}</th>
+						{perServing && <th>{t('recipeNutritionTable.column.perServing').replace('{label}', servingsLabel)}</th>}
+						<th>{t('recipeNutritionTable.column.total').replace('{weight}', fmt(totalWeightG))}</th>
 					</tr>
 					</thead>
 					<tbody>

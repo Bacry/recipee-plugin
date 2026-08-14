@@ -4,7 +4,9 @@ import { App, Component, MarkdownRenderer } from 'obsidian';
 interface MarkdownEditableBlockProps {
 	app: App;
 	title?: string;
+	titleClass?: string;
 	content: string;
+	contentClass?: string;
 	placeholder?: string; // shown, dimmed, in the preview when content is empty — never actually saved as content
 	onSave: (newContent: string) => void;
 }

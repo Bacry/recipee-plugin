@@ -9,6 +9,9 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { searchRecipeSources } from '../models/searchRecipeSources';
 import { listOilIngredients } from '../models/listOilIngredients';
 import { FormEntry } from '../models/formEntry';
+import { useT } from '../i18n/LanguageContext';
+import { useContext } from 'react';
+import { LanguageContext } from '../i18n/LanguageContext';
 
 export interface RecipeFormHandle {
 	triggerSubmit: () => void;
@@ -84,9 +87,11 @@ function toEntries(ingredients: RecipeIngredientEntry[], baseRecipes: RecipeBase
 
 export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function RecipeForm(
 	{ app, recipesFolder, ingredientsFolder, recipeImagesFolder, anthropicApiKey,
-		anthropicModel, onSubmit, initialValues, submitLabel = 'Créer la recette', oilIngredientTypes },
+		anthropicModel, onSubmit, initialValues, submitLabel, oilIngredientTypes },
 	ref
 ) {
+	const t = useT();
+	const language = useContext(LanguageContext);
 	const base = initialValues ?? emptyValues();
 	const [name, setName] = useState(base.name);
 	const [baseServings, setBaseServings] = useState(base.baseServings);
@@ -124,7 +129,8 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			.filter((e): e is Extract<FormEntry, { kind: 'baseRecipe' }> => e.kind === 'baseRecipe')
 			.map(({ kind, ...rest }) => rest);
 
-		onSubmit({			name,
+		onSubmit({
+			name,
 			baseServings,
 			servingsLabel,
 			preparationDurationMin,
@@ -284,7 +290,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	function openParseTextModal() {
 		new ParseRecipeTextModal(app, anthropicApiKey, anthropicModel, ingredientsFolder, (values) => {
 			applyExtractedValues(values);
-		}).open();
+		}, language).open();
 	}
 
 	useImperativeHandle(ref, () => ({
@@ -296,19 +302,19 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 
 			<div className="recipe-form-claude-section">
 				<button type="button" onClick={openParseTextModal} className="recipe-form-claude-submit">
-					Extraire les informations depuis un texte à l'aide de Claude
+					{t('recipeForm.claude.extract')}
 				</button>
 			</div>
 
 			<section className="form-section section">
-				<h4>Informations générales</h4>
+				<h4>{t('recipeForm.generalInfo')}</h4>
 
 				<div className="form-field form-field-wide">
-					<label>Nom</label>
+					<label>{t('recipeForm.name')}</label>
 					<input value={name} onChange={(e) => setName(e.target.value)} />
 				</div>
 				<div className="recipe-form-made-before-row">
-					<label>Recette déjà réalisée (dates inconnues)</label>
+					<label>{t('recipeForm.madeBefore')}</label>
 					<input
 						type="checkbox"
 						checked={madeBeforeTracking}
@@ -318,7 +324,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 				</div>
 				<div className="form-grid">
 					<div className="form-field">
-						<label>Portions de base</label>
+						<label>{t('recipeForm.baseServings')}</label>
 						<input
 							value={baseServings}
 							onChange={(e) => setBaseServings(sanitizeNumericInput(e.target.value))}
@@ -326,12 +332,12 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="form-field">
-						<label>Unité de portion (ex : crèmes, parts)</label>
+						<label>{t('recipeForm.servingsLabel')}</label>
 						<input value={servingsLabel} onChange={(e) => setServingsLabel(e.target.value)} />
 					</div>
 
 					<div className="form-field">
-						<label>Préparation (min)</label>
+						<label>{t('recipeForm.preparationDuration')}</label>
 						<input
 							value={preparationDurationMin}
 							onChange={(e) => setPreparationDurationMin(sanitizeNumericInput(e.target.value))}
@@ -339,7 +345,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="form-field">
-						<label>Nécessite cuisson</label>
+						<label>{t('recipeForm.requiresCooking')}</label>
 						<div className="recipe-form-cooking-row">
 							<input
 								type="checkbox"
@@ -352,7 +358,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 									value={cookingDurationMin}
 									onChange={(e) => setCookingDurationMin(sanitizeNumericInput(e.target.value))}
 									disabled={!requiresCooking}
-									placeholder="Temps"
+									placeholder={t('recipeForm.time')}
 									className="recipe-form-cooking-duration-input"
 								/>
 							</span>
@@ -361,7 +367,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 									value={totalWeightG}
 									onChange={(e) => setTotalWeightG(sanitizeNumericInput(e.target.value))}
 									disabled={!requiresCooking}
-									placeholder="Poids"
+									placeholder={t('recipeForm.weight')}
 									className="recipe-form-cooking-weight-input"
 								/>
 							</span>
@@ -369,9 +375,9 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="form-field">
-						<label>Sous-dossier</label>
+						<label>{t('recipeForm.subfolder')}</label>
 						<select value={subfolder} onChange={(e) => setSubfolder(e.target.value)}>
-							<option value="">-- Racine --</option>
+							<option value="">{t('recipeForm.subfolder.root')}</option>
 							{listRecipeSubfolders(app, recipesFolder).map((folder) => (
 								<option key={folder} value={folder}>{folder}</option>
 							))}
@@ -379,9 +385,9 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="form-field">
-						<label>Image</label>
+						<label>{t('recipeForm.image')}</label>
 						<div className="usda-search-row">
-							<input value={image} onChange={(e) => setImage(e.target.value)} placeholder="ex : crème brûlée.png" />
+							<input value={image} onChange={(e) => setImage(e.target.value)} placeholder={t('recipeForm.image.placeholder')} />
 							<input
 								type="file"
 								accept="image/*"
@@ -393,7 +399,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 								}}
 							/>
 							<button type="button" onClick={() => document.getElementById('recipe-image-upload')?.click()}>
-								Choisir
+								{t('recipeForm.choose')}
 							</button>
 						</div>
 					</div>
@@ -401,12 +407,12 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 
 				<div className="recipe-form-row-tags-source">
 					<div className="form-field usda-search-wrapper">
-						<label>Tags</label>
+						<label>{t('recipeForm.tags')}</label>
 						<input
 							value={tags}
 							onChange={(e) => handleTagsChange(e.target.value)}
 							onKeyDown={handleTagsKeyDown}
-							placeholder="ex : dessert, sans gluten"
+							placeholder={t('recipeForm.tags.placeholder')}
 						/>
 						{tagSuggestions.length > 0 && (
 							<ul className="smart-shopping-suggestions">
@@ -425,7 +431,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="form-field usda-search-wrapper recipe-form-field-source">
-						<label>Source (texte libre ou URL)</label>
+						<label>{t('recipeForm.source')}</label>
 						<input
 							value={source}
 							onChange={(e) => handleSourceChange(e.target.value)}
@@ -450,9 +456,9 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			</section>
 
 			<section className="form-section section">
-				<h4>Ingrédients et recettes de base</h4>
+				<h4>{t('recipeForm.ingredientsAndBaseRecipes')}</h4>
 				{entries.length === 0 && (
-					<p className="recipe-empty-entries">Aucun ingrédient ou recettes de base pour l'instant</p>
+					<p className="recipe-empty-entries">{t('recipeForm.emptyEntries')}</p>
 				)}
 				{entries.length > 0 && (() => {
 					let currentlyInSection = false;
@@ -483,18 +489,18 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 											(isIndented ? 'recipe-ingredient-indented' : '')
 										}
 									>
-										<span className="recipe-ingredient-drag-handle" title="Glisser pour réordonner">⠿</span>
+										<span className="recipe-ingredient-drag-handle" title={t('recipeForm.dragHandle.title')}>⠿</span>
 
 										{entry.kind === 'ingredient' && entry.isSectionHeader ? (
 											<input
 												value={entry.sectionTitle ?? ''}
 												onChange={(e) => updateSectionTitle(index, e.target.value)}
-												placeholder="Titre de la section (ex : Pour la pâte)"
+												placeholder={t('recipeForm.sectionTitle.placeholder')}
 												className="recipe-section-title-input"
 											/>
 										) : entry.kind === 'baseRecipe' ? (
 											<span className="recipe-ingredient-name">
-												{entry.recipeName} (recette)
+												{entry.recipeName} {t('recipeForm.recipeSuffix')}
 												{entry.quantity != null ? ` — ${entry.quantity}${entry.unit}` : ''}
 											</span>
 										) : (
@@ -511,13 +517,13 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 												<button
 													type="button"
 													onClick={() => toggleFried(index)}
-													title={entry.fried ? 'Marqué comme frit' : 'Marquer comme frit'}
+													title={entry.fried ? t('recipeForm.fried.marked') : t('recipeForm.fried.mark')}
 													className={entry.fried ? 'recipe-ingredient-fried-active' : 'recipe-ingredient-fried'}
 												>
-													{entry.fried ? 'Frit' : 'Pas frit'}
+													{entry.fried ? t('recipeForm.fried.yes') : t('recipeForm.fried.no')}
 												</button>
 											)}
-											<button type="button" onClick={() => handleRemoveEntry(index)} title="Retirer" className="recipe-ingredient-remove">✕</button>
+											<button type="button" onClick={() => handleRemoveEntry(index)} title={t('recipeForm.remove.title')} className="recipe-ingredient-remove">✕</button>
 										</div>
 									</li>
 								);
@@ -535,14 +541,14 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 							onAdd={(entry) => setEntries((prev) => [...prev, entry])}
 						/>
 					</div>
-					<button type="button" onClick={addSection} className="recipe-add-section-button" title="Ajouter une section">
-						+ section
+					<button type="button" onClick={addSection} className="recipe-add-section-button" title={t('recipeForm.addSection.title')}>
+						{t('recipeForm.addSection')}
 					</button>
 				</div>
 				<div className="recipe-frying-oil-row">
-					<label>Huile de friture</label>
+					<label>{t('recipeForm.fryingOil')}</label>
 					<select value={fryingOilName} onChange={(e) => setFryingOilName(e.target.value)}>
-						<option value="">Pas de friture</option>
+						<option value="">{t('recipeForm.fryingOil.none')}</option>
 						{listOilIngredients(app, ingredientsFolder, [], [], oilIngredientTypes).map((oilName) => (
 							<option key={oilName} value={oilName}>{oilName}</option>
 						))}
@@ -551,7 +557,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			</section>
 
 			<section className="form-section section">
-				<h4>Instructions</h4>
+				<h4>{t('recipeForm.instructions')}</h4>
 				<textarea
 					value={instructions}
 					onChange={(e) => setInstructions(e.target.value)}
@@ -561,7 +567,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			</section>
 
 			<section className="form-section section">
-				<h4>Notes</h4>
+				<h4>{t('recipeForm.notes')}</h4>
 				<textarea
 					value={notes}
 					onChange={(e) => setNotes(e.target.value)}

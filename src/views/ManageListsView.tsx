@@ -6,6 +6,7 @@ import { wouldMergeWithExisting, renameListValue, ListField } from '../models/re
 import { ConfirmModal } from '../components/ConfirmModal';
 import type MyPlugin from '../main';
 import { t } from '../i18n/strings';
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 export const MANAGE_LISTS_VIEW_TYPE = 'manage-lists-view';
 
@@ -32,7 +33,8 @@ export class ManageListsView extends ItemView {
 
 	private updateCloseAction(): void {
 		if (!this.closeAction) return;
-		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+		const language = this.plugin.settings.language;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? t('manageListsView.closeAction.back', language) : t('manageListsView.closeAction.close', language));
 	}
 
 	async setState(state: ManageListsViewState, result: unknown) {
@@ -49,7 +51,7 @@ export class ManageListsView extends ItemView {
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
-		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+		this.closeAction = this.addAction('arrow-left', t('manageListsView.closeAction.close', this.plugin.settings.language), () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
 		this.closeAction.addClass('header-button');
@@ -66,7 +68,7 @@ export class ManageListsView extends ItemView {
 		const current = this.plugin.settings[settingsKey] as string[];
 
 		if (current.includes(trimmed)) {
-			new Notice(`"${trimmed}" existe déjà.`);
+			new Notice(t('manageListsView.alreadyExists', this.plugin.settings.language).replace('{value}', trimmed));
 			return;
 		}
 
@@ -90,10 +92,11 @@ export class ManageListsView extends ItemView {
 		if (wouldMerge) {
 			new ConfirmModal(
 				this.app,
-				`"${trimmed}" existe déjà — renommer "${oldValue}" en "${trimmed}" fusionnera ces deux valeurs sur les ingrédients concernés. Continuer ?`,
+				t('manageListsView.rename.wouldMerge', this.plugin.settings.language).replace('{newValue}', trimmed).replace('{oldValue}', oldValue),
 				async () => {
 					await this.performRename(field, oldValue, trimmed);
-				}
+				},
+				this.plugin.settings.language
 			).open();
 		} else {
 			await this.performRename(field, oldValue, trimmed);
@@ -121,7 +124,7 @@ export class ManageListsView extends ItemView {
 
 		await this.plugin.saveSettings();
 
-		new Notice(`"${oldValue}" renommé en "${newValue}" (${affectedCount} ingrédient(s) mis à jour).`);
+		new Notice(t('manageListsView.rename.success', this.plugin.settings.language).replace('{oldValue}', oldValue).replace('{newValue}', newValue).replace('{count}', affectedCount.toString()));
 		this.render();
 	}
 
@@ -130,12 +133,13 @@ export class ManageListsView extends ItemView {
 		const current = this.plugin.settings[settingsKey] as string[];
 
 		if (field === 'type') {
+			const language = this.plugin.settings.language;
 			if (this.plugin.settings.oilIngredientTypes.includes(value)) {
-				new Notice(`Impossible de supprimer "${value}" : ce type est utilisé dans les réglages (catégorie "Huile"). Retire-le d'abord dans Réglages → Catégories spéciales.`);
+				new Notice(t('manageListsView.remove.usedAsOil', language).replace('{value}', value));
 				return;
 			}
 			if (this.plugin.settings.fruitIngredientTypes.includes(value)) {
-				new Notice(`Impossible de supprimer "${value}" : ce type est utilisé dans les réglages (catégorie "Fruit"). Retire-le d'abord dans Réglages → Catégories spéciales.`);
+				new Notice(t('manageListsView.remove.usedAsFruit', language).replace('{value}', value));
 				return;
 			}
 		}
@@ -145,12 +149,13 @@ export class ManageListsView extends ItemView {
 		if (stillUsed) {
 			new ConfirmModal(
 				this.app,
-				`"${value}" est encore utilisé par au moins un ingrédient. Retirer quand même de la liste (les ingrédients concernés garderont cette valeur, juste signalée comme inconnue) ?`,
+				t('manageListsView.remove.stillUsed', this.plugin.settings.language).replace('{value}', value),
 				async () => {
 					this.plugin.settings[settingsKey] = current.filter((v) => v !== value);
 					await this.plugin.saveSettings();
 					this.render();
-				}
+				},
+				this.plugin.settings.language
 			).open();
 		} else {
 			this.plugin.settings[settingsKey] = current.filter((v) => v !== value);
@@ -164,7 +169,7 @@ export class ManageListsView extends ItemView {
 
 		const current = this.plugin.settings.dietPresets;
 		if (current.some((p) => p.name === trimmed)) {
-			new Notice(`Un préréglage "${trimmed}" existe déjà.`);
+			new Notice(t('manageListsView.preset.alreadyExists', this.plugin.settings.language).replace('{name}', trimmed));
 			return;
 		}
 
@@ -182,6 +187,7 @@ export class ManageListsView extends ItemView {
 		if (!this.root) return;
 
 		this.root.render(
+			<LanguageProvider value={this.plugin.settings.language}>
 			<ManageListsDisplay
 				types={this.plugin.settings.ingredientTypes}
 				shopSections={this.plugin.settings.shopSections}
@@ -193,6 +199,7 @@ export class ManageListsView extends ItemView {
 				onAddPreset={(name, flags) => this.handleAddPreset(name, flags)}
 				onRemovePreset={(name) => this.handleRemovePreset(name)}
 			/>
+			</LanguageProvider>
 		);
 	}
 

@@ -1,36 +1,19 @@
 import { useState } from 'react';
 import { ListField } from '../models/renameListValue';
 import { DietPreset } from '../settings';
+import { useT } from '../i18n/LanguageContext';
 
 interface ManageListsDisplayProps {
 	types: string[];
 	shopSections: string[];
 	dietFlags: string[];
+	dietPresets: DietPreset[];
 	onAdd: (field: ListField, value: string) => void;
 	onRename: (field: ListField, oldValue: string, newValue: string) => void;
 	onRemove: (field: ListField, value: string) => void;
 	onAddPreset: (name: string, flags: string[]) => void;
 	onRemovePreset: (name: string) => void;
 }
-
-const LIST_INFO: Record<ListField, { label: string; description: string }> = {
-	type: {
-		label: "Types d'ingrédients",
-		description: "Catégorise chaque ingrédient (légume, viande, épice...). Détermine aussi le sous-dossier où sa fiche est rangée.",
-	},
-	shop_section: {
-		label: 'Rayons',
-		description: "Le rayon du magasin où trouver chaque ingrédient — utilisé pour organiser la liste de courses.",
-	},
-	diet_flag: {
-		label: 'Contraintes alimentaires pour les ingrédients',
-		description: "Signale qu'un ingrédient contient tel allergène ou correspond à telle contrainte (gluten, lactose...). Sert à filtrer les recettes qui en contiennent.",
-	},
-	diet_preset: {
-		label: 'Définition des contraintes alimentaires pour les recettes',
-		description: "Une combinaison nommée de plusieurs contraintes (ex: \"Végan\" = viande + poisson + œuf + lactose), pour filtrer en un clic sans tout recocher à chaque fois.",
-	},
-};
 
 function DietPresetsEditor({
 							   dietFlags,
@@ -43,6 +26,7 @@ function DietPresetsEditor({
 	onAddPreset: (name: string, flags: string[]) => void;
 	onRemovePreset: (name: string) => void;
 }) {
+	const t = useT();
 	const [newName, setNewName] = useState('');
 	const [selectedFlags, setSelectedFlags] = useState<Set<string>>(new Set());
 
@@ -68,18 +52,18 @@ function DietPresetsEditor({
 				{presets.map((preset) => (
 					<li key={preset.name}>
 						<span>{preset.name} — {preset.flags.join(', ')}</span>
-						<button type="button" onClick={() => onRemovePreset(preset.name)} title="Supprimer" className="recipe-ingredient-remove">✕</button>
+						<button type="button" onClick={() => onRemovePreset(preset.name)} title={t('manageListsDisplay.remove.title')} className="recipe-ingredient-remove">✕</button>
 					</li>
 				))}
 			</ul>
 
 			<div className="form-field">
-				<label>Nom du préréglage</label>
-				<input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="ex : Végan" />
+				<label>{t('manageListsDisplay.preset.nameLabel')}</label>
+				<input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('manageListsDisplay.preset.namePlaceholderExample')} />
 			</div>
 
 			<div className="form-field">
-				<label>Contraintes incluses</label>
+				<label>{t('manageListsDisplay.preset.constraintsLabel')}</label>
 				<div className="manage-lists-preset-checkboxes">
 					{dietFlags.map((flag) => (
 						<label key={flag} className="manage-lists-preset-checkbox">
@@ -94,7 +78,7 @@ function DietPresetsEditor({
 				</div>
 			</div>
 
-			<button type="button" onClick={handleAdd} className="ingredient-form-submit">Créer le préréglage</button>
+			<button type="button" onClick={handleAdd} className="ingredient-form-submit">{t('manageListsDisplay.preset.create')}</button>
 		</div>
 	);
 }
@@ -112,6 +96,7 @@ function ListSectionEditor({
 	onRename: (field: ListField, oldValue: string, newValue: string) => void;
 	onRemove: (field: ListField, value: string) => void;
 }) {
+	const t = useT();
 	const [newValue, setNewValue] = useState('');
 	const [editingValue, setEditingValue] = useState<string | null>(null);
 	const [editingDraft, setEditingDraft] = useState('');
@@ -155,7 +140,7 @@ function ListSectionEditor({
 								{value}
 							</span>
 						)}
-						<button type="button" onClick={() => onRemove(field, value)} title="Supprimer" className="recipe-ingredient-remove">✕</button>
+						<button type="button" onClick={() => onRemove(field, value)} title={t('manageListsDisplay.remove.title')} className="recipe-ingredient-remove">✕</button>
 					</li>
 				))}
 			</ul>
@@ -165,7 +150,7 @@ function ListSectionEditor({
 					value={newValue}
 					onChange={(e) => setNewValue(e.target.value)}
 					onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
-					placeholder="Ajouter une valeur..."
+					placeholder={t('manageListsDisplay.value.addPlaceholder')}
 				/>
 			</div>
 		</div>
@@ -175,8 +160,28 @@ function ListSectionEditor({
 export function ManageListsDisplay({ types, shopSections, dietFlags, dietPresets, onAdd, onRename, onRemove,
 									   onAddPreset,
 									   onRemovePreset, }: ManageListsDisplayProps) {
+	const t = useT();
 	const [selectedField, setSelectedField] = useState<ListField | 'diet_preset' | null>(null);
 	const [menuOpen, setMenuOpen] = useState(false);
+
+	const LIST_INFO: Record<ListField | 'diet_preset', { label: string; description: string }> = {
+		type: {
+			label: t('manageListsDisplay.field.type.label'),
+			description: t('manageListsDisplay.field.type.description'),
+		},
+		shop_section: {
+			label: t('manageListsDisplay.field.shopSection.label'),
+			description: t('manageListsDisplay.field.shopSection.description'),
+		},
+		diet_flag: {
+			label: t('manageListsDisplay.field.dietFlag.label'),
+			description: t('manageListsDisplay.field.dietFlag.description'),
+		},
+		diet_preset: {
+			label: t('manageListsDisplay.field.dietPreset.label'),
+			description: t('manageListsDisplay.field.dietPreset.description'),
+		},
+	};
 
 	const valuesByField: Record<ListField, string[]> = {
 		type: types,
@@ -187,8 +192,7 @@ export function ManageListsDisplay({ types, shopSections, dietFlags, dietPresets
 	return (
 		<div className="ingredient-form">
 			<p>
-				Ces listes sont utilisées dans les formulaires (menus déroulants, autocomplétion) et pour organiser
-				vos fiches. Renommer une valeur met automatiquement à jour tous les ingrédients concernés.
+				{t('manageListsDisplay.intro')}
 			</p>
 
 			<div className="manage-lists-select-wrapper">
@@ -197,7 +201,7 @@ export function ManageListsDisplay({ types, shopSections, dietFlags, dietPresets
 					onClick={() => setMenuOpen((open) => !open)}
 					className="manage-lists-select-button"
 				>
-					{selectedField ? LIST_INFO[selectedField].label : 'Choisir une liste...'}
+					{selectedField ? LIST_INFO[selectedField].label : t('manageListsDisplay.selectList')}
 				</button>
 
 				{menuOpen && (

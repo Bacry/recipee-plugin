@@ -7,7 +7,7 @@ import { RecipeNutritionTable } from './RecipeNutritionTable';
 import { findIngredientFileByName } from '../models/findIngredientFile';
 import { readIngredientForCalc } from '../models/computeRecipeNutrition';
 import { findUnit, roundQuantityForUnit, convertQuantity, UNITS, Unit, formatRoundedQuantity } from '../models/units';
-
+import { useT } from '../i18n/LanguageContext';
 
 interface RecipeDetailsProps {
 	app: App;
@@ -106,6 +106,7 @@ export function RecipeDetails({
 								  onShop,
 								  onMarkCookedToday,
 							  }: RecipeDetailsProps) {
+	const t = useT();
 	const [servingsInput, setServingsInput] = useState((initialServings ?? recipe.baseServings).toString());
 	const [absorptionPercent, setAbsorptionPercent] = useState(15);
 	const ENTITY_SENTINEL = '__entity__';
@@ -262,7 +263,7 @@ export function RecipeDetails({
 								setOpenUnitMenuIndex(null);
 							}}
 						>
-							{formatRoundedQuantity(Number(formatScaledQuantity(entry.quantity!, entry.unit, factor)))}{entry.unit} (original)
+							{formatRoundedQuantity(Number(formatScaledQuantity(entry.quantity!, entry.unit, factor)))}{entry.unit} {t('recipeDetails.unitOption.original')}
 						</li>
 						{options.map((opt) => (
 							<li
@@ -272,7 +273,7 @@ export function RecipeDetails({
 									setOpenUnitMenuIndex(null);
 								}}
 							>
-								{formatRoundedQuantity(opt.quantity)}{opt.unit?.name ?? ' (pièce)'}
+								{formatRoundedQuantity(opt.quantity)}{opt.unit?.name ?? ` ${t('recipeDetails.unitOption.piece')}`}
 							</li>
 						))}
 					</ul>
@@ -293,34 +294,34 @@ export function RecipeDetails({
 
 			<div className="recipe-time-source-row section">
 				<div className="recipe-time-source-column">
-					<div className="section-title">Temps</div>
+					<div className="section-title">{t('recipeDetails.time')}</div>
 					<div className="section-content">
 						{recipe.preparationDurationMin != null && (
-							<div className="section-content-item"> Préparation : {formatDuration(recipe.preparationDurationMin)} </div>
+							<div className="section-content-item"> {t('recipeDetails.time.preparation').replace('{duration}', formatDuration(recipe.preparationDurationMin))} </div>
 						)}
 						{recipe.cookingDurationMin != null && (
-							<div className="section-content-item"> Cuisson : {formatDuration(recipe.cookingDurationMin)} </div>
+							<div className="section-content-item"> {t('recipeDetails.time.cooking').replace('{duration}', formatDuration(recipe.cookingDurationMin))} </div>
 						)}
-						{totalDuration > 0 && <div className="section-content-item"> Total : {formatDuration(totalDuration)} </div>}
+						{totalDuration > 0 && <div className="section-content-item"> {t('recipeDetails.time.total').replace('{duration}', formatDuration(totalDuration))} </div>}
 						{recipe.preparationDurationMin == null && recipe.cookingDurationMin == null && (
-							<div>Non renseigné</div>
+							<div>{t('recipeDetails.time.notSet')}</div>
 						)}
 					</div>
 				</div>
 
 				<div className="recipe-time-source-column">
 					<div className="section-title">
-						Source{recipe.source ? (
+						{t('recipeDetails.source')}{recipe.source ? (
 						<>
 							{' : '}
 							{isUrl(recipe.source) ? (
-								<a href={recipe.source} target="_blank" rel="noopener noreferrer">web</a>
+								<a href={recipe.source} target="_blank" rel="noopener noreferrer">{t('recipeDetails.source.web')}</a>
 							) : (
 								recipe.source
 							)}
 						</>
 					) : (
-						' : Non renseignée'
+						` : ${t('recipeDetails.source.notSet')}`
 					)}
 					</div>
 					{recipe.image &&
@@ -330,7 +331,7 @@ export function RecipeDetails({
 								<img src={imagePath} alt={recipe.name} className="recipe-image" />
 							) : (
 								<p className="warning-text">
-									Image "{recipe.image}" introuvable dans le vault.
+									{t('recipeDetails.image.notFound').replace('{name}', recipe.image)}
 								</p>
 							);
 						})()}
@@ -340,7 +341,7 @@ export function RecipeDetails({
 
 			<div className="section">
 				<div className="section-title">
-					Ingrédients (pour{' '}
+					{t('recipeDetails.ingredients')}{' '}
 					<input
 						type="number"
 						value={servingsInput}
@@ -356,7 +357,7 @@ export function RecipeDetails({
 					<button
 						type="button"
 						onClick={() => setServingsInput(recipe.baseServings.toString())}
-						title="Réinitialiser le nombre de portions"
+						title={t('recipeDetails.resetServings')}
 						className="standard-button"
 					>
 						↺
@@ -364,7 +365,7 @@ export function RecipeDetails({
 					{' '}
 					{recipe.servingsLabel}{' '}
 					){' '}
-					<button ref={shopButtonRef} onClick={() => onShop(servings)} className="standard-button" title="Ajouter à la liste de courses"></button>
+					<button ref={shopButtonRef} onClick={() => onShop(servings)} className="standard-button" title={t('recipeDetails.shop.title')}></button>
 				</div>
 			</div>
 
@@ -414,7 +415,7 @@ export function RecipeDetails({
 										>
 											{entry.recipeName}
 										</a>
-										{' (recette de base)'}
+										{` ${t('recipeDetails.baseRecipeSuffix')}`}
 									</div>
 								);
 							}
@@ -443,7 +444,7 @@ export function RecipeDetails({
 									)}
 									{entry.complement ? ' (' + entry.complement + ')' : ''}
 									{entry.form ? ' (' + entry.form + ')' : ''}
-									{entry.isFryingOil ? ' (pour la friture)' : ''}
+									{entry.isFryingOil ? ` ${t('recipeDetails.fryingOilSuffix')}` : ''}
 								</div>
 							);
 						})}
@@ -455,26 +456,31 @@ export function RecipeDetails({
 				<InstructionsPreview app={app} content={recipe.instructions} />
 			</div>
 			<div className="section">
-				<MarkdownEditableBlock
-					app={app}
-					title="Notes"
-					titleClass="section-title"
-					content={recipe.notes ?? ''}
-					contentClass="section-content"
-					placeholder="Pour insérer une note cliquer sur le titre 'Notes'. Puis écrivez votre note (en format markdown), puis ré-appuyer sur 'Notes' pour enregistrer"
-					onSave={(newContent) => onSaveNotes(newContent)}
-				/>
+				<div className="section">
+					<MarkdownEditableBlock
+						app={app}
+						title={t('recipeDetails.notes')}
+						titleClass="section-title"
+						content={recipe.notes ?? ''}
+						contentClass="section-content"
+						placeholder={t('recipeDetails.notes.placeholder')}
+						onSave={(newContent) => onSaveNotes(newContent)}
+					/>
+				</div>
 			</div>
 			<div className="section">
-				<div className="section-title">Historique {' '}
-					<button onClick={onMarkCookedToday} className="standard-button" title="Marquer comme réalisée aujourd'hui">Réalisée aujourd'hui</button>
+				<div className="section-title">{t('recipeDetails.history')} {' '}
+					<button onClick={onMarkCookedToday} className="standard-button" title={t('recipeDetails.markCookedToday')}>{t('recipeDetails.markCookedToday.button')}</button>
 				</div>
 				<div className="section-content">
 					{recipe.cookedDates.length === 0
 						? (recipe.madeBeforeTracking
-							? 'Déjà réalisée plusieurs fois par le passé (dates non enregistrées).'
-							: 'Jamais réalisée pour l\'instant.')
-						: `Réalisée au moins ${recipe.cookedDates.length} fois${recipe.madeBeforeTracking ? ' (+ plusieurs fois non datées avant)' : ''} — dernière fois le ${formatCookedDate([...recipe.cookedDates].sort().reverse()[0])}.`}
+							? t('recipeDetails.history.madeBeforeTracking')
+							: t('recipeDetails.history.neverMade'))
+						: t('recipeDetails.history.madeAtLeast')
+							.replace('{count}', recipe.cookedDates.length.toString())
+							.replace('{suffix}', recipe.madeBeforeTracking ? t('recipeDetails.history.plusUndated') : '')
+							.replace('{date}', formatCookedDate([...recipe.cookedDates].sort().reverse()[0]))}
 				</div>
 			</div>
 

@@ -11,7 +11,7 @@ import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } f
 import { computeRecipeDietFlags } from '../models/computeRecipeDietFlags';
 import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
 import { t } from '../i18n/strings';
-
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 export const RECIPE_LIST_VIEW_TYPE = 'recipe-list-view';
 
@@ -159,11 +159,12 @@ export class RecipeListView extends ItemView {
 
 	private updateCloseAction(): void {
 		if (!this.closeAction) return;
-		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+		const language = this.plugin.settings.language;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? t('recipeListView.closeAction.back', language) : t('recipeListView.closeAction.close', language));
 	}
 
 	async onOpen() {
-		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+		this.closeAction = this.addAction('arrow-left', t('recipeListView.closeAction.close', this.plugin.settings.language), () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
 		this.closeAction.addClass('header-button');
@@ -274,13 +275,16 @@ export class RecipeListView extends ItemView {
 			return this.sortDirection === 'asc' ? comparison : -comparison;
 		});
 
+		const language = this.plugin.settings.language;
+
 		this.root.render(
+			<LanguageProvider value={language}>
 			<div>
 				<div className="recipe-list-sticky-header">
 					<div className="recipe-list-search-row">
 						<input
 							type="text"
-							placeholder="Rechercher une recette..."
+							placeholder={t('recipeListView.search.placeholder', this.plugin.settings.language)}
 							value={this.searchQuery}
 							onChange={(e) => {
 								this.searchQuery = e.target.value;
@@ -292,14 +296,14 @@ export class RecipeListView extends ItemView {
 						<div className="recipe-list-ingredient-filter-wrapper">
 							<input
 								type="text"
-								placeholder="Filtrer par ingrédient..."
+								placeholder={t('recipeListView.ingredientFilter.placeholder', this.plugin.settings.language)}
 								value={this.ingredientInput}
 								onChange={(e) => this.handleIngredientInputChange(e.target.value)}
 								onKeyDown={(e) => this.handleIngredientKeyDown(e)}
 								className="recipe-list-search"
 							/>
 							{this.ingredientQuery && (
-								<button type="button" onClick={() => this.clearIngredientFilter()} title="Retirer le filtre">✕</button>
+								<button type="button" onClick={() => this.clearIngredientFilter()} title={t('recipeListView.ingredientFilter.remove', this.plugin.settings.language)}>✕</button>
 							)}
 							{this.ingredientSuggestions.length > 0 && (
 								<ul className="smart-shopping-suggestions">
@@ -328,7 +332,7 @@ export class RecipeListView extends ItemView {
 								onClick={() => this.toggleDietMenu()}
 								className="recipe-list-tag-menu-button"
 							>
-								Contraintes {this.excludedDietFlags.size > 0 ? `(${this.excludedDietFlags.size})` : ''}
+								{t('recipeListView.constraints', this.plugin.settings.language)} {this.excludedDietFlags.size > 0 ? `(${this.excludedDietFlags.size})` : ''}
 							</button>
 
 							{this.dietMenuOpen && (
@@ -349,7 +353,7 @@ export class RecipeListView extends ItemView {
 											className="recipe-list-tag-menu-item"
 										>
 											<input type="checkbox" checked={this.excludedDietFlags.has(flag)} readOnly />
-											sans {flag}
+											{t('recipeListView.constraints.without', this.plugin.settings.language).replace('{flag}', flag)}
 										</li>
 									))}
 								</ul>
@@ -363,7 +367,7 @@ export class RecipeListView extends ItemView {
 									onClick={() => this.toggleTagMenu()}
 									className="recipe-list-tag-menu-button"
 								>
-									Tags {this.selectedTags.size > 0 ? `(${this.selectedTags.size})` : ''}
+									{t('recipeListView.tags', this.plugin.settings.language)} {this.selectedTags.size > 0 ? `(${this.selectedTags.size})` : ''}
 								</button>
 
 								{this.tagMenuOpen && (
@@ -381,7 +385,7 @@ export class RecipeListView extends ItemView {
 													type="button"
 													onClick={(e) => { e.stopPropagation(); this.togglePinnedTag(tag); }}
 													className="recipe-list-pin-button"
-													title={this.plugin.settings.pinnedTags.includes(tag) ? 'Désépingler' : 'Épingler'}
+													title={this.plugin.settings.pinnedTags.includes(tag) ? t('recipeListView.tags.unpin', this.plugin.settings.language) : t('recipeListView.tags.pin', this.plugin.settings.language)}
 												>
 													{this.plugin.settings.pinnedTags.includes(tag) ? '📌' : '📍'}
 												</button>
@@ -408,13 +412,13 @@ export class RecipeListView extends ItemView {
 
 					<div className="recipe-list-row recipe-list-header-row">
 						<div className="recipe-list-cell-name recipe-list-sortable" onClick={() => this.toggleSort('name')}>
-							Nom{this.sortKey === 'name' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+							{t('recipeListView.column.name', language)}{this.sortKey === 'name' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
 						</div>
 						<div className="recipe-list-cell-duration recipe-list-sortable" onClick={() => this.toggleSort('duration')}>
-							Durée{this.sortKey === 'duration' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+							{t('recipeListView.column.duration', language)}{this.sortKey === 'duration' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
 						</div>
 						<div className="recipe-list-cell-created recipe-list-sortable" onClick={() => this.toggleSort('created')}>
-							Créée {this.sortKey === 'created' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+							{t('recipeListView.column.created', language)} {this.sortKey === 'created' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
 						</div>
 						<div className="recipe-list-cell-cooked recipe-list-sortable" onClick={() => this.toggleSort('cooked')}>
 							#{this.sortKey === 'cooked' ? (this.sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
@@ -430,6 +434,7 @@ export class RecipeListView extends ItemView {
 					}}
 				/>
 			</div>
+			</LanguageProvider>
 		);
 	}
 

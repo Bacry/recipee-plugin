@@ -9,6 +9,7 @@ import { NEW_INGREDIENT_VIEW_TYPE } from './NewIngredientView';
 import { RECIPE_VIEW_TYPE } from './RecipeView';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
 import { t } from '../i18n/strings';
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 export const INGREDIENT_LIST_VIEW_TYPE = 'ingredient-list-view';
 
@@ -54,7 +55,8 @@ export class IngredientListView extends ItemView {
 
 	private updateCloseAction(): void {
 		if (!this.closeAction) return;
-		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+		const language = this.plugin.settings.language;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? t('ingredientListView.closeAction.back', language) : t('ingredientListView.closeAction.close', language));
 	}
 
 	async setState(state: IngredientListViewState, result: unknown) {
@@ -91,10 +93,9 @@ export class IngredientListView extends ItemView {
 	async onOpen() {
 
 		// We add the close button at top right of the note.
-		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+		this.closeAction = this.addAction('arrow-left', t('ingredientListView.closeAction.close', this.plugin.settings.language), () => {
 			closeOrGoBack(this.leaf, this.history);
-		});
-		this.closeAction.addClass('header-button');
+		});		this.closeAction.addClass('header-button');
 
 		// Create the container and root
 		const container = this.containerEl.children[1] as HTMLElement;
@@ -172,6 +173,7 @@ export class IngredientListView extends ItemView {
 				: undefinedIngredients.filter((n) => n.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
 
 			this.root.render(
+				<LanguageProvider value={this.plugin.settings.language}>
 				<IngredientListDisplay
 					mode="undefined"
 					showUndefined={this.showUndefined}
@@ -197,6 +199,7 @@ export class IngredientListView extends ItemView {
 					sortDirection={this.sortDirection}
 					onToggleSort={() => {}}
 				/>
+				</LanguageProvider>
 			);
 			return;
 		}
@@ -241,6 +244,7 @@ export class IngredientListView extends ItemView {
 		});
 
 		this.root.render(
+			<LanguageProvider value={this.plugin.settings.language}>
 			<IngredientListDisplay
 				mode="defined"
 				showUndefined={this.showUndefined}
@@ -266,6 +270,7 @@ export class IngredientListView extends ItemView {
 				sortDirection={this.sortDirection}
 				onToggleSort={(key) => this.toggleSort(key)}
 			/>
+			</LanguageProvider>
 		);
 	}
 

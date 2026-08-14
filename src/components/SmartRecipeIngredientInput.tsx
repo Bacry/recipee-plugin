@@ -7,6 +7,7 @@ import { normalizeNameForFile } from '../models/textNormalize';
 import { FormEntry } from '../models/formEntry';
 import { normalizeParsedQuantity } from '../models/normalizeQuantityUnit';
 import { SmartInputTokenBar } from './SmartInputTokenBar';
+import { useT } from '../i18n/LanguageContext';
 
 interface SmartRecipeIngredientInputProps {
 	app: App;
@@ -24,6 +25,7 @@ interface Suggestion {
 }
 
 export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFolder, onAdd }: SmartRecipeIngredientInputProps) {
+	const t = useT();
 	const [step, setStep] = useState<Step>('name');
 	const [name, setName] = useState('');
 	const [kind, setKind] = useState<'ingredient' | 'baseRecipe'>('ingredient');
@@ -107,7 +109,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 		const converted = convertQuantity(parsedQuantity.quantity, parsedQuantity.unit, targetUnit);
 		if (converted === null) {
 			setError(
-				`Unité incompatible : cette recette de base se mesure en "${servingsLabel}", pas convertible avec l'unité saisie.`
+				t('smartRecipeIngredientInput.error.incompatibleUnit').replace('{label}', servingsLabel ?? '')
 			);
 			return;
 		}
@@ -203,14 +205,14 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 
 	const placeholder =
 		step === 'name'
-			? "Nom de l'ingrédient ou d'une recette de base"
+			? t('smartRecipeIngredientInput.placeholder.name')
 			: kind === 'baseRecipe'
-				? 'Quantité (obligatoire)'
+				? t('smartRecipeIngredientInput.placeholder.quantityRequired')
 				: step === 'complement-or-quantity'
-					? 'Complément ou quantité (optionnel)'
-					: 'Quantité (optionnel)';
+					? t('smartRecipeIngredientInput.placeholder.complementOrQuantity')
+					: t('smartRecipeIngredientInput.placeholder.quantityOptional');
 
-	const displayName = name ? `${name}${form ? ` (${form})` : ''}${kind === 'baseRecipe' ? ' (recette)' : ''}` : '';
+	const displayName = name ? `${name}${form ? ` (${form})` : ''}${kind === 'baseRecipe' ? ` ${t('smartRecipeIngredientInput.recipeSuffix')}` : ''}` : '';
 
 	const tokens = [
 		displayName,
@@ -228,7 +230,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 			showSuggestions={step === 'name'}
 			suggestions={suggestions.map((s) => ({
 				key: `${s.kind}-${s.name}-${s.form ?? ''}`,
-				label: `${s.name}${s.kind === 'baseRecipe' ? ' (recette)' : ''}${s.form ? ` (${s.form})` : ''}`,
+				label: `${s.name}${s.kind === 'baseRecipe' ? ` ${t('smartRecipeIngredientInput.recipeSuffix')}` : ''}${s.form ? ` (${s.form})` : ''}`,
 				onClick: () => commitName(s.name, s.kind, s.form),
 			}))}
 			highlightedIndex={highlightedIndex}

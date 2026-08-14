@@ -1,6 +1,8 @@
 import { App, Modal, Notice } from 'obsidian';
 import { extractRecipeFromText } from '../services/claudeRecipeExtraction';
 import { RecipeFormValues } from './RecipeForm';
+import { t } from '../i18n/strings';
+import type { Language } from '../i18n/strings';
 
 // A native Obsidian modal with a large textarea for pasting free-form recipe
 // text, plus an "Analyser" button that calls Claude to extract structured
@@ -11,6 +13,7 @@ export class ParseRecipeTextModal extends Modal {
 	private model: string;
 	private ingredientsFolder: string;
 	private onExtracted: (values: RecipeFormValues) => void;
+	private language: Language;
 	private textareaEl!: HTMLTextAreaElement;
 	private statusEl!: HTMLElement;
 	private analyzeButton!: HTMLButtonElement;
@@ -20,20 +23,22 @@ export class ParseRecipeTextModal extends Modal {
 		apiKey: string,
 		model: string,
 		ingredientsFolder: string,
-		onExtracted: (values: RecipeFormValues) => void
+		onExtracted: (values: RecipeFormValues) => void,
+		language: Language = 'fr'
 	) {
 		super(app);
 		this.apiKey = apiKey;
 		this.model = model;
 		this.ingredientsFolder = ingredientsFolder;
 		this.onExtracted = onExtracted;
+		this.language = language;
 	}
 
 	onOpen() {
 		const { contentEl } = this;
-		contentEl.createEl('h3', { text: 'Extraire une recette depuis un texte' });
+		contentEl.createEl('h3', { text: t('parseRecipeTextModal.title', this.language) });
 		contentEl.createEl('p', {
-			text: 'Colle le texte brut d\'une recette (depuis un site, un livre...) — Claude va essayer d\'en extraire les champs.',
+			text: t('parseRecipeTextModal.description', this.language),
 		});
 
 		this.textareaEl = contentEl.createEl('textarea', {
@@ -47,10 +52,10 @@ export class ParseRecipeTextModal extends Modal {
 
 		const buttonRow = contentEl.createDiv({ cls: 'ingredient-form-actions' });
 
-		this.analyzeButton = buttonRow.createEl('button', { text: 'Analyser', cls: 'ingredient-form-submit' });
+		this.analyzeButton = buttonRow.createEl('button', { text: t('parseRecipeTextModal.analyze', this.language), cls: 'ingredient-form-submit' });
 		this.analyzeButton.onclick = () => this.handleAnalyze();
 
-		const cancelButton = buttonRow.createEl('button', { text: 'Annuler' });
+		const cancelButton = buttonRow.createEl('button', { text: t('parseRecipeTextModal.cancel', this.language) });
 		cancelButton.onclick = () => this.close();
 	}
 
@@ -59,20 +64,20 @@ export class ParseRecipeTextModal extends Modal {
 		if (text === '') return;
 
 		this.analyzeButton.disabled = true;
-		this.analyzeButton.textContent = 'Analyse en cours...';
+		this.analyzeButton.textContent = t('parseRecipeTextModal.analyzing', this.language);
 		this.statusEl.style.display = 'none';
 
 		const result = await extractRecipeFromText(this.app, this.apiKey, this.model, this.ingredientsFolder, text);
 
 		if (result.error || !result.values) {
 			this.statusEl.style.display = 'block';
-			this.statusEl.textContent = result.error ?? 'Erreur inconnue.';
+			this.statusEl.textContent = result.error ?? t('parseRecipeTextModal.unknownError', this.language);
 			this.analyzeButton.disabled = false;
-			this.analyzeButton.textContent = 'Analyser';
+			this.analyzeButton.textContent = t('parseRecipeTextModal.analyze', this.language);
 			return;
 		}
 
-		new Notice('Recette extraite avec succès.');
+		new Notice(t('parseRecipeTextModal.success', this.language));
 		this.onExtracted(result.values);
 		this.close();
 	}

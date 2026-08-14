@@ -1,4 +1,5 @@
 import { IngredientSummary, UndefinedIngredientUsage } from '../models/listAllIngredients';
+import { useT } from '../i18n/LanguageContext';
 
 type SortKey = 'name' | 'type' | 'shopSection' | 'usedInRecipesCount';
 
@@ -53,6 +54,7 @@ export function IngredientListDisplay({
 										  sortDirection,
 										  onToggleSort,
 									  }: IngredientListDisplayProps) {
+	const t = useT();
 	function sortArrow(key: SortKey) {
 		if (sortKey !== key) return '';
 		return sortDirection === 'asc' ? ' ↑' : ' ↓';
@@ -67,21 +69,21 @@ export function IngredientListDisplay({
 						onClick={() => onToggleShowUndefined(false)}
 						className={!showUndefined ? 'recipe-list-pinned-tag recipe-list-pinned-tag-active' : 'recipe-list-pinned-tag'}
 					>
-						Définis
+						{t('ingredientListDisplay.defined')}
 					</button>
 					<button
 						type="button"
 						onClick={() => onToggleShowUndefined(true)}
 						className={showUndefined ? 'recipe-list-pinned-tag recipe-list-pinned-tag-active' : 'recipe-list-pinned-tag'}
 					>
-						Non définis
+						{t('ingredientListDisplay.undefined')}
 					</button>
 				</div>
 
 				<div className="recipe-list-search-row">
 					<input
 						type="text"
-						placeholder="Rechercher un ingrédient..."
+						placeholder={t('ingredientListDisplay.search.placeholder')}
 						value={searchQuery}
 						onChange={(e) => onSearchQueryChange(e.target.value)}
 						className="recipe-list-search"
@@ -92,7 +94,7 @@ export function IngredientListDisplay({
 					<div className="recipe-list-filter-buttons-row">
 						<div className="recipe-list-tag-menu-wrapper">
 							<button type="button" onClick={onToggleTypeMenu} className="recipe-list-tag-menu-button">
-								Type {selectedTypes.size > 0 ? `(${selectedTypes.size})` : ''}
+								{t('ingredientListDisplay.type')} {selectedTypes.size > 0 ? `(${selectedTypes.size})` : ''}
 							</button>
 							{typeMenuOpen && (
 								<ul className="recipe-list-tag-menu">
@@ -108,14 +110,14 @@ export function IngredientListDisplay({
 
 						<div className="recipe-list-tag-menu-wrapper recipe-list-tags-wrapper">
 							<button type="button" onClick={onToggleDietMenu} className="recipe-list-tag-menu-button">
-								Contraintes {excludedDietFlags.size > 0 ? `(${excludedDietFlags.size})` : ''}
+								{t('ingredientListDisplay.constraints')} {excludedDietFlags.size > 0 ? `(${excludedDietFlags.size})` : ''}
 							</button>
 							{dietMenuOpen && (
 								<ul className="recipe-list-tag-menu">
 									{allDietFlags.map((flag) => (
 										<li key={flag} onClick={() => onToggleDietFlag(flag)} className="recipe-list-tag-menu-item">
 											<input type="checkbox" checked={excludedDietFlags.has(flag)} readOnly />
-											sans {flag}
+											{t('ingredientListDisplay.constraints.without').replace('{flag}', flag)}
 										</li>
 									))}
 								</ul>
@@ -127,13 +129,13 @@ export function IngredientListDisplay({
 				{mode === 'defined' && (
 					<div className="recipe-list-row recipe-list-header-row">
 						<div className="recipe-list-cell-name recipe-list-sortable" onClick={() => onToggleSort('name')}>
-							Nom{sortArrow('name')}
+							{t('ingredientListDisplay.column.name')}{sortArrow('name')}
 						</div>
 						<div className="recipe-list-cell-type recipe-list-sortable" onClick={() => onToggleSort('type')}>
-							Type{sortArrow('type')}
+							{t('ingredientListDisplay.type')}{sortArrow('type')}
 						</div>
 						<div className="recipe-list-cell-shopsection recipe-list-sortable" onClick={() => onToggleSort('shopSection')}>
-							Rayon{sortArrow('shopSection')}
+							{t('ingredientListDisplay.column.shopSection')}{sortArrow('shopSection')}
 						</div>
 						<div className="recipe-list-cell-cooked recipe-list-sortable" onClick={() => onToggleSort('usedInRecipesCount')}>
 							# {sortArrow('usedInRecipesCount')}
@@ -143,8 +145,8 @@ export function IngredientListDisplay({
 
 				{mode === 'undefined' && (
 					<div className="recipe-list-row recipe-list-header-row">
-						<div className="recipe-list-cell-name">Nom</div>
-						<div className="recipe-list-cell-recipes">Utilisé dans</div>
+						<div className="recipe-list-cell-name">{t('ingredientListDisplay.column.name')}</div>
+						<div className="recipe-list-cell-recipes">{t('ingredientListDisplay.column.usedIn')}</div>
 					</div>
 				)}
 			</div>
@@ -152,7 +154,7 @@ export function IngredientListDisplay({
 			{mode === 'undefined' ? (
 				<div>
 					{undefinedIngredients.length === 0 && (
-						<p className="recipe-empty-entries">Aucun ingrédient non défini 🎉</p>
+						<p className="recipe-empty-entries">{t('ingredientListDisplay.noUndefined')}</p>
 					)}
 					{undefinedIngredients.map((entry) => (
 						<div key={entry.name} className="recipe-list-row recipe-list-row-undefined">
@@ -178,7 +180,7 @@ export function IngredientListDisplay({
 			) : (
 				<div>
 					{ingredients.length === 0 && (
-						<p className="recipe-empty-entries">Aucun ingrédient trouvé</p>
+						<p className="recipe-empty-entries">{t('ingredientListDisplay.noResults')}</p>
 					)}
 					{ingredients.map((ing) => (
 						<div key={ing.filePath} className="recipe-list-row" onClick={() => onIngredientClick(ing.filePath)}>

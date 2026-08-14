@@ -10,6 +10,7 @@ import { createRecipe } from '../models/recipePersistence';
 import { createRef } from 'react';
 import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
 import { t } from '../i18n/strings';
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
@@ -54,19 +55,21 @@ export class NewRecipeView extends ItemView {
 	}
 	private updateCloseAction(): void {
 		if (!this.closeAction) return;
-		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+		const language = this.plugin.settings.language;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? t('newRecipeView.closeAction.back', language) : t('newRecipeView.closeAction.close', language));
 	}
 
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
+		const language = this.plugin.settings.language;
 
-		const saveAction = this.addAction('save', 'Enregistrer', () => {
+		const saveAction = this.addAction('save', t('newRecipeView.saveAction', language), () => {
 			this.formRef.current?.triggerSubmit();
 		});
 		saveAction.addClass('header-button');
 
-		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
+		const closeAction = this.addAction('x', t('newRecipeView.closeAction', language), () => {
 			this.handleClose();
 		});
 		closeAction.addClass('header-button');
@@ -83,20 +86,21 @@ export class NewRecipeView extends ItemView {
 		if (!this.root) return;
 
 		this.root.render(
-			<RecipeForm
-				ref={this.formRef}
-				key={this.templateKey ?? 'new'}
-				app={this.app}
-				recipesFolder={this.plugin.settings.recipesFolder}
-				ingredientsFolder={this.plugin.settings.ingredientsFolder}
-				recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
-				anthropicApiKey={this.plugin.settings.anthropicApiKey}
-				anthropicModel={this.plugin.settings.anthropicModel}
-				onSubmit={(values) => this.handleSubmit(values)}
-				initialValues={this.prefilledValues}
-				submitLabel="Créer la recette"
-				oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
-			/>
+			<LanguageProvider value={this.plugin.settings.language}>
+				<RecipeForm
+					ref={this.formRef}
+					key={this.templateKey ?? 'new'}
+					app={this.app}
+					recipesFolder={this.plugin.settings.recipesFolder}
+					ingredientsFolder={this.plugin.settings.ingredientsFolder}
+					recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
+					anthropicApiKey={this.plugin.settings.anthropicApiKey}
+					anthropicModel={this.plugin.settings.anthropicModel}
+					onSubmit={(values) => this.handleSubmit(values)}
+					initialValues={this.prefilledValues}
+					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
+				/>
+			</LanguageProvider>
 		);
 	}
 
@@ -116,7 +120,7 @@ export class NewRecipeView extends ItemView {
 				subfolder: values.subfolder,
 			});
 
-			new Notice(`Recette "${file.basename}" créée.`);
+			new Notice(t('newRecipeView.created', this.plugin.settings.language).replace('{name}', file.basename));
 			if (recipe!.madeBeforeTracking) {
 				await propagateMadeBeforeTracking(this.app, this.plugin.settings.recipesFolder, recipe!.baseRecipes);
 			}
@@ -127,7 +131,7 @@ export class NewRecipeView extends ItemView {
 				state: { filePath: file.path, history: [] },
 			});
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Impossible de créer la recette.';
+			const message = error instanceof Error ? error.message : t('newRecipeView.error.create', this.plugin.settings.language);
 			new Notice(message);
 		}
 	}

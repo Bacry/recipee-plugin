@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import MyPlugin from './main';
+import { t } from './i18n/strings';
 
 export interface MyPluginSettings {
 	ingredientTypes: string[];
@@ -32,15 +33,15 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	shopSections: ['dairy', 'fresh', 'frozen', 'bakery', 'pantry', 'produce', 'meat_fish', 'beverages', 'other'],
 	ingredientsFolder: 'Ingredients',
 	usdaApiKey: '',
-	shoppingListPath: 'Courses.md',
-	otherItemsNotePath: 'Autres.md',
+	shoppingListPath: 'Shopping list.md',
+	otherItemsNotePath: 'Other items.md',
 	recipeImagesFolder: 'Images',
 	anthropicApiKey: '',
 	anthropicModel: 'claude-sonnet-5',
-	dietFlags: ['gluten', 'lactose', 'oeuf', 'arachide', 'fruits à coque', 'soja', 'poisson', 'crustacés', 'viande'],
+	dietFlags: ['gluten', 'lactose', 'egg', 'peanut', 'tree nuts', 'soy', 'fish', 'shellfish', 'meat'],
 	dietPresets: [
-		{ name: 'Végétarien', flags: ['viande', 'poisson', 'crustacés'] },
-		{ name: 'Végan', flags: ['viande', 'poisson', 'crustacés', 'oeuf', 'lactose'] },
+		{ name: 'Vegetarian', flags: ['meat', 'fish', 'shellfish'] },
+		{ name: 'Vegan', flags: ['meat', 'fish', 'shellfish', 'egg', 'lactose'] },
 	],
 	pinnedTags: [],
 	oilIngredientTypes: ['oil'],
@@ -100,10 +101,11 @@ export class SampleSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+		const language = this.plugin.settings.language;
 
 		new Setting(containerEl)
-			.setName('Langue')
-			.setDesc('Langue de l\'interface du plugin.')
+			.setName(t('settings.language.name', language))
+			.setDesc(t('settings.language.desc', language))
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption('fr', 'Français')
@@ -112,12 +114,13 @@ export class SampleSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.language = value as 'fr' | 'en';
 						await this.plugin.saveSettings();
+						this.display();
 					}),
 			);
 
 		new Setting(containerEl)
-			.setName('Ingredients folder')
-			.setDesc('Folder where your ingredient notes are stored')
+			.setName(t('settings.ingredientsFolder.name', language))
+			.setDesc(t('settings.ingredientsFolder.desc', language))
 			.addText((text) =>
 				text
 					.setPlaceholder('Ingredients')
@@ -129,8 +132,8 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Recipes folder')
-			.setDesc('Folder where your recipe notes are stored')
+			.setName(t('settings.recipesFolder.name', language))
+			.setDesc(t('settings.recipesFolder.desc', language))
 			.addText((text) =>
 				text
 					.setPlaceholder('Recettes')
@@ -142,8 +145,8 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Recipe templates folder')
-			.setDesc('Root-level folder containing recipe templates (e.g. a "Cocktail" template) — used by "Create new recipe from template"')
+			.setName(t('settings.recipeTemplatesFolder.name', language))
+			.setDesc(t('settings.recipeTemplatesFolder.desc', language))
 			.addText((text) =>
 				text
 					.setPlaceholder('Templates')
@@ -155,8 +158,8 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Recipe images folder')
-			.setDesc('Folder where recipe images are stored — independent from the recipes folder, created automatically if missing')
+			.setName(t('settings.recipeImagesFolder.name', language))
+			.setDesc(t('settings.recipeImagesFolder.desc', language))
 			.addText((text) =>
 				text
 					.setValue(this.plugin.settings.recipeImagesFolder || DEFAULT_SETTINGS.recipeImagesFolder)
@@ -167,19 +170,19 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Ingredient types, shop sections & diet flags')
-			.setDesc('Managed via a dedicated view — run the "Manage lists" command or click the tag icon in the ribbon.');
+			.setName(t('settings.lists.name', language))
+			.setDesc(t('settings.lists.desc', language));
 
 		new Setting(containerEl)
-			.setName('Catégories spéciales')
-			.setDesc('Parmi tes types d\'ingrédients existants, lesquels correspondent à une huile (active "Peut être utilisé pour la friture") ou un fruit (active "Rendement en jus") sur la fiche ingrédient.')
+			.setName(t('settings.specialCategories.name', language))
+			.setDesc(t('settings.specialCategories.desc', language))
 			.setHeading();
 
-		this.renderCategoryPicker(containerEl, 'Types "huile" (friture)', 'oilIngredientTypes');
+		this.renderCategoryPicker(containerEl, t('settings.oilTypes.label', language), 'oilIngredientTypes');
 
 		new Setting(containerEl)
-			.setName('Absorption d\'huile par défaut')
-			.setDesc('Pourcentage utilisé au départ pour estimer l\'huile absorbée par les aliments frits — ajustable ensuite dans chaque recette. La littérature situe l\'absorption entre 8% et 25% selon la porosité de l\'aliment.')
+			.setName(t('settings.absorptionPercent.name', language))
+			.setDesc(t('settings.absorptionPercent.desc', language))
 			.addText((text) =>
 				text
 					.setPlaceholder('15')
@@ -192,15 +195,15 @@ export class SampleSettingTab extends PluginSettingTab {
 						}
 					}),
 			);
-		this.renderCategoryPicker(containerEl, 'Types "fruit" (rendement en jus)', 'fruitIngredientTypes');
 
+		this.renderCategoryPicker(containerEl, t('settings.fruitTypes.label', language), 'fruitIngredientTypes');
 
 		new Setting(containerEl)
-			.setName('USDA API key')
-			.setDesc('Free API key from fdc.nal.usda.gov, used to search nutritional data')
+			.setName(t('settings.usdaApiKey.name', language))
+			.setDesc(t('settings.usdaApiKey.desc', language))
 			.addText((text) =>
 				text
-					.setPlaceholder('Ta clé API')
+					.setPlaceholder(t('settings.usdaApiKey.placeholder', language))
 					.setValue(this.plugin.settings.usdaApiKey)
 					.onChange(async (value) => {
 						this.plugin.settings.usdaApiKey = value;
@@ -209,8 +212,8 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Anthropic API key')
-			.setDesc('Your own Anthropic API key, used to extract structured recipes from pasted text')
+			.setName(t('settings.anthropicApiKey.name', language))
+			.setDesc(t('settings.anthropicApiKey.desc', language))
 			.addText((text) =>
 				text
 					.setPlaceholder('sk-ant-...')
@@ -222,13 +225,13 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Anthropic model')
-			.setDesc('Model used for recipe text extraction')
+			.setName(t('settings.anthropicModel.name', language))
+			.setDesc(t('settings.anthropicModel.desc', language))
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption('claude-haiku-4-5-20251001', 'Claude Haiku 4.5 (fast, cheap)')
-					.addOption('claude-sonnet-5', 'Claude Sonnet 5 (balanced)')
-					.addOption('claude-opus-4-8', 'Claude Opus 4.8 (most capable)')
+					.addOption('claude-haiku-4-5-20251001', t('settings.anthropicModel.haiku', language))
+					.addOption('claude-sonnet-5', t('settings.anthropicModel.sonnet', language))
+					.addOption('claude-opus-4-8', t('settings.anthropicModel.opus', language))
 					.setValue(this.plugin.settings.anthropicModel)
 					.onChange(async (value) => {
 						this.plugin.settings.anthropicModel = value;
@@ -237,8 +240,8 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Shopping list note path')
-			.setDesc('Path to the single note used as your shopping list')
+			.setName(t('settings.shoppingListPath.name', language))
+			.setDesc(t('settings.shoppingListPath.desc', language))
 			.addText((text) =>
 				text
 					.setPlaceholder('Courses.md')
@@ -249,8 +252,8 @@ export class SampleSettingTab extends PluginSettingTab {
 					}),
 			);
 		new Setting(containerEl)
-			.setName('Other items note path')
-			.setDesc('Single note listing non-ingredient item names, used to grow autocomplete over time')
+			.setName(t('settings.otherItemsNotePath.name', language))
+			.setDesc(t('settings.otherItemsNotePath.desc', language))
 			.addText((text) =>
 				text
 					.setPlaceholder('Autres.md')

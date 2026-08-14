@@ -8,18 +8,17 @@ import { SmartInputResult } from '../components/SmartShoppingInput';
 import { ShoppingListDisplay, ResolvedItem } from '../components/ShoppingListDisplay';
 import { aggregateContributions } from '../models/aggregateContributions';
 import { resolveShopSection, getIngredientDensityInfo } from '../models/resolveShopSection';
-import { toggleShoppingListItemChecked, deleteShoppingListItem } from '../models/updateShoppingListItem';
 import { setOtherItemShopSection } from '../models/otherItemsNote';
 import { ShoppingListItem } from '../models/ShoppingList';
 import { showShopSectionMenu } from '../components/showShopSectionMenu';
 import { removeRecipeFromShoppingList } from '../models/removeRecipeFromShoppingList';
 import { toggleShoppingListItemChecked, deleteShoppingListItem, setItemAlreadyOwned } from '../models/updateShoppingListItem';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
-import { readIngredientForCalc } from '../models/computeRecipeNutrition';
 import { findIngredientFileByName } from '../models/findIngredientFile';
 import { findRecipeFileByName } from '../models/findRecipeFile';
 import { parseRecipeFromFrontmatter } from '../models/parseRecipe';
 import { t } from '../i18n/strings';
+import { LanguageProvider } from '../i18n/LanguageContext';
 
 export const SHOPPING_LIST_VIEW_TYPE = 'shopping-list-view';
 
@@ -61,7 +60,8 @@ export class ShoppingListView extends ItemView {
 
 	private updateCloseAction(): void {
 		if (!this.closeAction) return;
-		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
+		const language = this.plugin.settings.language;
+		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? t('shoppingListView.closeAction.back', language) : t('shoppingListView.closeAction.close', language));
 	}
 
 	async onOpen() {
@@ -75,7 +75,7 @@ export class ShoppingListView extends ItemView {
 			file = await this.app.vault.create(path, '---\nitems: []\n---\n');
 		}
 
-		this.closeAction = this.addAction('arrow-left', 'Fermer', () => {
+		this.closeAction = this.addAction('arrow-left', t('shoppingListView.closeAction.close', this.plugin.settings.language), () => {
 			closeOrGoBack(this.leaf, this.history);
 		});
 		this.closeAction.addClass('header-button');
@@ -139,7 +139,11 @@ export class ShoppingListView extends ItemView {
 		const file = this.app.vault.getAbstractFileByPath(path);
 
 		if (!(file instanceof TFile)) {
-			this.root.render(<p>Fichier de liste de courses introuvable.</p>);
+			this.root.render(
+				<LanguageProvider value={this.plugin.settings.language}>
+					<p>{t('shoppingListView.fileNotFound', this.plugin.settings.language)}</p>
+				</LanguageProvider>
+			);
 			return;
 		}
 
@@ -191,6 +195,7 @@ export class ShoppingListView extends ItemView {
 		);
 
 		this.root.render(
+			<LanguageProvider value={this.plugin.settings.language}>
 			<div className="shopping-list-main-div">
 				{warnings.length > 0 && (
 					<ul className="ingredient-validation-warnings">
@@ -216,6 +221,7 @@ export class ShoppingListView extends ItemView {
 					onSetAlreadyOwned={(id, owned) => this.handleSetAlreadyOwned(id, owned)}
 				/>
 			</div>
+			</LanguageProvider>
 		);
 	}
 

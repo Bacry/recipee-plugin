@@ -1,6 +1,7 @@
 import { NutritionPer100g } from '../models/Ingredient';
 import {upperFirstLetter} from '../models/textNormalize'
 import { isOilIngredient } from '../models/listOilIngredients';
+import { useT } from '../i18n/LanguageContext';
 
 interface IngredientDetailsProps {
 	name: string;
@@ -37,72 +38,74 @@ export function IngredientDetails({
 									  usedInRecipes,
 									  onRecipeClick,
 								  }: IngredientDetailsProps) {
+	const t = useT();
+
 	return (
 		<div>
 			<div className="section">
 
 
-			<div className="section-title"> Caractéristiques </div>
-			<div className="section-content">
-				<div className="section-content-item"> Type : {type} </div>
-				<div className="section-content-item"> Rayon : {shopSection} </div>
-				{brand &&
-					<div className="section-content-item"> Marque : {brand} </div>
-				}
-				{densityGMl != null &&
-					<div className="section-content-item"> Densité : {densityGMl} g/mL </div>
-				}
-				{entityWeightG != null &&
-					<div className="section-content-item"> Poids unitaire : {entityWeightG} g </div>
-				}
-				{juiceYieldMl != null &&
-					<div className="section-content-item"> Rendement en jus : {juiceYieldMl} mL / fruit</div>
-				}
-				{possibleForms != null && possibleForms.length > 0 &&
-					<div className="section-content-item"> Formes possibles : {possibleForms.join(', ')} </div>
-				}
-				{dietFlags != null && dietFlags.length > 0 &&
-					<div className="section-content-item"> Contraintes alimentaires : {dietFlags.join(', ')} </div>
-				}
-				{isOilIngredient(type, oilIngredientTypes) &&
-					<div className="section-content-item"> Peut être utilisé pour la friture </div>
-				}
-			</div>
-			<div className="section-title"> Valeurs nutritionnelles (pour 100g)</div>
-			<div className="section-content">
-			<table>
-				<tbody>
-				<tr><td>Calories</td><td>{fmt(nutrition.kcal)} kcal</td></tr>
-				<tr><td>Lipides</td><td>{fmt(nutrition.lipids)} g</td></tr>
-				<tr><td style={{ paddingLeft: '1.5em' }}>dont acides gras insaturés</td><td>{fmt(nutrition.non_saturated_lipids)} g</td></tr>
-				<tr><td>Glucides</td><td>{fmt(nutrition.glucids)} g</td></tr>
-				<tr><td style={{ paddingLeft: '1.5em' }}>dont sucres</td><td>{fmt(nutrition.sugar)} g</td></tr>
-				<tr><td>Protéines</td><td>{fmt(nutrition.proteins)} g</td></tr>
-				<tr><td>Sel</td><td>{fmt(nutrition.salt)} g</td></tr>
-				<tr><td>Fibres</td><td>{fmt(nutrition.fibers)} g</td></tr>
-				<tr><td>Cholestérol</td><td>{fmt(nutrition.cholesterol)} mg</td></tr>
-				</tbody>
-			</table>
-			</div>
+				<div className="section-title"> {t('ingredientDetails.characteristics')} </div>
+				<div className="section-content">
+					<div className="section-content-item"> {t('ingredientDetails.type').replace('{value}', type)} </div>
+					<div className="section-content-item"> {t('ingredientDetails.shopSection').replace('{value}', shopSection)} </div>
+					{brand &&
+						<div className="section-content-item"> {t('ingredientDetails.brand').replace('{value}', brand)} </div>
+					}
+					{densityGMl != null &&
+						<div className="section-content-item"> {t('ingredientDetails.density').replace('{value}', densityGMl.toString())} </div>
+					}
+					{entityWeightG != null &&
+						<div className="section-content-item"> {t('ingredientDetails.entityWeight').replace('{value}', entityWeightG.toString())} </div>
+					}
+					{juiceYieldMl != null &&
+						<div className="section-content-item"> {t('ingredientDetails.juiceYield').replace('{value}', juiceYieldMl.toString())} </div>
+					}
+					{possibleForms != null && possibleForms.length > 0 &&
+						<div className="section-content-item"> {t('ingredientDetails.possibleForms').replace('{value}', possibleForms.join(', '))} </div>
+					}
+					{dietFlags != null && dietFlags.length > 0 &&
+						<div className="section-content-item"> {t('ingredientDetails.dietFlags').replace('{value}', dietFlags.join(', '))} </div>
+					}
+					{isOilIngredient(type, oilIngredientTypes) &&
+						<div className="section-content-item"> {t('ingredientDetails.canBeUsedForFrying')} </div>
+					}
+				</div>
+				<div className="section-title"> {t('ingredientDetails.nutrition')}</div>
+				<div className="section-content">
+					<table>
+						<tbody>
+						<tr><td>{t('ingredientDetails.nutrition.kcal')}</td><td>{fmt(nutrition.kcal)} kcal</td></tr>
+						<tr><td>{t('ingredientDetails.nutrition.lipids')}</td><td>{fmt(nutrition.lipids)} g</td></tr>
+						<tr><td style={{ paddingLeft: '1.5em' }}>{t('ingredientDetails.nutrition.nonSaturatedLipids')}</td><td>{fmt(nutrition.non_saturated_lipids)} g</td></tr>
+						<tr><td>{t('ingredientDetails.nutrition.glucids')}</td><td>{fmt(nutrition.glucids)} g</td></tr>
+						<tr><td style={{ paddingLeft: '1.5em' }}>{t('ingredientDetails.nutrition.sugar')}</td><td>{fmt(nutrition.sugar)} g</td></tr>
+						<tr><td>{t('ingredientDetails.nutrition.proteins')}</td><td>{fmt(nutrition.proteins)} g</td></tr>
+						<tr><td>{t('ingredientDetails.nutrition.salt')}</td><td>{fmt(nutrition.salt)} g</td></tr>
+						<tr><td>{t('ingredientDetails.nutrition.fibers')}</td><td>{fmt(nutrition.fibers)} g</td></tr>
+						<tr><td>{t('ingredientDetails.nutrition.cholesterol')}</td><td>{fmt(nutrition.cholesterol)} mg</td></tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 
 			<div className="section">
-			<div className="section-title"> Ingrédient utilisé dans </div>
-			<div className="section-content">
-				{usedInRecipes.length > 0 && (
-					<span>
+				<div className="section-title"> {t('ingredientDetails.usedIn')} </div>
+				<div className="section-content">
+					{usedInRecipes.length > 0 && (
+						<span>
 					{usedInRecipes.map((recipeName, index) => (
-							<span key={recipeName}>
+						<span key={recipeName}>
 							<a href="#" onClick={(e) => { e.preventDefault(); onRecipeClick(recipeName); }}>
 								{recipeName}
 							</a>
-								{index < usedInRecipes.length - 1 ? ', ' : ''}
-						</span>
-						))}
+							{index < usedInRecipes.length - 1 ? ', ' : ''}
+						   </span>
+					))}
 					</span>
-				)}
+					)}
+				</div>
 			</div>
-		</div>
 		</div>
 	);
 }

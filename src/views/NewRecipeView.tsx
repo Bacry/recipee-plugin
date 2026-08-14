@@ -11,6 +11,7 @@ import { createRef } from 'react';
 import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
 import { t } from '../i18n/strings';
 import { LanguageProvider } from '../i18n/LanguageContext';
+import { UnitSystemProvider } from '../models/UnitSystemContext';
 
 export const NEW_RECIPE_VIEW_TYPE = 'new-recipe-view';
 
@@ -87,6 +88,7 @@ export class NewRecipeView extends ItemView {
 
 		this.root.render(
 			<LanguageProvider value={this.plugin.settings.language}>
+				<UnitSystemProvider value={this.plugin.settings.unitSystem}>
 				<RecipeForm
 					ref={this.formRef}
 					key={this.templateKey ?? 'new'}
@@ -100,6 +102,7 @@ export class NewRecipeView extends ItemView {
 					initialValues={this.prefilledValues}
 					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
 				/>
+				</UnitSystemProvider>
 			</LanguageProvider>
 		);
 	}

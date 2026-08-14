@@ -25,6 +25,7 @@ import { recordRecipeCookedTodayRecursive } from '../models/recordRecipeCookedRe
 import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracking';
 import { t } from '../i18n/strings';
 import { LanguageProvider } from '../i18n/LanguageContext';
+import { UnitSystemProvider } from '../models/UnitSystemContext';
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -410,6 +411,7 @@ export class RecipeView extends ItemView {
 		if (this.isEditing) {
 			this.root.render(
 				<LanguageProvider value={language}>
+					<UnitSystemProvider value={this.plugin.settings.unitSystem}>
 					<RecipeForm
 						ref={this.formRef}
 						app={this.app}
@@ -422,6 +424,7 @@ export class RecipeView extends ItemView {
 						initialValues={recipeToFormValues(recipe!, this.filePath, this.plugin.settings.recipesFolder)}
 						oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
 					/>
+					</UnitSystemProvider>
 				</LanguageProvider>
 			);
 			return;

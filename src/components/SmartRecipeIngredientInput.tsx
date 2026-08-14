@@ -8,6 +8,7 @@ import { FormEntry } from '../models/formEntry';
 import { normalizeParsedQuantity } from '../models/normalizeQuantityUnit';
 import { SmartInputTokenBar } from './SmartInputTokenBar';
 import { useT } from '../i18n/LanguageContext';
+import { useUnitSystem } from '../models/UnitSystemContext';
 
 interface SmartRecipeIngredientInputProps {
 	app: App;
@@ -26,6 +27,7 @@ interface Suggestion {
 
 export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFolder, onAdd }: SmartRecipeIngredientInputProps) {
 	const t = useT();
+	const unitSystem = useUnitSystem();
 	const [step, setStep] = useState<Step>('name');
 	const [name, setName] = useState('');
 	const [kind, setKind] = useState<'ingredient' | 'baseRecipe'>('ingredient');
@@ -88,7 +90,7 @@ export function SmartRecipeIngredientInput({ app, ingredientsFolder, recipesFold
 
 	function finalizeIngredient(complementValue: string, parsedQuantity: ParsedQuantity | null) {
 		const normalized = parsedQuantity
-			? normalizeParsedQuantity(app, ingredientsFolder, name, parsedQuantity)
+			? normalizeParsedQuantity(app, ingredientsFolder, name, parsedQuantity, unitSystem)
 			: null;
 
 		onAdd({

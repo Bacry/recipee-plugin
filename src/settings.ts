@@ -6,6 +6,7 @@ export interface MyPluginSettings {
 	ingredientTypes: string[];
 	shopSections: string[];
 	ingredientsFolder: string;
+	unitSystem: 'metric' | 'us';
 	usdaApiKey: string;
 	shoppingListPath: string; // path to the single "Courses" note
 	otherItemsNotePath: string; // single note listing non-ingredient item names, used for autocomplete
@@ -33,6 +34,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	shopSections: ['dairy', 'fresh', 'frozen', 'bakery', 'pantry', 'produce', 'meat_fish', 'beverages', 'other'],
 	ingredientsFolder: 'Ingredients',
 	usdaApiKey: '',
+	unitSystem: 'metric',
 	shoppingListPath: 'Shopping list.md',
 	otherItemsNotePath: 'Other items.md',
 	recipeImagesFolder: 'Images',
@@ -115,6 +117,20 @@ export class SampleSettingTab extends PluginSettingTab {
 						this.plugin.settings.language = value as 'fr' | 'en';
 						await this.plugin.saveSettings();
 						this.display();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t('settings.unitSystem.name', language))
+			.setDesc(t('settings.unitSystem.desc', language))
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption('metric', t('settings.unitSystem.metric', language))
+					.addOption('us', t('settings.unitSystem.us', language))
+					.setValue(this.plugin.settings.unitSystem)
+					.onChange(async (value) => {
+						this.plugin.settings.unitSystem = value as 'metric' | 'us';
+						await this.plugin.saveSettings();
 					}),
 			);
 

@@ -2,24 +2,28 @@ export interface Unit {
 	name: string;
 	ratioToBaseline: number;
 	isVolume: boolean;
-	autoConvertTo?: string;
+	autoConvertTo?: string; // legacy — kept for now, still checked in a couple of places (picker exclusion logic), will be fully retired once those are migrated too
+	system?: 'metric' | 'us'; // which unit system this belongs to — units without this (kg, g, l, dl, cl, ml) are considered neutral/universal, never auto-converted based on system preference
+	equivalentUnit?: string; // this unit's counterpart in the other system, used when the user's preferred system doesn't match
 	roundToNearest: number;
 	excludeFromPicker?: boolean;
 }
 
 export const UNITS: Unit[] = [
-	{ name: 'kg', ratioToBaseline: 1000, isVolume: false, roundToNearest: 0.01 },
-	{ name: 'g', ratioToBaseline: 1, isVolume: false, roundToNearest: 1 },
+	{ name: 'kg', ratioToBaseline: 1000, isVolume: false, roundToNearest: 0.01, system: 'metric', equivalentUnit: 'lb'},
+	{ name: 'g', ratioToBaseline: 1, isVolume: false, roundToNearest: 1, system: 'metric', equivalentUnit: 'oz' },
 	{ name: 'l', ratioToBaseline: 1000, isVolume: true, roundToNearest: 0.01 },
 	{ name: 'dl', ratioToBaseline: 100, isVolume: true, roundToNearest: 0.1 },
-	{ name: 'cl', ratioToBaseline: 10, isVolume: true, roundToNearest: 0.1 },
+	{ name: 'cl', ratioToBaseline: 10, isVolume: true, roundToNearest: 0.1, system: 'metric', equivalentUnit: 'cup' },
 	{ name: 'ml', ratioToBaseline: 1, isVolume: true, roundToNearest: 1 },
-	{ name: 'cs', ratioToBaseline: 15, isVolume: true, roundToNearest: 1 },
-	{ name: 'cc', ratioToBaseline: 5, isVolume: true, roundToNearest: 1 },
+	{ name: 'cs', ratioToBaseline: 15, isVolume: true, roundToNearest: 1, system: 'metric', equivalentUnit: 'tbsp' },
+	{ name: 'cc', ratioToBaseline: 5, isVolume: true, roundToNearest: 1, system: 'metric', equivalentUnit: 'tsp' },
 	{ name: 'dash', ratioToBaseline: 0.9, isVolume: true, roundToNearest: 1, excludeFromPicker: true },
-	{ name: 'cup', ratioToBaseline: 236.588, isVolume: true, autoConvertTo: 'cl', roundToNearest: 0.1 },
-	{ name: 'tbsp', ratioToBaseline: 14.787, isVolume: true, autoConvertTo: 'cs', roundToNearest: 1 },
-	{ name: 'tsp', ratioToBaseline: 4.929, isVolume: true, autoConvertTo: 'cc', roundToNearest: 1 },
+	{ name: 'cup', ratioToBaseline: 236.588, isVolume: true, autoConvertTo: 'cl', roundToNearest: 0.1, system: 'us', equivalentUnit: 'cl' },
+	{ name: 'tbsp', ratioToBaseline: 14.787, isVolume: true, autoConvertTo: 'cs', roundToNearest: 1, system: 'us', equivalentUnit: 'cs' },
+	{ name: 'tsp', ratioToBaseline: 4.929, isVolume: true, autoConvertTo: 'cc', roundToNearest: 1, system: 'us', equivalentUnit: 'cc' },
+	{ name: 'oz', ratioToBaseline: 28.3495, isVolume: false, roundToNearest: 0.1, system: 'us', equivalentUnit: 'g' },
+	{ name: 'lb', ratioToBaseline: 453.592, isVolume: false, roundToNearest: 0.01, system: 'us', equivalentUnit: 'kg' },
 ];
 
 export function findUnit(name: string): Unit | null {

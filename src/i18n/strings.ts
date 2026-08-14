@@ -1234,6 +1234,25 @@ const STRINGS: Record<string, StringEntry> = {
 		en: "Single note listing non-ingredient item names, used to grow autocomplete over time",
 	},
 
+	// --- src/settings.ts (unit system) ---
+	'settings.unitSystem.name': {
+		fr: "Système d'unités",
+		en: "Unit system",
+	},
+	'settings.unitSystem.desc': {
+		fr: "Unités proposées par défaut lors de la saisie des quantités.",
+		en: "Units suggested by default when entering quantities.",
+	},
+	'settings.unitSystem.metric': {
+		fr: "Métrique (g, cl, kg)",
+		en: "Metric (g, cl, kg)",
+	},
+	'settings.unitSystem.us': {
+		fr: "US (oz, cup, lb)",
+		en: "US (oz, cup, lb)",
+	},
+
+
 };
 
 // Falls back to the French string (then the raw key) if a translation is

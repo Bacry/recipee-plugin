@@ -33,10 +33,12 @@ export interface DietPreset {
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
 	ingredientTypes: ['dairy', 'fish', 'meat', 'vegetable', 'fruit', 'fruit juice', 'cereal', 'other', 'oil'],
-	shopSections: ['dairy', 'fresh', 'frozen', 'bakery', 'pantry', 'produce', 'meat_fish', 'beverages', 'other'],
+	shopSections: ['dairy', 'fresh', 'frozen', 'bakery', 'pantry', 'produce', 'meat_fish', 'beverages'],
 	ingredientsFolder: 'Ingredients',
+	recipesFolder: 'Recipes',
+	recipeTemplatesFolder: 'Templates',
 	usdaApiKey: '',
-	unitSystem: 'metric',
+	unitSystem: 'us',
 	shoppingListPath: 'Shopping list.md',
 	otherItemsNotePath: 'Other items.md',
 	recipeImagesFolder: 'Images',
@@ -156,8 +158,8 @@ export class SampleSettingTab extends PluginSettingTab {
 			.setDesc(t('settings.recipesFolder.desc', language))
 			.addText((text) =>
 				text
-					.setPlaceholder('Recettes')
-					.setValue(this.plugin.settings.recipesFolder)
+					.setPlaceholder('Recipes')
+					.setValue(this.plugin.settings.recipesFolder || DEFAULT_SETTINGS.recipesFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.recipesFolder = value;
 						await this.plugin.saveSettings();
@@ -170,8 +172,7 @@ export class SampleSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder('Templates')
-					.setValue(this.plugin.settings.recipeTemplatesFolder)
-					.onChange(async (value) => {
+					.setValue(this.plugin.settings.recipeTemplatesFolder || DEFAULT_SETTINGS.recipeTemplatesFolder)					.onChange(async (value) => {
 						this.plugin.settings.recipeTemplatesFolder = value;
 						await this.plugin.saveSettings();
 					}),

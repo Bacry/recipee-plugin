@@ -26,6 +26,8 @@ import { propagateMadeBeforeTracking } from '../models/propagateMadeBeforeTracki
 import { t } from '../i18n/strings';
 import { LanguageProvider } from '../i18n/LanguageContext';
 import { UnitSystemProvider } from '../models/UnitSystemContext';
+import { findRecipesUsingBaseRecipe } from '../models/findRecipesUsingBaseRecipe';
+
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
 
@@ -47,6 +49,7 @@ export class RecipeView extends ItemView {
 	private closeAction!: HTMLElement;
 	private saveAction!: HTMLElement;
 	private formRef = createRef<RecipeFormHandle>();
+	private deleteAction!: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -106,8 +109,14 @@ export class RecipeView extends ItemView {
 		this.isEditing = isEditing;
 		this.updateModifyButton();
 		this.updateSaveButtonVisibility();
+		this.updateDeleteButtonVisibility();
 		this.updateTitle();
 		this.render();
+	}
+
+	private updateDeleteButtonVisibility(): void {
+		if (!this.deleteAction) return;
+		this.deleteAction.style.display = this.isEditing ? 'none' : '';
 	}
 
 	async setState(state: RecipeViewState, result: unknown): Promise<void> {
@@ -162,6 +171,13 @@ export class RecipeView extends ItemView {
 		});
 		this.modifyAction.addClass('header-button');
 
+
+		this.deleteAction = this.addAction('trash-2', t('recipeView.delete.action', language), () => {
+			this.handleDelete();
+		});
+		this.deleteAction.addClass('header-button');
+		this.updateDeleteButtonVisibility();
+
 		this.closeAction = this.addAction(
 			'arrow-left',
 			t('recipeView.closeAction.close', language),
@@ -174,6 +190,7 @@ export class RecipeView extends ItemView {
 			}
 		);
 		this.closeAction.addClass('header-button');
+
 
 		this.saveAction = this.addAction('save', t('recipeView.saveAction', language), () => {
 			this.formRef.current?.triggerSubmit();
@@ -259,7 +276,8 @@ export class RecipeView extends ItemView {
 			this.plugin.settings.recipesFolder,
 			this.plugin.settings.otherItemsNotePath,
 			recipe,
-			servings
+			servings,
+			this.plugin.settings.language
 		);
 
 		const language = this.plugin.settings.language;
@@ -306,6 +324,38 @@ export class RecipeView extends ItemView {
 		closeOrGoBack(this.leaf, this.history);
 	}
 
+	async handleDelete(): Promise<void> {
+		if (!this.filePath) return;
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		if (!(file instanceof TFile)) return;
+
+		const language = this.plugin.settings.language;
+		const usedAsBase = findRecipesUsingBaseRecipe(this.app, this.plugin.settings.recipesFolder, file.basename);
+
+		if (usedAsBase.length > 0) {
+			new Notice(
+				t('recipeView.delete.blocked', language)
+					.replace('{name}', file.basename)
+					.replace('{count}', usedAsBase.length.toString())
+					.replace('{recipes}', usedAsBase.join(', ')),
+				10000
+			);
+			return;
+		}
+
+		new ConfirmModal(
+			this.app,
+			t('recipeView.delete.confirm', language).replace('{name}', file.basename),
+			async () => {
+				await this.app.vault.trash(file, true);
+				new Notice(t('recipeView.deleted', language).replace('{name}', file.basename));
+				closeOrGoBack(this.leaf, this.history);
+			},
+			language,
+			t('recipeView.delete.confirm.button', language)
+		).open();
+	}
+
 	async handleSaveNotes(newContent: string) {
 		if (!this.filePath) return;
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
@@ -322,7 +372,7 @@ export class RecipeView extends ItemView {
 	// Called when the inline edit form is submitted: validates, moves the
 	// file if its name/subfolder changed, then overwrites its content.
 	async handleSave(values: RecipeFormValues) {
-		const { recipe, errors } = formValuesToRecipe(values);
+		const { recipe, errors } = formValuesToRecipe(values, this.plugin.settings.language);
 
 		if (errors.length > 0) {
 			new ErrorModal(this.app, errors, this.plugin.settings.language).open();

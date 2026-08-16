@@ -6,6 +6,8 @@ import { convertQuantity, findUnit } from './units';
 import { findRecipeFileByName } from './findRecipeFile';
 import { findIngredientFileByName } from './findIngredientFile';
 import {findFileByBasename} from "./fileSystemUtils";
+import { t } from '../i18n/strings';
+import type { Language } from '../i18n/strings';
 
 const NUTRITION_KEYS: (keyof NutritionPer100g)[] = [
 	'kcal', 'lipids', 'non_saturated_lipids', 'glucids',
@@ -112,7 +114,8 @@ export function computeRecipeNutrition(
 	recipesFolder: string,
 	recipe: Recipe,
 	visiting: Set<string> = new Set(),
-	fryingAbsorptionPercent: number = 15
+	fryingAbsorptionPercent: number = 15,
+	language: Language = 'fr'
 ): RecipeNutritionResult {
 	const warnings: string[] = [];
 	let totalNutrition = emptyNutrition();
@@ -124,20 +127,20 @@ export function computeRecipeNutrition(
 
 		const file = findIngredientFileByName(app, ingredientsFolder, entry.ingredientName)
 		if (!(file instanceof TFile)) {
-			warnings.push(`Ingrédient "${entry.ingredientName}" sans fiche : exclu du calcul.`);
+			warnings.push(t('computeRecipeNutrition.noSheet', language).replace('{name}', entry.ingredientName));
 			continue;
 		}
 
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const ingredientData = readIngredientForCalc(frontmatter);
 		if (!ingredientData) {
-			warnings.push(`Ingrédient "${entry.ingredientName}" invalide : exclu du calcul.`);
+			warnings.push(t('computeRecipeNutrition.invalidIngredient', language).replace('{name}', entry.ingredientName));
 			continue;
 		}
 
 		const grams = convertIngredientEntryToGrams(app, ingredientsFolder, entry);
 		if (grams === null) {
-			warnings.push(`Impossible de convertir "${entry.ingredientName}" en grammes (densité/poids unitaire manquant) : exclu du calcul.`);
+			warnings.push(t('computeRecipeNutrition.conversionFailed', language).replace('{name}', entry.ingredientName));
 			continue;
 		}
 
@@ -147,33 +150,33 @@ export function computeRecipeNutrition(
 
 	for (const entry of recipe.baseRecipes) {
 		if (visiting.has(entry.recipeName)) {
-			warnings.push(`Référence circulaire détectée sur "${entry.recipeName}" — exclue du calcul.`);
+			warnings.push(t('computeRecipeNutrition.circularReference', language).replace('{name}', entry.recipeName));
 			continue;
 		}
 
 		const file = findRecipeFileByName(app, recipesFolder, entry.recipeName);
 		if (!file) {
-			warnings.push(`Recette de base "${entry.recipeName}" introuvable — exclue du calcul.`);
+			warnings.push(t('computeRecipeNutrition.baseRecipeNotFound', language).replace('{name}', entry.recipeName));
 			continue;
 		}
 		
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const { recipe: baseRecipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
 		if (!baseRecipe) {
-			warnings.push(`Recette de base "${entry.recipeName}" invalide — exclue du calcul.`);
+			warnings.push(t('computeRecipeNutrition.baseRecipeInvalid', language).replace('{name}', entry.recipeName));
 			continue;
 		}
 
 		const fromUnit = entry.unit === '' ? null : findUnit(entry.unit);
 		const grams = convertQuantity(entry.quantity, fromUnit, findUnit('g'));
 		if (grams === null) {
-			warnings.push(`Impossible de convertir la quantité de "${entry.recipeName}" en grammes — exclue du calcul.`);
+			warnings.push(t('computeRecipeNutrition.baseRecipeConversionFailed', language).replace('{name}', entry.recipeName));
 			continue;
 		}
 
 		const nextVisiting = new Set(visiting);
 		nextVisiting.add(recipe.name);
-		const baseResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, baseRecipe, nextVisiting);
+		const baseResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, baseRecipe, nextVisiting, fryingAbsorptionPercent, language);
 		warnings.push(...baseResult.warnings);
 
 		const baseNutritionPer100g = {} as NutritionPer100g;
@@ -206,10 +209,10 @@ export function computeRecipeNutrition(
 					summedWeightG += oilAbsorbedG;
 					fryingInfo = { oilName: recipe.fryingOilName, oilAbsorbedG, friedWeightG };
 				} else {
-					warnings.push(`Huile de friture "${recipe.fryingOilName}" invalide — absorption non incluse dans le calcul.`);
+					warnings.push(t('computeRecipeNutrition.fryingOilInvalid', language).replace('{name}', recipe.fryingOilName));
 				}
 			} else {
-				warnings.push(`Huile de friture "${recipe.fryingOilName}" introuvable — absorption non incluse dans le calcul.`);
+				warnings.push(t('computeRecipeNutrition.fryingOilNotFound', language).replace('{name}', recipe.fryingOilName));
 			}
 		}
 	}

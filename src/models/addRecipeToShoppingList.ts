@@ -22,6 +22,7 @@ export async function addRecipeToShoppingList(
 	recipesFolder: string,
 	otherItemsNotePath: string,
 	recipe: Recipe,
+	language: Language = 'fr',
 	servings: number
 ): Promise<AddRecipeResult> {
 	const file = app.vault.getAbstractFileByPath(shoppingListPath);
@@ -31,7 +32,7 @@ export async function addRecipeToShoppingList(
 
 	const scaleFactor = recipe.baseServings > 0 ? servings / recipe.baseServings : 1;
 	const { ingredients: flattened, warnings } = flattenRecipeIngredients(
-		app, ingredientsFolder, recipesFolder, recipe, scaleFactor
+		app, ingredientsFolder, recipesFolder, recipe, scaleFactor, language
 	);
 
 	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;

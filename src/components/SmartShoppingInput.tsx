@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { App } from 'obsidian';
 import { parseQuantityString, ParsedQuantity } from '../models/units';
 import { searchAllItemNames } from '../models/searchAllItemNames';
-import { addOtherItemNameIfMissing } from '../models/otherItemsNote';
 import { normalizeNameForFile } from '../models/textNormalize';
 import { IngredientNameSuggestion } from '../models/searchIngredientNames';
 import { SmartInputTokenBar } from './SmartInputTokenBar';
@@ -67,7 +66,7 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 	}
 
 
-	async function commitName(chosenName: string, pickedForm?: string) {
+	function commitName(chosenName: string, pickedForm?: string) {
 		const trimmed = normalizeNameForFile(chosenName);
 		if (trimmed === '') return;
 
@@ -77,12 +76,6 @@ export function SmartShoppingInput({ app, ingredientsFolder, otherItemsNotePath,
 		setSuggestions([]);
 		setHighlightedIndex(-1);
 		setStep('complement-or-quantity');
-
-		const ingredientPath = `${ingredientsFolder}/${trimmed}.md`;
-		const isKnownIngredient = app.vault.getAbstractFileByPath(ingredientPath) !== null;
-		if (!isKnownIngredient) {
-			await addOtherItemNameIfMissing(app, otherItemsNotePath, trimmed);
-		}
 	}
 
 	function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

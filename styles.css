@@ -1121,7 +1121,7 @@
 	justify-content: center;
 }
 .recipe-list-cell-duration {
-	width: 34px;
+	width: 50px;
 	border-left: 1px solid var(--background-modifier-border);
 	padding-left: 0.6rem;
 	text-align: left;
@@ -1301,7 +1301,7 @@
 }
 
 .recipe-list-cell-created {
-	width: 80px;
+	width: 100px;
 	flex-shrink: 0;
 	text-align: right;
 	color: var(--text-muted);

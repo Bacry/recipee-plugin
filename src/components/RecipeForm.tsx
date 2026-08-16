@@ -69,6 +69,7 @@ function emptyValues(): RecipeFormValues {
 		tags: '',
 		subfolder: '',
 		fryingOilName: '',
+		totalWeightG: '',
 	};
 }
 
@@ -313,7 +314,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 				<h4>{t('recipeForm.generalInfo')}</h4>
 
 				<div className="form-field form-field-wide">
-					<label>{t('recipeForm.name')}</label>
+					<label>{t('recipeForm.name')}*</label>
 					<input value={name} onChange={(e) => setName(e.target.value)} />
 				</div>
 				<div className="recipe-form-made-before-row">
@@ -327,7 +328,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 				</div>
 				<div className="form-grid">
 					<div className="form-field">
-						<label>{t('recipeForm.baseServings')}</label>
+						<label>{t('recipeForm.baseServings')}*</label>
 						<input
 							value={baseServings}
 							onChange={(e) => setBaseServings(sanitizeNumericInput(e.target.value))}
@@ -335,7 +336,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="form-field">
-						<label>{t('recipeForm.servingsLabel')}</label>
+						<label>{t('recipeForm.servingsLabel')}*</label>
 						<input value={servingsLabel} onChange={(e) => setServingsLabel(e.target.value)} />
 					</div>
 

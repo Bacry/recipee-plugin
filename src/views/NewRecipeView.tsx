@@ -109,7 +109,7 @@ export class NewRecipeView extends ItemView {
 	}
 
 	async handleSubmit(values: RecipeFormValues) {
-		const { recipe, errors } = formValuesToRecipe(values);
+		const { recipe, errors } = formValuesToRecipe(values, this.plugin.settings.language);
 
 		if (errors.length > 0) {
 			new ErrorModal(this.app, errors, this.plugin.settings.language).open();

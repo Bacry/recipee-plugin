@@ -4,6 +4,8 @@ import { parseRecipeFromFrontmatter } from './parseRecipe';
 import { convertQuantity, findUnit } from './units';
 import { sumRecipeIngredientWeightsG } from './computeRecipeNutrition';
 import { findRecipeFileByName } from './findRecipeFile';
+import { t } from '../i18n/strings';
+import type { Language } from '../i18n/strings';
 
 export interface FlattenedIngredient {
 	ingredientName: string;
@@ -27,6 +29,7 @@ export function flattenRecipeIngredients(
 	recipesFolder: string,
 	recipe: Recipe,
 	scaleFactor: number,
+	language: Language = 'fr',
 	visiting: Set<string> = new Set()
 ): FlattenResult {
 	const warnings: string[] = [];
@@ -48,27 +51,27 @@ export function flattenRecipeIngredients(
 			ingredientName: recipe.fryingOilName,
 			quantity: null,
 			unit: '',
-			complement: 'pour friture',
+			complement: t('flattenRecipeIngredients.forFrying', 'en'),
 		});
 	}
 
 	for (const entry of recipe.baseRecipes) {
 		if (visiting.has(entry.recipeName)) {
-			warnings.push(`Référence circulaire détectée sur "${entry.recipeName}" — ignorée.`);
+			warnings.push(t('flattenRecipeIngredients.circularReference', 'en').replace('{name}', entry.recipeName));
 			continue;
 		}
 
 		const path = `${recipesFolder}/${entry.recipeName}.md`;
 		const file = findRecipeFileByName(app, recipesFolder, entry.recipeName);
 		if (!file) {
-			warnings.push(`Recette de base "${entry.recipeName}" introuvable — ignorée.`);
+			warnings.push(t('flattenRecipeIngredients.baseRecipeNotFound', 'en').replace('{name}', entry.recipeName));
 			continue;
 		}
 
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const { recipe: baseRecipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
 		if (!baseRecipe) {
-			warnings.push(`Recette de base "${entry.recipeName}" invalide — ignorée.`);
+			warnings.push(t('flattenRecipeIngredients.baseRecipeInvalid', 'en').replace('{name}', entry.recipeName));
 			continue;
 		}
 
@@ -77,7 +80,7 @@ export function flattenRecipeIngredients(
 		const neededGrams = convertQuantity(scaledEntryQuantity, fromUnit, findUnit('g'));
 
 		if (neededGrams === null) {
-			warnings.push(`Impossible de convertir la quantité de "${entry.recipeName}" en grammes — ignorée.`);
+			warnings.push(t('flattenRecipeIngredients.conversionFailed', 'en').replace('{name}', entry.recipeName));
 			continue;
 		}
 
@@ -86,7 +89,7 @@ export function flattenRecipeIngredients(
 		// agree on a base recipe's total batch weight.
 		const baseTotalWeightG = baseRecipe.totalWeightG ?? sumRecipeIngredientWeightsG(app, ingredientsFolder, baseRecipe);
 		if (baseTotalWeightG <= 0) {
-			warnings.push(`Poids total inconnu pour "${entry.recipeName}" — impossible de calculer les proportions.`);
+			warnings.push(t('flattenRecipeIngredients.unknownTotalWeight', 'en').replace('{name}', entry.recipeName));
 			continue;
 		}
 
@@ -94,7 +97,7 @@ export function flattenRecipeIngredients(
 
 		const nextVisiting = new Set(visiting);
 		nextVisiting.add(recipe.name);
-		const baseResult = flattenRecipeIngredients(app, ingredientsFolder, recipesFolder, baseRecipe, baseRecipeFactor, nextVisiting);
+		const baseResult = flattenRecipeIngredients(app, ingredientsFolder, recipesFolder, baseRecipe, baseRecipeFactor, language, nextVisiting);
 		warnings.push(...baseResult.warnings);
 		ingredients.push(...baseResult.ingredients);
 	}

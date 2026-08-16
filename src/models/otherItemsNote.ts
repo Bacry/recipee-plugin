@@ -87,6 +87,12 @@ export async function getOtherItemShopSection(
 // Updates (or adds) the #xxx shop-section tag on a given item's line in the
 // "Autres" note. If the item already had a tag, it's replaced; if it had none,
 // one is appended. Leaves the checked state and everything else untouched.
+// Updates (or adds) the #xxx shop-section tag on a given item's line in the
+// "Autres" note. If the item already had a line, its tag is replaced (or
+// added if it had none). If the item has no line at all yet — the common
+// case now that names are only ever added here once a section is actually
+// assigned, not automatically at shopping-list-entry time — a brand new
+// line is appended instead.
 export async function setOtherItemShopSection(
 	app: App,
 	path: string,
@@ -96,6 +102,8 @@ export async function setOtherItemShopSection(
 	const file = await ensureOtherItemsNoteExists(app, path);
 	const content = await app.vault.read(file);
 	const lines = content.split('\n');
+
+	let found = false;
 
 	const updatedLines = lines.map((line) => {
 		const lineMatch = line.match(/^(- \[[ x]\] )(.+)$/);
@@ -107,8 +115,15 @@ export async function setOtherItemShopSection(
 
 		if (currentName.toLowerCase() !== itemName.toLowerCase()) return line;
 
+		found = true;
 		return `${prefix}${currentName} #${shopSection}`;
 	});
+
+	if (!found) {
+		const separator = content.endsWith('\n') || content === '' ? '' : '\n';
+		await app.vault.modify(file, `${content}${separator}- [ ] ${itemName} #${shopSection}\n`);
+		return;
+	}
 
 	await app.vault.modify(file, updatedLines.join('\n'));
 }

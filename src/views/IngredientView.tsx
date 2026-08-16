@@ -36,6 +36,7 @@ export class IngredientView extends ItemView {
 	private closeAction!: HTMLElement;
 	private saveAction!: HTMLElement;
 	private formRef = createRef<IngredientFormHandle>();
+	private deleteAction!: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -89,6 +90,11 @@ export class IngredientView extends ItemView {
 		);
 	}
 
+	private updateDeleteButtonVisibility(): void {
+		if (!this.deleteAction) return;
+		this.deleteAction.style.display = this.isEditing ? 'none' : '';
+	}
+
 	private updateCloseAction(): void {
 		if (!this.closeAction) return;
 		this.closeAction.setAttribute('aria-label', canNavigateBack({ history: this.history }) ? 'Retour' : 'Fermer');
@@ -98,6 +104,7 @@ export class IngredientView extends ItemView {
 		this.isEditing = isEditing;
 		this.updateModifyButton();
 		this.updateSaveButtonVisibility();
+		this.updateDeleteButtonVisibility();
 		this.updateTitle();
 		this.render();
 	}
@@ -151,6 +158,16 @@ export class IngredientView extends ItemView {
 			);
 		this.modifyAction.addClass('header-button');
 
+		this.deleteAction = this.addAction(
+			'trash-2',
+			t('ingredientView.delete.action', this.plugin.settings.language),
+			() => {
+				this.handleDelete();
+			}
+		);
+		this.deleteAction.addClass('header-button');
+		this.updateDeleteButtonVisibility();
+
 		/* Adding the close button */
 		this.closeAction = this.addAction(
 			'arrow-left',
@@ -176,6 +193,8 @@ export class IngredientView extends ItemView {
 		this.updateSaveButtonVisibility();
 
 
+
+
 		if (this.filePath) {
 			this.render();
 		}
@@ -192,6 +211,34 @@ export class IngredientView extends ItemView {
 	// close this leaf — there's nothing in our navigation stack to return to.
 	handleClose() {
 		closeOrGoBack(this.leaf, this.history);
+	}
+
+	async handleDelete(): Promise<void> {
+		if (!this.filePath) return;
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		if (!(file instanceof TFile)) return;
+
+		const language = this.plugin.settings.language;
+		const usage = findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename);
+
+		const message = usage.length > 0
+			? t('ingredientView.delete.confirm.withUsage', language)
+				.replace('{name}', file.basename)
+				.replace('{count}', usage.length.toString())
+				.replace('{recipes}', usage.join(', '))
+			: t('ingredientView.delete.confirm.noUsage', language).replace('{name}', file.basename);
+
+		new ConfirmModal(
+			this.app,
+			message,
+			async () => {
+				await this.app.vault.trash(file, true);
+				new Notice(t('ingredientView.deleted', language).replace('{name}', file.basename));
+				closeOrGoBack(this.leaf, this.history);
+			},
+			language,
+			t('ingredientView.delete.confirm.button', language)
+		).open();
 	}
 
 	// Called when the edit form is submitted: moves the file if its type (and

@@ -19,6 +19,7 @@ import { addIcon } from 'obsidian';
 import { RecipeListView, RECIPE_LIST_VIEW_TYPE } from './views/RecipeListView';
 import { ManageListsView, MANAGE_LISTS_VIEW_TYPE } from './views/ManageListsView';
 import { IngredientListView, INGREDIENT_LIST_VIEW_TYPE } from './views/IngredientListView';
+import { loadExampleData } from './models/loadExampleData';
 
 
 
@@ -151,6 +152,13 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: 'load-example-data',
+			name: 'Load example data',
+			callback: () => {
+				loadExampleData(this.app, this.settings);
+			},
+		});
 
 		this.addRibbonIcon('chef-hat', 'Liste des recettes', () => {
 			this.activateRecipeListView();
@@ -348,6 +356,11 @@ export default class MyPlugin extends Plugin {
 		}
 
 		new TemplatePickerModal(this.app, templates, (templateFile) => {
+			if (templateFile === null) {
+				this.activateNewRecipeView();
+				return;
+			}
+
 			const frontmatter = this.app.metadataCache.getFileCache(templateFile)?.frontmatter;
 			const templateRecipe = parseRecipeTemplate(frontmatter, templateFile.basename);
 
@@ -355,7 +368,8 @@ export default class MyPlugin extends Plugin {
 				? frontmatter.default_subfolder
 				: undefined;
 
-			this.activateNewRecipeViewFromTemplate(templateToFormValues(templateRecipe, defaultSubfolder), templateFile.path);		}).open();
+			this.activateNewRecipeViewFromTemplate(templateToFormValues(templateRecipe, defaultSubfolder), templateFile.path);
+		}, this.settings.language).open();
 	}
 
 	async activateNewRecipeViewFromTemplate(prefilledValues: RecipeFormValues, templateKey: string) {

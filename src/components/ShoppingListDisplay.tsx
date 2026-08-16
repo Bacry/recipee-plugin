@@ -3,6 +3,7 @@ import { ShoppingListItem, ShoppingListRecipeEntry } from '../models/ShoppingLis
 import { AggregationResult } from '../models/aggregateContributions';
 import { convertQuantity, findUnit, parseQuantityString } from '../models/units';
 import { useT } from '../i18n/LanguageContext';
+import { UNASSIGNED_SHOP_SECTION } from '../models/resolveShopSection';
 
 export interface ResolvedItem {
 	item: ShoppingListItem;
@@ -26,7 +27,7 @@ interface ShoppingListDisplayProps {
 }
 
 function displaySectionName(section: string, t: (key: string) => string): string {
-	return section === 'Autres rayons' ? t('shoppingListDisplay.otherSection') : section;
+	return section === UNASSIGNED_SHOP_SECTION ? t('shoppingListDisplay.otherSection') : section;
 }
 
 function groupBySection(resolvedItems: ResolvedItem[]): Map<string, ResolvedItem[]> {
@@ -144,8 +145,8 @@ export function ShoppingListDisplay({
 	const groups = groupBySection(resolvedItems);
 
 	const sortedSections = Array.from(groups.entries()).sort(([a], [b]) => {
-		if (a === 'Autres rayons') return 1;
-		if (b === 'Autres rayons') return -1;
+		if (a === UNASSIGNED_SHOP_SECTION) return 1;
+		if (b === UNASSIGNED_SHOP_SECTION) return -1;
 		return a.localeCompare(b);
 	});
 
@@ -205,9 +206,9 @@ export function ShoppingListDisplay({
 											)}
 										</span>
 										<span className="shopping-list-item-actions">
-											{!resolved.isKnownIngredient && resolved.shopSection === 'Autres rayons' && (
-												<button onClick={(e) => onSetSection(resolved.item.id, e)} title={t('shoppingListDisplay.setSection.title')}>📚</button>
-											)}
+{!resolved.isKnownIngredient && resolved.shopSection === UNASSIGNED_SHOP_SECTION && (
+	<button onClick={(e) => onSetSection(resolved.item.id, e)} title={t('shoppingListDisplay.setSection.title')}>📚</button>
+)}
 											<button onClick={() => onToggleChecked(resolved.item.id)} title={t('shoppingListDisplay.markBought.title')}>✓</button>
 <button onClick={() => onDelete(resolved.item.id)} title={t('shoppingListDisplay.delete.title')}>✕</button>
 										</span>

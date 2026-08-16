@@ -8,6 +8,8 @@ import { findIngredientFileByName } from '../models/findIngredientFile';
 import { readIngredientForCalc } from '../models/computeRecipeNutrition';
 import { findUnit, roundQuantityForUnit, convertQuantity, UNITS, Unit, formatRoundedQuantity } from '../models/units';
 import { useT } from '../i18n/LanguageContext';
+import { useContext } from 'react';
+import { LanguageContext } from '../i18n/LanguageContext';
 
 interface RecipeDetailsProps {
 	app: App;
@@ -125,7 +127,8 @@ export function RecipeDetails({
 	const servings = Number(servingsInput) || recipe.baseServings;
 	const factor = servings / recipe.baseServings;
 
-	const nutritionResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, recipe, undefined, absorptionPercent);
+	const language = useContext(LanguageContext);
+	const nutritionResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, recipe, undefined, absorptionPercent, language);
 
 	const scaledTotal = { ...nutritionResult.totalNutrition };
 	for (const key of Object.keys(scaledTotal) as (keyof typeof scaledTotal)[]) {

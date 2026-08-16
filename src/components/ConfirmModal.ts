@@ -8,12 +8,14 @@ export class ConfirmModal extends Modal {
 	private message: string;
 	private onConfirm: () => void;
 	private language: Language;
+	private confirmLabel?: string;
 
-	constructor(app: App, message: string, onConfirm: () => void, language: Language = 'fr') {
+	constructor(app: App, message: string, onConfirm: () => void, language: Language = 'fr', confirmLabel?: string) {
 		super(app);
 		this.message = message;
 		this.onConfirm = onConfirm;
 		this.language = language;
+		this.confirmLabel = confirmLabel;
 	}
 
 	onOpen() {
@@ -22,8 +24,7 @@ export class ConfirmModal extends Modal {
 
 		const buttonRow = contentEl.createDiv({ cls: 'ingredient-form-actions' });
 
-		const confirmButton = buttonRow.createEl('button', { text: t('confirmModal.confirm', this.language), cls: 'ingredient-form-submit' });
-		confirmButton.onclick = () => {
+		const confirmButton = buttonRow.createEl('button', { text: this.confirmLabel ?? t('confirmModal.confirm', this.language), cls: 'ingredient-form-submit' });		confirmButton.onclick = () => {
 			this.onConfirm();
 			this.close();
 		};

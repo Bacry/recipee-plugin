@@ -1,5 +1,7 @@
 import { Recipe } from './recipe';
 import { RecipeFormValues } from '../components/RecipeForm';
+import { t } from '../i18n/strings';
+import type { Language } from '../i18n/strings';
 
 export function recipeToFormValues(recipe: Recipe, filePath: string, recipesFolder: string): RecipeFormValues {
 	// Derives the subfolder from the file's actual path — e.g. if filePath is
@@ -29,26 +31,26 @@ export function recipeToFormValues(recipe: Recipe, filePath: string, recipesFold
 	};
 }
 
-export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe | null; errors: string[] } {
+export function formValuesToRecipe(values: RecipeFormValues, language: Language = 'fr'): { recipe: Recipe | null; errors: string[] } {
 	const errors: string[] = [];
 
 	if (values.name.trim() === '') {
-		errors.push('Le nom est obligatoire.');
+		errors.push(t('recipeFormConversion.nameRequired', language));
 	}
 	if (values.servingsLabel.trim() === '') {
-		errors.push('L\'unité de portion est obligatoire.');
+		errors.push(t('recipeFormConversion.servingsLabelRequired', language));
 	}
 
 	const baseServings = Number(values.baseServings);
 	if (values.baseServings.trim() === '' || Number.isNaN(baseServings) || baseServings <= 0) {
-		errors.push('"Portions de base" doit être un nombre positif.');
+		errors.push(t('recipeFormConversion.baseServingsInvalid', language));
 	}
 
 	let preparationDurationMin: number | undefined;
 	if (values.preparationDurationMin.trim() !== '') {
 		const parsed = Number(values.preparationDurationMin);
 		if (Number.isNaN(parsed)) {
-			errors.push('"Préparation (min)" n\'est pas un nombre valide.');
+			errors.push(t('recipeFormConversion.preparationDurationInvalid', language));
 		} else {
 			preparationDurationMin = parsed;
 		}
@@ -58,7 +60,7 @@ export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe |
 	if (values.totalWeightG.trim() !== '') {
 		const parsed = Number(values.totalWeightG);
 		if (Number.isNaN(parsed)) {
-			errors.push('"Poids total mesuré" n\'est pas un nombre valide.');
+			errors.push(t('recipeFormConversion.totalWeightInvalid', language));
 		} else {
 			totalWeightG = parsed;
 		}
@@ -68,7 +70,7 @@ export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe |
 	if (values.cookingDurationMin.trim() !== '') {
 		const parsed = Number(values.cookingDurationMin);
 		if (Number.isNaN(parsed)) {
-			errors.push('"Cuisson (min)" n\'est pas un nombre valide.');
+			errors.push(t('recipeFormConversion.cookingDurationInvalid', language));
 		} else {
 			cookingDurationMin = parsed;
 		}
@@ -100,7 +102,7 @@ export function formValuesToRecipe(values: RecipeFormValues): { recipe: Recipe |
 		fryingOilName: values.fryingOilName.trim() || undefined,
 		tags,
 		totalWeightG,
-		cookedDates: [], // new recipes/edits via the form never set this directly — only "Réalisée aujourd'hui" does, via recordRecipeCookedToday
+		cookedDates: [],
 	};
 
 	return { recipe, errors: [] };

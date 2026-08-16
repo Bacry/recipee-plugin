@@ -1,7 +1,6 @@
 import { App } from 'obsidian';
 import { ShoppingListItem } from './ShoppingList';
 import { normalizeForSearch } from './textNormalize';
-import { addOtherItemNameIfMissing } from './otherItemsNote';
 import { findIngredientFileByName } from './findIngredientFile';
 
 
@@ -64,13 +63,6 @@ export async function addSingleIngredientToShoppingList(
 		checked: false,
 		contributions: newContribution,
 	};
-
-	// New item: if it has no ingredient fiche, register it in "Autres" so
-	// future searches/autocomplete and the 📚 shop-section button work for it.
-	const hasSheet = findIngredientFileByName(app, ingredientsFolder, addition.name) !== null;
-	if (!hasSheet) {
-		await addOtherItemNameIfMissing(app, otherItemsNotePath, addition.name);
-	}
 
 	return [...items, newItem];
 }

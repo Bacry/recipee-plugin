@@ -1069,6 +1069,8 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Ajouter quand même",
 		en: "Add anyway",
 	},
+
+
 	'confirmModal.cancel': {
 		fr: "Annuler",
 		en: "Cancel",
@@ -1230,8 +1232,8 @@ const STRINGS: Record<string, StringEntry> = {
 		en: "Other items note path",
 	},
 	'settings.otherItemsNotePath.desc': {
-		fr: "Note unique listant les noms d'articles non-ingrédients, utilisée pour enrichir l'autocomplétion au fil du temps",
-		en: "Single note listing non-ingredient item names, used to grow autocomplete over time",
+		fr: "Note unique listant les noms d'articles (sans fiche ingrédient), utilisée pour enrichir l'autocomplétion au fil du temps",
+		en: "Single note listing item names not corresponding to ingredient notes, used to grow autocomplete over time",
 	},
 
 	// --- src/settings.ts (unit system) ---
@@ -1267,6 +1269,158 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Affiche les boutons \"Suggérer avec Claude\" et \"Extraire depuis un texte\" dans les formulaires. Désactive-les si tu n'as pas de clé API Anthropic.",
 		en: "Shows the \"Suggest with Claude\" and \"Extract from text\" buttons in the forms. Turn this off if you don't have an Anthropic API key.",
 	},
+
+	// --- src/main.ts ---
+	'main.templatePicker.emptyRecipe': {
+		fr: "Recette vide",
+		en: "Empty recipe",
+	},
+	'main.templatePicker.placeholder': {
+		fr: "Choisir un template de recette...",
+		en: "Choose a recipe template...",
+	},
+
+	// --- src/models/flattenRecipeIngredients.ts ---
+	'flattenRecipeIngredients.forFrying': {
+		fr: "pour friture",
+		en: "for frying",
+	},
+	'flattenRecipeIngredients.circularReference': {
+		fr: "Référence circulaire détectée sur \"{name}\" — ignorée.",
+		en: "Circular reference detected on \"{name}\" — skipped.",
+	},
+	'flattenRecipeIngredients.baseRecipeNotFound': {
+		fr: "Recette de base \"{name}\" introuvable — ignorée.",
+		en: "Base recipe \"{name}\" not found — skipped.",
+	},
+	'flattenRecipeIngredients.baseRecipeInvalid': {
+		fr: "Recette de base \"{name}\" invalide — ignorée.",
+		en: "Base recipe \"{name}\" is invalid — skipped.",
+	},
+	'flattenRecipeIngredients.conversionFailed': {
+		fr: "Impossible de convertir la quantité de \"{name}\" en grammes — ignorée.",
+		en: "Could not convert the quantity of \"{name}\" to grams — skipped.",
+	},
+	'flattenRecipeIngredients.unknownTotalWeight': {
+		fr: "Poids total inconnu pour \"{name}\" — impossible de calculer les proportions.",
+		en: "Unknown total weight for \"{name}\" — cannot calculate proportions.",
+	},
+
+
+	// --- src/models/computeRecipeNutrition.ts ---
+	'computeRecipeNutrition.noSheet': {
+		fr: "Ingrédient \"{name}\" sans fiche : exclu du calcul.",
+		en: "Ingredient \"{name}\" has no sheet: excluded from the calculation.",
+	},
+	'computeRecipeNutrition.invalidIngredient': {
+		fr: "Ingrédient \"{name}\" invalide : exclu du calcul.",
+		en: "Ingredient \"{name}\" is invalid: excluded from the calculation.",
+	},
+	'computeRecipeNutrition.conversionFailed': {
+		fr: "Impossible de convertir \"{name}\" en grammes (densité/poids unitaire manquant) : exclu du calcul.",
+		en: "Could not convert \"{name}\" to grams (missing density/unit weight): excluded from the calculation.",
+	},
+	'computeRecipeNutrition.circularReference': {
+		fr: "Référence circulaire détectée sur \"{name}\" — exclue du calcul.",
+		en: "Circular reference detected on \"{name}\" — excluded from the calculation.",
+	},
+	'computeRecipeNutrition.baseRecipeNotFound': {
+		fr: "Recette de base \"{name}\" introuvable — exclue du calcul.",
+		en: "Base recipe \"{name}\" not found — excluded from the calculation.",
+	},
+	'computeRecipeNutrition.baseRecipeInvalid': {
+		fr: "Recette de base \"{name}\" invalide — exclue du calcul.",
+		en: "Base recipe \"{name}\" is invalid — excluded from the calculation.",
+	},
+	'computeRecipeNutrition.baseRecipeConversionFailed': {
+		fr: "Impossible de convertir la quantité de \"{name}\" en grammes — exclue du calcul.",
+		en: "Could not convert the quantity of \"{name}\" to grams — excluded from the calculation.",
+	},
+	'computeRecipeNutrition.fryingOilInvalid': {
+		fr: "Huile de friture \"{name}\" invalide — absorption non incluse dans le calcul.",
+		en: "Frying oil \"{name}\" is invalid — absorption not included in the calculation.",
+	},
+	'computeRecipeNutrition.fryingOilNotFound': {
+		fr: "Huile de friture \"{name}\" introuvable — absorption non incluse dans le calcul.",
+		en: "Frying oil \"{name}\" not found — absorption not included in the calculation.",
+	},
+
+
+	// --- src/models/recipeFormConversion.ts ---
+	'recipeFormConversion.nameRequired': {
+		fr: "Le nom est obligatoire.",
+		en: "Name is required.",
+	},
+	'recipeFormConversion.servingsLabelRequired': {
+		fr: "L'unité de portion est obligatoire.",
+		en: "Serving unit is required.",
+	},
+	'recipeFormConversion.baseServingsInvalid': {
+		fr: "\"Portions de base\" doit être un nombre positif.",
+		en: "\"Base servings\" must be a positive number.",
+	},
+	'recipeFormConversion.preparationDurationInvalid': {
+		fr: "\"Préparation (min)\" n'est pas un nombre valide.",
+		en: "\"Preparation (min)\" is not a valid number.",
+	},
+	'recipeFormConversion.totalWeightInvalid': {
+		fr: "\"Poids total mesuré\" n'est pas un nombre valide.",
+		en: "\"Measured total weight\" is not a valid number.",
+	},
+	'recipeFormConversion.cookingDurationInvalid': {
+		fr: "\"Cuisson (min)\" n'est pas un nombre valide.",
+		en: "\"Cooking (min)\" is not a valid number.",
+	},
+
+	// --- src/views/IngredientView.tsx (delete) ---
+	'ingredientView.delete.action': {
+		fr: "Supprimer l'ingrédient",
+		en: "Delete ingredient",
+	},
+	'ingredientView.delete.confirm.noUsage': {
+		fr: "Supprimer définitivement \"{name}\" ?",
+		en: "Permanently delete \"{name}\"?",
+	},
+	'ingredientView.delete.confirm.withUsage': {
+		fr: "\"{name}\" est utilisé dans {count} recette(s) : {recipes}. Ces recettes afficheront cet ingrédient comme \"Non défini\" après suppression. Continuer ?",
+		en: "\"{name}\" is used in {count} recipe(s): {recipes}. Those recipes will show this ingredient as \"Undefined\" after deletion. Continue?",
+	},
+	'ingredientView.delete.confirm.button': {
+		fr: "Supprimer",
+		en: "Delete",
+	},
+	'ingredientView.deleted': {
+		fr: "Ingrédient \"{name}\" supprimé.",
+		en: "Ingredient \"{name}\" deleted.",
+	},
+
+
+	// --- src/views/RecipeView.tsx (delete) ---
+	'recipeView.delete.action': {
+		fr: "Supprimer la recette",
+		en: "Delete recipe",
+	},
+	'recipeView.delete.blocked': {
+		fr: "Impossible de supprimer \"{name}\" : elle est utilisée comme recette de base dans {count} recette(s) : {recipes}. Retire-la de ces recettes d'abord.",
+		en: "Cannot delete \"{name}\": it's used as a base recipe in {count} recipe(s): {recipes}. Remove it from those recipes first.",
+	},
+	'recipeView.delete.confirm': {
+		fr: "Supprimer définitivement \"{name}\" ?",
+		en: "Permanently delete \"{name}\"?",
+	},
+	'recipeView.delete.confirm.button': {
+		fr: "Supprimer",
+		en: "Delete",
+	},
+	'recipeView.deleted': {
+		fr: "Recette \"{name}\" supprimée.",
+		en: "Recipe \"{name}\" deleted.",
+	},
+	'recipeView.delete.blocked.title': {
+		fr: "Suppression impossible",
+		en: "Cannot delete",
+	},
+
 
 };
 

@@ -3,6 +3,15 @@ import { getOtherItemShopSection } from './otherItemsNote';
 import { DensityInfo } from './aggregateContributions';
 import { findIngredientFileByName } from './findIngredientFile';
 
+// A dedicated sentinel value for "we don't know which shop section this item
+// belongs to yet" — distinct from the ordinary "other" value a user can
+// pick from their own configurable shop sections list (see Manage Lists).
+// Exported so every place that needs to compare against or display this
+// specific bucket uses the same single constant, instead of repeating the
+// string literal (and risking a typo-based mismatch) in multiple files.
+export const UNASSIGNED_SHOP_SECTION = 'Unassigned';
+
+
 // Looks up the shop section for a shopping list item by name.
 // Priority order:
 // 1. A matching ingredient file's shop_section, if one exists.
@@ -28,7 +37,7 @@ export async function resolveShopSection(
 	const otherSection = await getOtherItemShopSection(app, otherItemsNotePath, itemName);
 	if (otherSection) return otherSection;
 
-	return 'Autres rayons'; // no ingredient sheet, and no #rayon tag added yet in "Autres"
+	return UNASSIGNED_SHOP_SECTION; // no ingredient sheet, and no #rayon tag added yet in "Autres"
 }
 
 // Reads density_g_ml and entity_weight_g from an ingredient's frontmatter,

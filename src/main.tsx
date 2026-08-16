@@ -20,6 +20,7 @@ import { RecipeListView, RECIPE_LIST_VIEW_TYPE } from './views/RecipeListView';
 import { ManageListsView, MANAGE_LISTS_VIEW_TYPE } from './views/ManageListsView';
 import { IngredientListView, INGREDIENT_LIST_VIEW_TYPE } from './views/IngredientListView';
 import { loadExampleData } from './models/loadExampleData';
+import { t } from './i18n/strings';
 
 
 
@@ -160,21 +161,9 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 
-		this.addRibbonIcon('chef-hat', 'Liste des recettes', () => {
+
+		const recipeListIcon = this.addRibbonIcon('chef-hat', t('main.ribbon.recipeList', this.settings.language), () => {
 			this.activateRecipeListView();
-		});
-
-
-		this.addRibbonIcon('shopping-cart', 'Liste de courses', () => {
-			this.activateShoppingListView();
-		});
-
-		this.addRibbonIcon('carrot', 'Liste des ingrédients', () => {
-			this.activateIngredientListView();
-		});
-
-		this.addRibbonIcon('tags', 'Préférences des listes', () => {
-			this.activateManageListsView();
 		});
 
 // Custom "chef hat with a plus" icon, since no built-in Lucide icon combines
@@ -193,8 +182,12 @@ export default class MyPlugin extends Plugin {
 	<line x1="71" y1="82" x2="93" y2="82" stroke="var(--background-primary)" stroke-width="5" stroke-linecap="round"/>
 `);
 
-		this.addRibbonIcon('chef-hat-plus', 'Crée une nouvelle recette', () => {
+		const newRecipeIcon = this.addRibbonIcon('chef-hat-plus', t('main.ribbon.newRecipe', this.settings.language), () => {
 			this.createNewRecipe();
+		});
+
+		const ingredientListIcon = this.addRibbonIcon('carrot', t('main.ribbon.ingredientList', this.settings.language), () => {
+			this.activateIngredientListView();
 		});
 
 		// Lucide's actual "carrot" path (24x24 viewBox), with a small "+" badge
@@ -209,10 +202,27 @@ export default class MyPlugin extends Plugin {
 	<line x1="82" y1="71" x2="82" y2="93" stroke="var(--background-primary)" stroke-width="5" stroke-linecap="round"/>
 	<line x1="71" y1="82" x2="93" y2="82" stroke="var(--background-primary)" stroke-width="5" stroke-linecap="round"/>
 `);
-		this.addRibbonIcon('carrot-plus', 'Crée un nouvel ingrédient', () => {
+		const newIngredientIcon = this.addRibbonIcon('carrot-plus', t('main.ribbon.newIngredient', this.settings.language), () => {
 			this.activateNewIngredientView();
 		});
+
 		this.addSettingTab(new SampleSettingTab(this.app, this));
+
+
+		const shoppingListIcon = this.addRibbonIcon('shopping-cart', t('main.ribbon.shoppingList', this.settings.language), () => {
+			this.activateShoppingListView();
+		});
+
+		const manageListsIcon = this.addRibbonIcon('tags', t('main.ribbon.manageLists', this.settings.language), () => {
+			this.activateManageListsView();
+		});
+
+		// Move our 6 ribbon icons to the very top of the ribbon, above any other
+// plugin's icons — Obsidian's public API doesn't offer ordering control,
+// so this repositions the DOM elements directly after creation.
+		const icons = [recipeListIcon, newRecipeIcon, ingredientListIcon, newIngredientIcon, shoppingListIcon, manageListsIcon];
+		icons[0].parentElement?.prepend(...icons);
+
 	}
 
 	async activateIngredientListView() {

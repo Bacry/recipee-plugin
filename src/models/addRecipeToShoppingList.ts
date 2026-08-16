@@ -5,6 +5,7 @@ import { parseShoppingList } from './parseShoppingList';
 import { buildShoppingListMarkdown } from './buildShoppingListMarkdown';
 import { flattenRecipeIngredients } from './flattenRecipeIngredients';
 import { addSingleIngredientToShoppingList } from './addSingleIngredientToShoppingList';
+import type { Language } from './i18n/strings';
 
 function generateId(): string {
 	return Math.random().toString(36).slice(2, 10);
@@ -22,8 +23,8 @@ export async function addRecipeToShoppingList(
 	recipesFolder: string,
 	otherItemsNotePath: string,
 	recipe: Recipe,
-	language: Language = 'fr',
-	servings: number
+	servings: number,
+	language: Language = 'fr'
 ): Promise<AddRecipeResult> {
 	const file = app.vault.getAbstractFileByPath(shoppingListPath);
 	if (!(file instanceof TFile)) {

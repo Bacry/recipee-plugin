@@ -171,7 +171,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		setIsSuggestingWithClaude(false);
 
 		if (result.error || !result.suggestion) {
-			new Notice(result.error ?? 'Erreur inconnue.');
+			new Notice(result.error ?? t('ingredientForm.claude.unknownError'));
 			return;
 		}
 

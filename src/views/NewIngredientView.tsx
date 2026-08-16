@@ -53,13 +53,14 @@ export class NewIngredientView extends ItemView {
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		this.root = createRoot(container);
+		const language = this.plugin.settings.language;
 
-		const saveAction = this.addAction('save', 'Enregistrer', () => {
+		const saveAction = this.addAction('save', t('newIngredientView.saveAction', language), () => {
 			this.formRef.current?.triggerSubmit();
 		});
 		saveAction.addClass('header-button');
 
-		const closeAction = this.addAction('x', 'Fermer le formulaire', () => {
+		const closeAction = this.addAction('x', t('newIngredientView.closeAction', language), () => {
 			this.handleClose();
 		});
 		closeAction.addClass('header-button');
@@ -137,7 +138,7 @@ export class NewIngredientView extends ItemView {
 				file.basename
 			);
 
-			new Notice(`Ingrédient "${file.basename}" créé.`);
+			new Notice(t('newIngredientView.created', this.plugin.settings.language).replace('{name}', file.basename));
 
 			if (canNavigateBack({ history: this.history })) {
 				// Came from a recipe's missing-ingredient link — go back there as before.

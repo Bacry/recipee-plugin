@@ -247,7 +247,7 @@ export class IngredientView extends ItemView {
 		values: IngredientFormValues
 	): Promise<void> {
 		if (!this.filePath) {
-			new Notice("Aucun fichier ingrédient sélectionné.");
+			new Notice(t('ingredientView.noFileSelected', this.plugin.settings.language));
 			return;
 		}
 
@@ -256,7 +256,7 @@ export class IngredientView extends ItemView {
 		);
 
 		if (!(file instanceof TFile)) {
-			new Notice("Le fichier ingrédient est introuvable.");
+			new Notice(t('ingredientView.fileNotFound', this.plugin.settings.language));
 			return;
 		}
 
@@ -295,7 +295,7 @@ export class IngredientView extends ItemView {
 			if (newName !== oldName) {
 				const updatedCount = await renameIngredientInRecipes(this.app, this.plugin.settings.recipesFolder, oldName, newName);
 				if (updatedCount > 0) {
-					new Notice(`${updatedCount} recette(s) mise(s) à jour avec le nouveau nom.`);
+					new Notice(t('ingredientView.rename.recipesUpdated', this.plugin.settings.language).replace('{count}', updatedCount.toString()));
 				}
 			}
 

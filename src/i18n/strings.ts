@@ -184,6 +184,14 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Formulaire ingrédient",
 		en: "Ingredient form",
 	},
+	'newIngredientView.saveAction': {
+		fr: "Enregistrer",
+		en: "Save",
+	},
+	'newIngredientView.closeAction': {
+		fr: "Fermer le formulaire",
+		en: "Close form",
+	},
 
 	// --- src/components/ErrorModal.tsx ---
 	'errorModal.title': {
@@ -1279,6 +1287,30 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Choisir un template de recette...",
 		en: "Choose a recipe template...",
 	},
+	'main.ribbon.recipeList': {
+		fr: "Liste des recettes",
+		en: "Recipe list",
+	},
+	'main.ribbon.newRecipe': {
+		fr: "Créer une nouvelle recette",
+		en: "Create new recipe",
+	},
+	'main.ribbon.ingredientList': {
+		fr: "Liste des ingrédients",
+		en: "Ingredient list",
+	},
+	'main.ribbon.newIngredient': {
+		fr: "Créer un nouvel ingrédient",
+		en: "Create new ingredient",
+	},
+	'main.ribbon.shoppingList': {
+		fr: "Liste de courses",
+		en: "Shopping list",
+	},
+	'main.ribbon.manageLists': {
+		fr: "Gérer les listes",
+		en: "Manage lists",
+	},
 
 	// --- src/models/flattenRecipeIngredients.ts ---
 	'flattenRecipeIngredients.forFrying': {
@@ -1419,6 +1451,36 @@ const STRINGS: Record<string, StringEntry> = {
 	'recipeView.delete.blocked.title': {
 		fr: "Suppression impossible",
 		en: "Cannot delete",
+	},
+
+	// --- src/components/IngredientForm.tsx (Claude error) ---
+	'ingredientForm.claude.unknownError': {
+		fr: "Erreur inconnue.",
+		en: "Unknown error.",
+	},
+	// --- src/views/IngredientView.tsx (delete/rename notices) ---
+	'ingredientView.noFileSelected': {
+		fr: "Aucun fichier ingrédient sélectionné.",
+		en: "No ingredient file selected.",
+	},
+	'ingredientView.fileNotFound': {
+		fr: "Le fichier ingrédient est introuvable.",
+		en: "Ingredient file not found.",
+	},
+	'ingredientView.rename.recipesUpdated': {
+		fr: "{count} recette(s) mise(s) à jour avec le nouveau nom.",
+		en: "{count} recipe(s) updated with the new name.",
+	},
+	// --- src/views/NewIngredientView.tsx ---
+	'newIngredientView.created': {
+		fr: "Ingrédient \"{name}\" créé.",
+		en: "Ingredient \"{name}\" created.",
+	},
+
+
+	'recipeListView.tag.filterTitle': {
+		fr: "Filtrer par ce tag",
+		en: "Filter by this tag",
 	},
 
 

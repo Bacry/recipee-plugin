@@ -404,6 +404,7 @@ export class RecipeListView extends ItemView {
 									type="button"
 									onClick={() => this.toggleTag(tag)}
 									className={this.selectedTags.has(tag) ? 'recipe-list-pinned-tag recipe-list-pinned-tag-active' : 'recipe-list-pinned-tag'}
+									title={t('recipeListView.tag.filterTitle', this.plugin.settings.language)}
 								>
 									{tag}
 								</button>

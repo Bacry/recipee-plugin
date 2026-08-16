@@ -6,9 +6,11 @@ Under the hood, every recipe, ingredient or shopping list  *is* still a plain ma
 
 The plugin can also connect to two optional external services to help fill in your data faster — both are off by default, quick to turn on, and fully explained step by step in [USDA Nutrition Lookup](#usda-nutrition-lookup) and [AI Assistance (Claude)](#ai-assistance-claude) below.
 
-> This guide reflects the plugin's default settings: **English**, and the **US measurement system** (cups, oz, lb...). Several other languages are available too, with more added over time, and you can switch to the **Metric** system at any time — both from Settings. See [Language & Units](#language--units) in Advanced Features.
+> This guide reflects the plugin's default settings: **English**, and the **US measurement system** (cups, oz, lb...). Several other languages are available too, with more added over time, and you can switch to the **Metric** system at any time — both from Settings. See [Language & Units](#language--units) in Advanced Features. 
 
-![Recipe view screenshot](screenshots/recipe-view.png)
+<p align="center">
+<img src="screenshots/recipe-view.png" width="500" alt="Recipe view screenshot">
+</p>
 
 ## Table of Contents
 
@@ -58,9 +60,11 @@ Open the command palette (`Cmd/Ctrl+P`) and run **"Load example data"**. This ad
 	- Try changing the servings number at the top of the ingredient list too, and watch every quantity and the Nutrition table (at the bottom) recalculate. Click <img src="screenshots/icons/icon-reset.png" width="24" alt="Reset icon"> to reset the servings back to the recipe's original number.
 	- Notice the frying oil ingredient in the list of ingredients. And, close to the Nutrition table, notice the editable **absorption percentage**: fried food soaks up some of the oil it's cooked in, which isn't captured by the raw ingredient weights alone — this percentage estimates how much, and adds that oil's calories/fat to the totals. Try changing the number and watch the nutrition table update live.
 	- Ingredient names in the list are clickable links — click **"Chicken breast"** to open its own sheet (nutrition facts, which other recipes use it, etc.). Click <img src="screenshots/icons/icon-back.png" width="22" alt="Back icon"> (top right — always takes you back to whatever you were looking at before) to return to the recipe.
-	- Click <img src="screenshots/icons/icon-back.png" width="22" alt="Back icon"> again to return to the Recipe List.
+	- Click <img src="screenshots/icons/icon-back.png" width="22" alt="Back icon"> again to return to the Recipe List. 
 
-![Fried Chicken Tenders recipe view, showing sections and the frying/absorption block](screenshots/quickstart-fried-chicken.png)
+<p align="center">
+<img src="screenshots/quickstart-fried-chicken.png" width="500" alt="Fried Chicken Tenders recipe view, showing sections and the frying/absorption block">
+</p>
 
 - Open the <img src="screenshots/icons/icon-ingredient-list.png" width="24" alt="Ingredient list icon"> **Ingredient List** — the ten example ingredients, organized by type and shop section. Try sorting by any column, and filtering by type or dietary constraint. Click on any ingredient to open its own sheet, then <img src="screenshots/icons/icon-back.png" width="22" alt="Back icon"> to return to the list.
 
@@ -68,7 +72,9 @@ Open the command palette (`Cmd/Ctrl+P`) and run **"Load example data"**. This ad
 
 1. Click <img src="screenshots/icons/icon-new-recipe.png" width="24" alt="New recipe icon"> — since the example data includes a recipe template, a small picker appears asking which one to start from. Choose **"Empty recipe"** (always listed first) — templates are just a way to pre-fill common fields for a recipe type you make often, not needed here. A blank recipe form opens.
 
-![Template picker, with "Empty recipe" as the first option](screenshots/quickstart-template-picker.png)
+<p align="center">
+<img src="screenshots/quickstart-template-picker.png" width="500" alt="Template picker, with "Empty recipe" as the first option">
+</p>
 
 2. In the **Name** field, type `Sweetened Milk`.
 3. In **Base servings**, type `1`. In **Serving unit**, type `glass` — together these just mean "this recipe makes 1 glass".
@@ -76,36 +82,50 @@ Open the command palette (`Cmd/Ctrl+P`) and run **"Load example data"**. This ad
 5. Scroll to the ingredient input at the bottom of the ingredients section. Type `who` — a suggestion for "whole milk" appears (one of the example ingredients). Click it, or press **Enter** to accept it. Now type `1cup` (a number directly followed by a unit, no space needed) and press **Enter** again — this is the quantity. The line `1cup of Whole milk` appears in the list.
 6. Add a second ingredient the same way: type `sug`, pick **"sugar"** from the suggestions, then type `1tbsp` and press **Enter**. The line `1tbsp of Sugar` appears.
 7. In the **Instructions** box, type your steps as a numbered markdown list, starting with a heading: `#### Preparation` on its own line, then `1. Warm the milk gently.` and `2. Stir in the sugar until dissolved.` below it. The `####` is what makes that line display as a heading in the recipe view — you'll see the same style used for a `#### Cooking` section later, on recipes that need one. 
+ 
+<p align="center">
+<img src="screenshots/quickstart-recipe-form.png" width="500" alt="Recipe form with ingredients added">
+</p>
+
 8. Click <img src="screenshots/icons/icon-save.png" width="24" alt="Save icon"> (saves whatever form you're filling in) at the top right of the view to save the recipe. You're now looking at the finished recipe, with a nutrition table already computed from whole milk and sugar's own nutrition facts.
 
-![Recipe form with ingredients added](screenshots/quickstart-recipe-form.png)
 
 ### Step 4 — Add an ingredient that doesn't exist yet
 
 Real recipes often call for something you haven't created a sheet for. Let's see what that looks like.
 
 1. Click <img src="screenshots/icons/icon-edit.png" width="24" alt="Edit icon"> (switches the recipe from read-only into an editable form) on the "Sweetened Milk" recipe you just created.
-2. In the ingredient input, type `Vanilla extract` — since no ingredient by that name exists, no suggestion appears. Press **Enter** anyway to accept it as free text, then type `1tsp` and press **Enter** to set its quantity.
-3. Click <img src="screenshots/icons/icon-save.png" width="24" alt="Save icon"> to save the recipe again. Notice the recipe still works fine — "Vanilla extract" just shows up in the ingredient list without a link, since it has no sheet yet.
+2. In the ingredient input, type `vanilla extract` — since no ingredient by that name exists, no suggestion appears. Press **Enter** anyway to accept it as free text, then type `1tsp` and press **Enter** to set its quantity.
+3. Click <img src="screenshots/icons/icon-save.png" width="24" alt="Save icon"> to save the recipe again. Notice the recipe still works fine — "Vanilla extract" shows up in the ingredient list as a red link, since it has no sheet yet. Clicking it would take you straight to a pre-filled "new ingredient" form — but let's do it from the Ingredient List instead, to see that view too.
 4. Open the <img src="screenshots/icons/icon-ingredient-list.png" width="24" alt="Ingredient list icon"> **Ingredient List** and switch to the **"Undefined"** tab — "Vanilla extract" is listed there now.
-5. Click it — a new ingredient form opens, with the **Name** field already filled in.
+
+<p align="center">
+<img src="screenshots/quickstart-undefined-ingredient.png" width="500" alt="Undefined ingredient tab, with the new ingredient listed">
+</p> 
+
+5. Click on the name of the ingredient "Vanilla extract" — a new ingredient form opens, with the **Name** field already filled in.
 6. Fill in a **Type** (e.g. `other`) and a **Shop section** (e.g. `pantry`), then a rough set of **nutrition facts per 100g** (exact values don't matter for this walkthrough — even all zeros is fine).
+
+<p align="center">
+<img src="screenshots/quickstart-new-ingredient.png" width="500" alt="The new ingredient form">
+</p>
+
 7. Click <img src="screenshots/icons/icon-save.png" width="24" alt="Save icon"> to save the ingredient.
 8. Go back to the <img src="screenshots/icons/icon-recipe-list.png" width="24" alt="Recipe list icon"> **Recipe List** and open "Sweetened Milk" again — "Vanilla extract" is now a clickable link, and it's included in the nutrition table too.
 
-![Undefined ingredient tab, with the new ingredient listed](screenshots/quickstart-undefined-ingredient.png)
 
 ### Step 5 — The Shopping List
 
 1. Open the <img src="screenshots/icons/icon-shopping-list.png" width="24" alt="Shopping list icon"> **Shopping List** — it's empty so far.
 2. Go to <img src="screenshots/icons/icon-recipe-list.png" width="24" alt="Recipe list icon"> **Recipe List** and open your **"Sweetened Milk"** recipe.
-3. Click the shopping cart icon (🛒) at the top of the ingredient list — this adds all of that recipe's ingredients to your shopping list, scaled to its servings.
-4. Click <img src="screenshots/icons/icon-back.png" width="22" alt="Back icon"> and open the <img src="screenshots/icons/icon-shopping-list.png" width="24" alt="Shopping list icon"> **Shopping List** again — Whole milk, Sugar, and Vanilla extract are now listed, grouped by shop section.
-5. Click the checkmark (✓) next to one of them to mark it bought — the line gets struck through. Click ✓ again to undo it.
-6. Click the ✕ next to another one to remove it from the list entirely.
-7. Now type directly into the input at the top of the list — e.g. `Sponges` — and press **Enter** twice (once to accept the name, once more since it has no fixed quantity). It's added as a plain item, with no ingredient sheet required — this is how you add anything to your shopping list beyond just recipe ingredients.
+3. Click the shopping cart icon (🛒) at the top of the ingredient list — this adds all of that recipe's ingredients to your shopping list, scaled to its servings. The **Shopping List** opens — Whole milk, Sugar, and Vanilla extract are now listed, grouped by shop section.
+4.Click the checkmark (✓) next to one of them to mark it bought — the line gets struck through. Click ✓ again to undo it.
+5. Click the ✕ next to another one to remove it from the list entirely.
+7. Now type directly into the input at the top of the list — e.g. `Sponges` — and press **Enter** twice (once to accept the name, once more since it has no fixed quantity). It's added as a plain item, with no ingredient sheet required — this is how you add anything to your shopping list beyond just recipe ingredients (Note that you could have added a quantity also) 
 
-![Shopping list with items from a recipe and a manual item](screenshots/quickstart-shopping-list.png)
+<p align="center">
+<img src="screenshots/quickstart-shopping-list.png" width="500" alt="The shopping list">
+</p>
 
 ---
 

@@ -12,11 +12,11 @@ export interface RecipeIngredientEntry {
 	order?: number; // position dans la liste unifiée (ingrédients + recettes de base) affichée/éditée
 }
 
-// A reference to another recipe (tagged "base") used as a component of this
-// recipe — e.g. "100g of vinegar mix" inside a sushi rice recipe. Unlike
-// regular ingredients, quantity is always required (no "à volonté" case
-// makes sense here), and unit must be convertible to the base recipe's own
-// servingsLabel unit (checked at form-submit time, not enforced by the type).
+// A reference to another recipe (with isBaseRecipe: true) used as a component
+// of this recipe — e.g. "100g of vinegar mix" inside a sushi rice recipe.
+// Unlike regular ingredients, quantity is always required (no "à volonté"
+// case makes sense here), and unit must be convertible to the base recipe's
+// own servingsLabel unit (checked at form-submit time, not enforced by the type).
 export interface RecipeBaseRecipeEntry {
 	recipeName: string;
 	quantity: number;
@@ -34,6 +34,7 @@ export interface Recipe {
 	madeBeforeTracking: boolean;
 	ingredients: RecipeIngredientEntry[];
 	baseRecipes: RecipeBaseRecipeEntry[]; // always an array, empty if none used
+	isBaseRecipe: boolean; // if true, this recipe can be used as a component of other rec
 	instructions: string;
 	notes?: string;
 	source?: string;

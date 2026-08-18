@@ -12,6 +12,7 @@ import { FormEntry } from '../models/formEntry';
 import { useT } from '../i18n/LanguageContext';
 import { useContext } from 'react';
 import { LanguageContext } from '../i18n/LanguageContext';
+import { AIProviderId, AICredentials } from '../services/ai/types';
 
 export interface RecipeFormHandle {
 	triggerSubmit: () => void;
@@ -25,6 +26,7 @@ export interface RecipeFormValues {
 	cookingDurationMin: string;
 	requiresCooking: boolean;
 	madeBeforeTracking: boolean;
+	isBaseRecipe: boolean;
 	fryingOilName: string;
 	ingredients: RecipeIngredientEntry[];
 	baseRecipes: RecipeBaseRecipeEntry[];
@@ -42,13 +44,13 @@ interface RecipeFormProps {
 	recipesFolder: string;
 	ingredientsFolder: string;
 	recipeImagesFolder: string;
-	anthropicApiKey: string;
-	anthropicModel: string;
+	aiCredentials: AICredentials;
+	aiProvider: AIProviderId;
 	onSubmit: (values: RecipeFormValues) => void;
 	initialValues?: RecipeFormValues;
 	submitLabel?: string;
 	oilIngredientTypes: string[];
-	claudeEnabled: boolean;
+	aiEnabled: boolean;
 }
 
 function emptyValues(): RecipeFormValues {
@@ -60,6 +62,7 @@ function emptyValues(): RecipeFormValues {
 		cookingDurationMin: '',
 		requiresCooking: false,
 		madeBeforeTracking: false,
+		isBaseRecipe: false,
 		ingredients: [],
 		baseRecipes: [],
 		instructions: '',
@@ -88,8 +91,8 @@ function toEntries(ingredients: RecipeIngredientEntry[], baseRecipes: RecipeBase
 }
 
 export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function RecipeForm(
-	{ app, recipesFolder, ingredientsFolder, recipeImagesFolder, anthropicApiKey,
-		anthropicModel, onSubmit, initialValues, submitLabel, oilIngredientTypes, claudeEnabled  },
+	{ app, recipesFolder, ingredientsFolder, recipeImagesFolder, aiCredentials,
+		aiProvider, onSubmit, initialValues, submitLabel, oilIngredientTypes, aiEnabled  },
 	ref
 ) {
 	const t = useT();
@@ -114,6 +117,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	const [sourceHighlightedIndex, setSourceHighlightedIndex] = useState<number>(-1);
 	const [requiresCooking, setRequiresCooking] = useState(base.requiresCooking);
 	const [madeBeforeTracking, setMadeBeforeTracking] = useState(base.madeBeforeTracking);
+	const [isBaseRecipe, setIsBaseRecipe] = useState(base.isBaseRecipe);
 	const [fryingOilName, setFryingOilName] = useState(base.fryingOilName);
 	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -139,6 +143,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			cookingDurationMin,
 			requiresCooking,
 			madeBeforeTracking,
+			isBaseRecipe,
 			ingredients,
 			baseRecipes,
 			instructions,
@@ -279,6 +284,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		setCookingDurationMin(values.cookingDurationMin);
 		setRequiresCooking(values.requiresCooking);
 		setMadeBeforeTracking(values.madeBeforeTracking);
+		setIsBaseRecipe(values.isBaseRecipe);
 		setEntries(toEntries(values.ingredients, values.baseRecipes));
 		setInstructions(values.instructions);
 		setNotes(values.notes);
@@ -290,7 +296,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	}
 
 	function openParseTextModal() {
-		new ParseRecipeTextModal(app, anthropicApiKey, anthropicModel, ingredientsFolder, (values) => {
+		new ParseRecipeTextModal(app, aiProvider, aiCredentials, ingredientsFolder, (values) => {
 			applyExtractedValues(values);
 		}, language).open();
 	}
@@ -302,10 +308,10 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	return (
 		<div className="ingredient-form">
 
-			{claudeEnabled && (
-				<div className="recipe-form-claude-section">
-					<button type="button" onClick={openParseTextModal} className="recipe-form-claude-submit">
-						{t('recipeForm.claude.extract')}
+			{aiEnabled && (
+				<div className="recipe-form-ai-section">
+					<button type="button" onClick={openParseTextModal} className="recipe-form-ai-submit">
+						{t('recipeForm.ai.extract')}
 					</button>
 				</div>
 			)}
@@ -316,15 +322,6 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 				<div className="form-field form-field-wide">
 					<label>{t('recipeForm.name')}*</label>
 					<input value={name} onChange={(e) => setName(e.target.value)} />
-				</div>
-				<div className="recipe-form-made-before-row">
-					<label>{t('recipeForm.madeBefore')}</label>
-					<input
-						type="checkbox"
-						checked={madeBeforeTracking}
-						onChange={(e) => setMadeBeforeTracking(e.target.checked)}
-						className="recipe-form-made-before-checkbox"
-					/>
 				</div>
 				<div className="form-grid">
 					<div className="form-field">
@@ -349,7 +346,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					</div>
 
 					<div className="form-field">
-						<label>{t('recipeForm.requiresCooking')}</label>
+						<label>{t('recipeForm.requiresCooking')}*</label>
 						<div className="recipe-form-cooking-row">
 							<input
 								type="checkbox"
@@ -456,6 +453,25 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 							</ul>
 						)}
 					</div>
+				</div>
+
+				<div className="recipe-form-made-before-row">
+					<label>{t('recipeForm.madeBefore')}</label>
+					<input
+						type="checkbox"
+						checked={madeBeforeTracking}
+						onChange={(e) => setMadeBeforeTracking(e.target.checked)}
+						className="recipe-form-made-before-checkbox"
+					/>
+				</div>
+				<div className="recipe-form-made-before-row">
+					<label>{t('recipeForm.isBaseRecipe')}</label>
+					<input
+						type="checkbox"
+						checked={isBaseRecipe}
+						onChange={(e) => setIsBaseRecipe(e.target.checked)}
+						className="recipe-form-made-before-checkbox"
+					/>
 				</div>
 			</section>
 

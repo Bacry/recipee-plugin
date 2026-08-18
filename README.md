@@ -135,22 +135,20 @@ That's the whole loop: browse example data, then build your own recipes and ingr
 
 # Basic Features
 
-Everything in this section gets you fully productive — writing recipes, checking nutrition, and shopping — without touching any advanced setting.
+Everything in this section gets you fully productive — writing recipes, checking nutrition, and shopping — without touching any markdown obsidian notes.
 
 ## The Ribbon Icons
 
-![Ribbon icons](screenshots/ribbon-icons.png)
+Five icons open the plugin's main views, plus one for tags list managent:
 
-Five icons open the plugin's main views, plus one for Manage Lists:
-
-| Icon | Opens |
-|---|---|
-| <img src="screenshots/icons/icon-recipe-list.png" width="24" alt="Recipe list icon"> | The **Recipe List** — browse, search, and filter every recipe in your vault |
-| <img src="screenshots/icons/icon-new-recipe.png" width="24" alt="New recipe icon"> | A blank **new recipe** form — see [Creating a Recipe](#creating-a-recipe) |
-| <img src="screenshots/icons/icon-ingredient-list.png" width="24" alt="Ingredient list icon"> | The **Ingredient List** — browse every ingredient you've defined |
+| Icon | Opens                                                                                   |
+|---|-----------------------------------------------------------------------------------------|
+| <img src="screenshots/icons/icon-recipe-list.png" width="24" alt="Recipe list icon"> | The **Recipe List** — browse, search, and filter every recipe in your vault             |
+| <img src="screenshots/icons/icon-new-recipe.png" width="24" alt="New recipe icon"> | A blank **new recipe** form — see [Creating a Recipe](#creating-a-recipe)               |
+| <img src="screenshots/icons/icon-ingredient-list.png" width="24" alt="Ingredient list icon"> | The **Ingredient List** — browse, search, and filter every ingredient in your vault     |
 | <img src="screenshots/icons/icon-new-ingredient.png" width="24" alt="New ingredient icon"> | A blank **new ingredient** form — see [Creating an Ingredient](#creating-an-ingredient) |
-| <img src="screenshots/icons/icon-shopping-list.png" width="24" alt="Shopping list icon"> | Your **Shopping List** |
-| <img src="screenshots/icons/icon-manage-lists.png" width="24" alt="Manage lists icon"> | **Manage Lists** — a separate, more advanced view, see [Manage Lists](#manage-lists) |
+| <img src="screenshots/icons/icon-shopping-list.png" width="24" alt="Shopping list icon"> | Managing your **Shopping List**                                                         |
+| <img src="screenshots/icons/icon-manage-lists.png" width="24" alt="Manage lists icon"> | **Manage Lists** — a separate, more advanced view, see [Manage Lists](#manage-lists)    |
 
 On mobile, tap the menu icon (☰) in the top bar to reveal the same six icons.
 
@@ -160,38 +158,58 @@ Everything described in this guide happens through these ribbon icons and the on
 
 Click the <img src="screenshots/icons/icon-new-ingredient.png" width="18" alt="New ingredient icon"> ribbon icon to open a blank ingredient form.
 
-![Empty ingredient form](screenshots/ingredient-form-empty.png)
+<p align="center">
+<img src="screenshots/empty-ingredient-form.png" width="500" alt="Empty ingredient form">
+</p>
 
 Fill in:
 
-- **Name** — required. This becomes the ingredient's file name, and the name you'll search for when adding it to a recipe.
-- **Type** — required. A category like "vegetable", "dairy", "oil"... Pick from your existing types (managed in [Manage Lists](#manage-lists)), or type a new one to add it on the fly.
-- **Shop section** — required. Where you'd find it in a store (e.g. "produce", "dairy"). Used to group your [shopping list](#shopping-list) by aisle.
-- **Density (g/mL)** *(optional)* — lets the plugin convert between weight and volume for this ingredient anywhere a quantity is shown (e.g. so "200g of milk" and "20cl of milk" both display and calculate correctly).
-- **Unit weight (g)** *(optional)* — the weight of a single whole unit (e.g. one egg, one lemon). Lets you enter "3 eggs" in a recipe and have the plugin know its weight for nutrition purposes.
+- **Name** *(required)* — this becomes the ingredient's file name, and the name you'll search for when adding it to a recipe.
+- **Type** *(required)* — a category like "vegetable", "dairy", "oil"... Pick from existing types (managed in [Manage Lists](#manage-lists)).
+- **Shop section** *(required)* — where you'd find it in a store (e.g. "produce", "dairy"). Used to group your [shopping list](#shopping-list) by aisle. Pick from existing shop sections (managed in [Manage Lists](#manage-lists)).
+- **Density (g/mL)** *(optional)* — indicates the weight (in g) per volume (in mL). It allows the plugin to convert between weight quantity and volume quantity for this ingredient (e.g. the density of milk is 1, the same as water : so "200g of milk" corresponds to "200ml of milk").
+- **Unit weight (g)** *(optional)* — where applicable: specifies the weight of a whole unit (e.g., an egg, a cucumber). This allows you to: i) enter "3 eggs" in a recipe and let the plugin determine the weight for nutritional calculations, or ii) conversely, determine how many cucumbers to buy for a recipe requiring 200 g of cucumber.
 - **Forms** *(optional)* — a comma-separated list of preparation forms this ingredient can take (e.g. `whole, chopped, diced`). These become autocomplete suggestions when you add this ingredient to a recipe — see [Adding ingredients](#adding-ingredients-the-full-input-flow).
-- **Constraints** *(optional)* — check any dietary flags this ingredient triggers (gluten, lactose, a specific allergen...). Used to filter recipes — see [Diet Flags & Filtering](#diet-flags--filtering-by-constraint).
-- **Brand** *(optional)* — free text, only meaningful when the brand affects nutrition (e.g. a low-sodium soy sauce).
-- **Nutritional values (per 100g)** — Calories, Fat (with a "of which unsaturated" sub-field), Carbohydrates (with a "of which sugars" sub-field), Proteins, Salt, Fiber, Cholesterol. These are the numbers every recipe's nutrition table is built from — see [Viewing a Recipe & Its Nutrition](#viewing-a-recipe--its-nutrition).
+- **Constraints** *(optional)* — check any dietary flags this ingredient triggers (gluten, lactose, a specific allergen...). Used to filter recipes — see [Diet Flags & Filtering](#diet-flags--filtering-by-constraint). Pick from existing types (managed in [Manage Lists](#manage-lists)).
+- **Brand** *(optional)* — free text, useful to indicate the brand the indicated nutrition values are based on.
+- **Nutritional values (per 100g)** — calories, Fat (with a "of which unsaturated" sub-field), Carbohydrates (with a "of which sugars" sub-field), Proteins, Salt, Fiber, Cholesterol. These are the numbers every recipe's nutrition table is built from — see [Viewing a Recipe & Its Nutrition](#viewing-a-recipe--its-nutrition).
 
-  *Filling these in by hand is the default flow. If you'd rather look them up or have them suggested automatically, see [USDA Nutrition Lookup](#usda-nutrition-lookup) and [AI Assistance](#ai-assistance-claude) in Advanced Features — both are optional and can be turned off entirely.*
+  *<u>Filling these in by hand is the default flow. If you'd rather look them up or have them suggested automatically, see [USDA Nutrition Lookup](#usda-nutrition-lookup) and [AI Assistance](#ai-assistance-claude) in Advanced Features — both are optional and can be turned off entirely.* </u>
 
-Click the save icon (💾, top right) when done.
+Click the save icon (<img src="screenshots/icons/icon-save.png" width="24" alt="Save icon"> , top right) when done.
 
 ## Creating a Recipe
 
-Click the <img src="screenshots/icons/icon-new-recipe.png" width="18" alt="New recipe icon"> ribbon icon to open a blank recipe form.
+Click the <img src="screenshots/icons/icon-new-recipe.png" width="18" alt="New recipe icon"> ribbon icon. You'll be asked to pick an existing template (a partly pre-filled form) or start from a blank one — choose **"Empty recipe"** (always listed first) for a fully blank form like this one:
 
-![Empty recipe form](screenshots/recipe-form-empty.png)
+<p align="center">
+<img src="screenshots/empty-recipe-form.png" width="500" alt="Empty recipe form">
+</p>
 
-Fill in a **Name**, then:
+*If Claude is enabled (see [AI Assistance](#ai-assistance-claude)), an "Extract from text" button appears at the very top — lets you paste a recipe from elsewhere and have its fields filled in automatically. Entirely optional; the rest of this section covers filling the form in by hand.*
+
+### General information
+
+- **Name** *(required)* — becomes the recipe's file name.
+- **Recipe already made before** — check this if you've cooked it many times in the past but never tracked the dates; leave unchecked otherwise. See [Viewing a Recipe & Its Nutrition](#viewing-a-recipe--its-nutrition) for how history tracking works.
+- **This is a base recipe** — check this if you want this recipe usable as a component of other recipes (e.g. a sauce or dough reused elsewhere). See [Recipe Sections & Base Recipes](#recipe-sections--base-recipes) in Advanced Features.
+- **Base servings** and **Serving unit** *(both required)* — see [Servings, explained](#servings-explained) below.
+- **Preparation (min)** *(optional)* — a plain number.
+- **Requires cooking** *(required)* — a checkbox that unlocks two more fields once checked: a cooking **Time** (min), and a **Weight** field for the dish's measured final weight once cooked. Leave the weight field empty if you haven't weighed it. It is needed for the plugin to estimate the Nutrition table values for 100g (see [Viewing a Recipe](#viewing-a-recipe--its-nutrition)).
+- **Subfolder** *(optional)* — a dropdown of existing subfolders inside your recipes folder, to file this recipe under one of them (e.g. "Cocktails"). Leave on "-- Root --" to save it directly in your main recipes folder.
+- **Image** *(optional)* — either type a filename directly, or click **"Choose"** to upload an image file from your computer; it's saved to your [configured recipe images folder](#settings-reference) and linked automatically.
+
+Below that, two more fields on their own row:
+
+- **Tags** *(optional)* — comma-separated, with autocomplete suggesting tags you've already used elsewhere. Used for filtering in the [Recipe List](#browsing--filtering-recipes-and-ingredients).
+- **Source** *(optional)* — free text or a URL (rendered as a clickable "web" link if it's a URL), with autocomplete suggesting sources you've already used.
 
 ### Servings, explained
 
 Every recipe has two related fields:
 
-- **Base servings** — a number, e.g. `4`.
-- **Serving unit** — a word describing what that number counts, e.g. `servings`, `cookies`, `cocktails`, `loaf`. This is entirely free text — use whatever makes sense for the recipe.
+- **Base servings** *(required)* — a number, e.g. `4`.
+- **Serving unit** *(required)* — a word describing what that number counts, e.g. `servings`, `cookies`, `cocktails`, `loaf`. This is entirely free text — use whatever makes sense for the recipe.
 
 Together, these mean "this recipe as written makes 4 servings" (or 4 cookies, or 1 loaf, etc.). Later, in the [recipe view](#viewing-a-recipe--its-nutrition), you can change this number — say, to `8` — and every ingredient quantity *and* the nutrition table scale automatically. Nothing about how you write the recipe needs to change; scaling only happens at viewing time.
 
@@ -199,12 +217,10 @@ Together, these mean "this recipe as written makes 4 servings" (or 4 cookies, or
 
 This is the part worth understanding well, since you'll use it constantly. The ingredient field walks you through up to three steps for each line — **name → complement/form → quantity** — confirming each with **Enter** (or the on-screen keyboard's "Done"/✓ key on mobile).
 
-![Typing an ingredient name with autocomplete suggestions](screenshots/ingredient-input-autocomplete.png)
-
 **Step 1 — Name.** Start typing (2+ letters triggers suggestions). You'll see:
-- Ingredients you've already created.
-- If that ingredient has [forms](#creating-an-ingredient) declared on its sheet, each form appears as its own suggestion, e.g. `Chicken` **and** `Chicken (chopped)` **and** `Chicken (diced)` as separate options.
-- Other recipes tagged as a **base recipe** (see [Recipe Sections & Base Recipes](#recipe-sections--base-recipes)), labeled `(recipe)`.
+- Ingredients you've already created
+- If an ingredient has [forms](#creating-an-ingredient) declared on its sheet, each form appears as its own suggestion, e.g. `Chicken` **and** `Chicken (chopped)` **and** `Chicken (diced)` as separate options.
+- Other recipes marked as a **base recipe**, labeled `(recipe)` — see [Recipe Sections & Base Recipes](#recipe-sections--base-recipes).
 
 Press **Enter** to accept the highlighted suggestion, or just type a name and press Enter to use free text (useful for an ingredient you haven't created a sheet for yet — you can create it later from the [Ingredient List](#browsing--filtering-recipes-and-ingredients)'s "undefined ingredients" tab).
 
@@ -217,41 +233,58 @@ If you picked a suggestion that already included a form (like `Chicken (chopped)
 At any step, pressing **Backspace** on an empty input steps back to re-edit the previous piece.
 
 **Quantities** accept a plain number, a number with a unit attached (no space needed), or a fraction:
+By default, the plugin uses the **US measurement system** — quantities you type are kept as-is if they're already in a US unit (`oz`, `lb`, `cup`, `tbsp`, `tsp`), and automatically converted if you type a Metric one instead. (Switch to Metric as your default anytime in Settings — see [Language & Units](#language--units).)
 
 | You type | Understood as |
 |---|---|
-| `200g` | 200 grams |
+| `8oz` | 8 ounces |
 | `1/2` | 0.5 (unitless — a whole-item count) |
 | `1 1/2cup` | 1.5 cups |
-| `2cs` | 2 French tablespoons (≈ 15 mL each) |
+| `2tbsp` | 2 tablespoons |
 | `3` | 3 whole units (e.g. "3 eggs") |
 
-Supported units: `g`, `kg`, `l`, `dl`, `cl`, `ml`, `cs` (tbsp), `cc` (tsp), `cup`, `tbsp`, `tsp`, `oz`, `lb`. Typing a unit from the system you're *not* using by default is fine — it's automatically converted to your preferred system on save (see [Units](#language--units)).
+Supported units: `oz`, `lb`, `cup`, `tbsp`, `tsp` (US), and `g`, `kg`, `l`, `dl`, `cl`, `ml`, `cs`, `cc`, `dash` (Metric).
+
+Typing a unit from the system you're *not* using by default is fine — it's automatically converted to your preferred one on save. For example, if you type `250g`, since the default here is US, it's instantly converted and stored as `8.8oz` — the recipe always ends up in your preferred system, no matter which one you typed in.
 
 **Worked examples:**
 
 | What you type, step by step | Result |
 |---|---|
-| `Flour` → Enter → `200g` → Enter | 200g of Flour |
-| `Chicken (chopped)` *(picked from suggestions)* → Enter → `500g` → Enter | 500g of Chicken (chopped) |
-| `Soy sauce` → Enter → `low-sodium` → Enter → `2cs` → Enter | 2cs of Soy sauce (low-sodium) |
+| `Flour` → Enter → `8oz` → Enter | 8oz of Flour |
+| `Chicken (chopped)` *(picked from suggestions)* → Enter → `1lb` → Enter | 1lb of Chicken (chopped) |
+| `Soy sauce` → Enter → `low-sodium` → Enter → `2tbsp` → Enter | 2tbsp of Soy sauce (low-sodium) |
 | `Salt` → Enter → *(leave blank)* → Enter | Salt, no fixed quantity — still appears on the [shopping list](#shopping-list) |
-| `Pizza dough (recipe)` *(a base recipe)* → Enter → `300g` → Enter | 300g of Pizza dough, scaled from that recipe's own ingredients — see [Base Recipes](#recipe-sections--base-recipes) |
-
+| `Pizza dough (recipe)` *(a base recipe)* → Enter → `10oz` → Enter | 10oz of Pizza dough, scaled from that recipe's own ingredients — see [Base Recipes](#recipe-sections--base-recipes) |
 Once you have at least one ingredient line, drag it by its handle (⠿) to reorder — see [Recipe Sections](#recipe-sections--base-recipes) for grouping ingredients under headers.
 
-Finish with **Instructions** (plain markdown — headings, lists, anything Obsidian renders normally) and optional **Notes**. Save with the 💾 icon.
+Below the ingredient input, two more things live in this section:
+
+- **"+ section" button** — groups ingredients under a header (e.g. "For the dough"). See [Recipe Sections & Base Recipes](#recipe-sections--base-recipes) in Advanced Features.
+- **Frying oil** dropdown — only relevant if this recipe involves frying something. See [Frying & Oil Absorption](#frying--oil-absorption) in Advanced Features.
+
+### Instructions & Notes
+
+- **Instructions** — plain markdown (headings, numbered lists, anything Obsidian renders normally). Use at least one `####` heading (e.g. `#### Preparation`) to structure your steps — every `####` heading you write is displayed as a section title in the recipe view, so you can split instructions into as many stages as make sense (e.g. `#### Preparation` and `#### Cooking`).
+- **Notes** *(optional)* — usually left empty here. This field is really meant to be filled in later, from the recipe's [read-only view](#viewing-a-recipe--its-nutrition) rather than this form — a place to jot things down while actually making the recipe (substitutions you made, adjustments for next time, how it turned out).
+
+Once everything's filled in, click <img src="screenshots/icons/icon-save.png" width="18" alt="Save icon"> to save the recipe.
+
 
 ## Viewing a Recipe & Its Nutrition
 
 Opening a saved recipe shows the read-only view: tags, prep/cook time, source, image, the ingredient list, instructions, history, and a nutrition table.
 
-![Recipe view with nutrition table](screenshots/recipe-view-nutrition.png)
+
+<p align="center">
+<img src="screenshots/quickstart-fried-chicken.png" width="500" alt="The read-only recipe view">
+</p>
 
 - **Servings field**, top of the ingredients section — change this number and every quantity *and* the nutrition table recompute instantly. Click ↺ to reset to the recipe's base servings (see [Servings, explained](#servings-explained)).
-- **Click any ingredient quantity** to see it converted to another compatible unit (weight ↔ volume ↔ whole units) — useful if a recipe lists grams but you think in cups, or vice versa.
-- **Nutrition table** — three columns: **Total** for the whole batch, **Per serving** (using your [serving unit](#servings-explained), when it isn't already a real measurement like grams), and **Per 100g**. All computed from the per-100g values on each ingredient's own sheet.
+- **Click any ingredient quantity** to see it converted (when possible) to another compatible unit (weight ↔ volume ↔ whole units) — useful if a recipe lists grams but you think in cups, or vice versa.
 - **"Made today"** button — logs today's date to the recipe's history. Cooked something many times before you started using the plugin? Mark "already made before" instead of guessing dates, from the [edit form](#creating-a-recipe).
+- **Nutrition table** — three columns: **Total** for the whole batch, **Per serving** (using your [serving unit](#servings-explained), when it isn't already a real measurement like grams), and **Per 100g**. All computed from the per-100g values on each ingredient's own sheet.
+- **Notes** — click the "Notes" heading to open an editable text area (markdown supported), type your note, then click the heading again to save it. This is the place to jot things down while actually making the recipe — substitutions you made, adjustments for next time, how it turned out — without needing to switch to editing the whole recipe.
 
 *Cooking a recipe changes its total weight in ways raw ingredient weights can't predict (water evaporates, fat renders, etc.). If a recipe [requires cooking](#creating-a-recipe) and you haven't entered a measured final weight, the "Per 100g" column is flagged unreliable — "Total" and "Per serving" stay accurate either way. Enter a real measured weight (weigh the finished dish once) for an accurate "Per 100g".*
 
@@ -259,41 +292,68 @@ Opening a saved recipe shows the read-only view: tags, prep/cook time, source, i
 
 Open it from the ribbon/menu, or click the <img src="screenshots/icons/icon-shopping-list.png" width="18" alt="Shopping cart icon"> icon at the top of any recipe's ingredient list to add that recipe's ingredients (scaled to whatever [servings](#servings-explained) you set).
 
-![Shopping list grouped by shop section](screenshots/shopping-list.png)
+
+
+<p align="center">
+<img src="screenshots/quickstart-shopping-list.png" width="500" alt="The shopping list view">
+</p>
 
 - Items are grouped by **shop section** (set on each ingredient's sheet — see [Creating an Ingredient](#creating-an-ingredient)).
 - Adding the same ingredient from multiple recipes **combines the quantities** automatically.
-- Click an item's **name** to record how much you already have — it's subtracted from what's needed, and the line is struck through once fully covered.
+- Click an item's **name** to record the quantity you already have in stock — it's subtracted from what's needed, and the line is struck through once fully covered.
 - ✓ marks an item bought; ✕ removes it entirely.
 - At the top, each recipe you've added is listed with its own ✕ — this removes *only* what that recipe contributed, leaving quantities from other recipes untouched.
-- Type in the input at the top to add anything manually — including non-ingredient items (cleaning supplies, etc.), which are remembered for next time's autocomplete.
-- For ingredients with a known unit weight or [juice yield](#creating-an-ingredient), quantities show an approximate item count too, e.g. `300g (≈ 2 cucumbers)`.
+- Type in the input at the top to add anything manually — including non-ingredient items (cleaning supplies, etc.).
+- For ingredients with a known [unit weight](#creating-an-ingredient) or [juice yield](#creating-an-ingredient), quantities show an approximate item count too — e.g. `300g (≈ 2 cucumbers)` for a unit weight, or `25cl (≈ 3 lemons)` for a juice yield.
 
-## Browsing & Filtering Recipes and Ingredients
+## Browsing & Filtering Recipes
 
-**Recipe List**: search by name, filter by ingredient (shows only recipes actually using it) or by tag (pin your most-used tags for one-click access), sort by name/duration/date/times cooked. See [Diet Flags & Filtering](#diet-flags--filtering-by-constraint) for filtering by dietary constraint.
+Click the <img src="screenshots/icons/icon-recipe-list.png" width="18" alt="Recipe list icon"> ribbon icon to open the Recipe List — a scrollable table of every recipe in your vault, one row per recipe, showing its name, total duration, creation date, and how many times you've cooked it. Click any row to open that recipe.
 
-**Ingredient List**: toggle between ingredients you've defined and ingredients a recipe references but that have no sheet yet — click an "undefined" one to create it, pre-filled with the right name. Filter/sort by type, shop section, or number of recipes using it.
+Search by name, filter by ingredient (shows only recipes actually using it) or by tag (pin your most-used tags for one-click access). Click any column header to sort by it — an arrow (↑/↓) shows the current direction; click the same header again to reverse it. See [Diet Flags & Filtering](#diet-flags--filtering-by-constraint) for filtering by dietary constraint.
 
-![Recipe list with filters](screenshots/recipe-list-filters.png)
+<p align="center">
+<img src="screenshots/recipe-list.png" width="500" alt="The recipe list view">
+</p>
+
+## Browsing & Filtering Ingredients
+
+Click the <img src="screenshots/icons/icon-ingredient-list.png" width="18" alt="Ingredient list icon"> ribbon icon to open the Ingredient List — a scrollable table of every ingredient you've defined, showing its name, type, shop section, and how many recipes use it. Click any row to open that ingredient's sheet.
+
+<p align="center">
+<img src="screenshots/ingredient-list.png" width="500" alt="The recipe list view">
+</p>
+
+Toggle to the **"Undefined"** tab to see ingredient names a recipe references but that have no sheet yet — click one to create it, pre-filled with the right name. Filter by type or shop section, and click any column header to sort by it (click again to reverse the order, shown with an ↑/↓ arrow).
 
 ---
 
 # Advanced Features
 
-Everything below is optional, off by default or tucked into settings — the plugin works fully without any of it.
-
 ## Commands
 
 Every action available from the ribbon (see [The Ribbon Icons](#the-ribbon-icons)) — opening the recipe list, ingredient list, shopping list, Manage Lists, and creating a new recipe or ingredient — is also available from the command palette (`Cmd/Ctrl+P`), under the plugin's name. This is purely a matter of preference: use whichever is faster for you. Everything in this guide assumes you're using the ribbon icons.
 
-## Recipe Sections & Base Recipes
+## Ingredient Sections for recipes
 
 **Sections** group ingredients under a header, e.g. "For the dough" / "For the filling". In the recipe form, click **"+ section"**, type a title, and drag it (⠿) to where it belongs — ingredients after it are visually indented until the next section. Leave a section's title **empty** to create a silent "reset" marker that de-indents everything after it back to the top level, without showing any visible header.
 
-![Recipe form with two sections](screenshots/recipe-sections.png)
+<p align="center">
+<img src="screenshots/ingredient-section.png" width="500" alt="Ingredients sections">
+</p>
 
-**Base recipes** let you use one recipe as a component of another — a sauce, a dough, a base syrup. Tag the component recipe with `base` (in its Tags field), then reference it from another recipe exactly like an ingredient — see the [worked example](#adding-ingredients-the-full-input-flow) above (`Pizza dough (recipe)`). Its quantity is required and must be in a unit compatible with that recipe's own [serving unit](#servings-explained). Its ingredients — and nutrition — are pulled in recursively and scaled to the amount used.
+<p align="center">
+<img src="screenshots/ingredient-section-view.png" width="500" alt="Ingredients sections view">
+</p>
+
+## Base Recipes
+
+**Base recipes** let you use one recipe as a component of another — a sauce, a dough, a base syrup. "Check "This is a base recipe" on the component recipe's form, then reference it from another recipe exactly like an ingredient — see below. Its quantity is required and must be in a unit compatible with that recipe's own [serving unit](#servings-explained). Its ingredients — and nutrition — are pulled in recursively and scaled to the amount used.
+
+<p align="center">
+<img src="screenshots/base-recipe.png" width="500" alt="base recipe">
+</p>
+
 
 ## Frying & Oil Absorption
 

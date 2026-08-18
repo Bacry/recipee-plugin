@@ -93,10 +93,10 @@ export class NewIngredientView extends ItemView {
 					dietFlags={this.plugin.settings.dietFlags}
 					fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
 					usdaApiKey={this.plugin.settings.usdaApiKey}
-					anthropicApiKey={this.plugin.settings.anthropicApiKey}
-					anthropicModel={this.plugin.settings.anthropicModel}
+					aiCredentials={this.plugin.settings.aiCredentials[this.plugin.settings.aiProvider]}
 					usdaEnabled={this.plugin.settings.usdaEnabled}
-					claudeEnabled={this.plugin.settings.claudeEnabled}
+					aiEnabled={this.plugin.settings.aiEnabled}
+					aiProvider={this.plugin.settings.aiProvider}
 					autoSearchOnMount={!!this.prefilledName}
 					submitLabel={t('ingredientForm.submitLabel.create', this.plugin.settings.language)}
 					initialValues={

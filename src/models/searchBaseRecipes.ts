@@ -23,7 +23,7 @@ export function searchBaseRecipes(
 	for (const file of files) {
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const { recipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
-		if (!recipe || !recipe.tags.includes('base')) continue;
+		if (!recipe || !recipe.isBaseRecipe) continue;
 
 		if (normalizeForSearch(file.basename).includes(normalizedQuery)) {
 			matches.push(file.basename);
@@ -54,7 +54,7 @@ export function getBaseRecipeServingsLabel(
 
 	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 	const { recipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
-	if (!recipe || !recipe.tags.includes('base')) return null;
+	if (!recipe || !recipe.isBaseRecipe) return null;
 
 	return recipe.servingsLabel;
 }

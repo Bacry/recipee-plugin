@@ -468,12 +468,12 @@ export class RecipeView extends ItemView {
 						recipesFolder={this.plugin.settings.recipesFolder}
 						ingredientsFolder={this.plugin.settings.ingredientsFolder}
 						recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
-						anthropicApiKey={this.plugin.settings.anthropicApiKey}
-						anthropicModel={this.plugin.settings.anthropicModel}
+						aiCredentials={this.plugin.settings.aiCredentials[this.plugin.settings.aiProvider]}
+						aiProvider={this.plugin.settings.aiProvider}
 						onSubmit={(values) => this.handleSave(values)}
 						initialValues={recipeToFormValues(recipe!, this.filePath, this.plugin.settings.recipesFolder)}
 						oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
-						claudeEnabled={this.plugin.settings.claudeEnabled}
+						aiEnabled={this.plugin.settings.aiEnabled}
 					/>
 					</UnitSystemProvider>
 				</LanguageProvider>
@@ -492,6 +492,7 @@ export class RecipeView extends ItemView {
 						</ul>
 					)}
 					<RecipeDetails
+						key={this.filePath}
 						app={this.app}
 						recipe={recipe!}
 						ingredientsFolder={this.plugin.settings.ingredientsFolder}

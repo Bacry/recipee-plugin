@@ -154,7 +154,7 @@ export function ShoppingListDisplay({
 		<div>
 			{recipeEntries.length > 0 && (
 				<div className="shopping-list-recipes-section">
-					<h4>{t('shoppingListDisplay.recipesSection.title')}</h4>
+					<h5>{t('shoppingListDisplay.recipesSection.title')}</h5>
 					<ul>
 						{recipeEntries.map((entry) => (
 							<li key={entry.id}>
@@ -166,6 +166,7 @@ export function ShoppingListDisplay({
 			)}
 
 			<div className="shopping-list">
+
 				{sortedSections.map(([section, sectionItems]) => (
 					<div key={section} className="shopping-list-section">
 						<h4>{displaySectionName(section, t)}</h4>

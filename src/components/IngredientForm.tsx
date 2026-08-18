@@ -5,11 +5,14 @@ import { searchUsda, UsdaResult } from '../services/usda';
 import { translateToEnglish } from '../services/translate';
 import { ErrorModal } from './ErrorModal';
 import { sortAlphabetically } from '../models/textNormalize';
-import { suggestIngredientFields } from '../services/claudeIngredientExtraction';
+import { suggestIngredientFields } from '../services/ai/aiIngredientExtraction';
+import { AIProviderId } from '../services/ai/types';
 import { forwardRef, useImperativeHandle } from 'react';
 import { useT } from '../i18n/LanguageContext';
 import { useContext } from 'react';
 import { LanguageContext } from '../i18n/LanguageContext';
+import { AIProviderId } from '../services/ai/types';
+import { AICredentials } from '../services/ai/types';
 
 export interface IngredientFormHandle {
 	triggerSubmit: () => void;
@@ -37,10 +40,10 @@ interface IngredientFormProps {
 	dietFlags: string[];
 	fruitIngredientTypes: string[];
 	usdaEnabled: boolean;
-	claudeEnabled: boolean;
+	aiEnabled: boolean;
 	usdaApiKey: string;
-	anthropicApiKey: string;
-	anthropicModel: string;
+	aiCredentials: AICredentials;
+	aiProvider: AIProviderId;
 	initialValues?: IngredientFormValues;
 	submitLabel?: string;
 	autoSearchOnMount?: boolean;
@@ -78,10 +81,10 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		dietFlags,
 		fruitIngredientTypes,
 		usdaApiKey,
-		anthropicApiKey,
-		anthropicModel,
+		aiCredentials,
+		aiProvider,
 		usdaEnabled,
-		claudeEnabled,
+		aiEnabled,
 		initialValues,
 		submitLabel = 'Créer l\'ingrédient',
 		autoSearchOnMount,
@@ -121,8 +124,8 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	const searchRequestId = useRef(0);
-	const [claudeNutritionSuggestions, setClaudeNutritionSuggestions] = useState<Record<keyof NutritionPer100g, number> | null>(null);
-	const [isSuggestingWithClaude, setIsSuggestingWithClaude] = useState(false);
+	const [aiNutritionSuggestions, setAiNutritionSuggestions] = useState<Record<keyof NutritionPer100g, number> | null>(null);
+	const [isSuggestingWithAI, setIsSuggestingWithAI] = useState(false);
 	const [juiceYieldMl, setJuiceYieldMl] = useState(initialValues?.juiceYieldMl ?? '');
 	const [dietFlagsSelected, setDietFlagsSelected] = useState<string[]>(
 		(initialValues?.dietFlags ?? '').split(',').map((f) => f.trim()).filter(Boolean)
@@ -139,39 +142,35 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		setNutritionInputs((prev) => ({ ...prev, [field]: sanitizeNumericInput(value) }));
 	}
 
-	function applyClaudeNutritionValue(field: keyof NutritionPer100g) {
-		if (!claudeNutritionSuggestions) return;
-		updateNutritionField(field, claudeNutritionSuggestions[field].toString());
-	}
-
-	function applyAllClaudeSuggestions() {
-		if (!claudeNutritionSuggestions) return;
+	function applyAllAiSuggestions() {
+		if (!aiNutritionSuggestions) return;
 		const next = { ...nutritionInputs };
 		for (const key of NUTRITION_KEYS) {
-			next[key] = claudeNutritionSuggestions[key].toString();
+			next[key] = aiNutritionSuggestions[key].toString();
 		}
 		setNutritionInputs(next);
 	}
 
-	async function handleSuggestWithClaude() {
+	async function handleSuggestWithAI() {
 		if (name.trim() === '') {
 			new Notice(t('ingredientForm.error.nameRequiredForSuggestion'));
 			return;
 		}
 
-		setIsSuggestingWithClaude(true);
+		setIsSuggestingWithAI(true);
 		const result = await suggestIngredientFields(
-			anthropicApiKey,
-			anthropicModel,
+			aiProvider,
+			aiCredentials,
 			name,
 			ingredientTypes,
 			shopSections,
-			dietFlags
+			dietFlags,
+			language
 		);
-		setIsSuggestingWithClaude(false);
+		setIsSuggestingWithAI(false);
 
 		if (result.error || !result.suggestion) {
-			new Notice(result.error ?? t('ingredientForm.claude.unknownError'));
+			new Notice(result.error ?? t('ingredientForm.ai.unknownError'));
 			return;
 		}
 
@@ -184,7 +183,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		setDietFlagsSelected(s.dietFlags.split(',').map((f: string) => f.trim()).filter(Boolean));
 
 		if (s.nutrition) {
-			setClaudeNutritionSuggestions(s.nutrition);
+			setAiNutritionSuggestions(s.nutrition);
 		}
 	}
 
@@ -328,23 +327,23 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 					value={nutritionInputs[field]}
 					onChange={(e) => updateNutritionField(field, e.target.value)}
 				/>
-				{claudeEnabled && claudeNutritionSuggestions && (
+				{aiEnabled && aiNutritionSuggestions && (
 					<span
-						className="ingredient-form-claude-suggestion"
-						onClick={() => applyClaudeNutritionValue(field)}
+						className="ingredient-form-ai-suggestion"
+						onClick={() => applyAiNutritionValue(field)}
 					>
-					Claude : {claudeNutritionSuggestions[field].toFixed(1)}
-				</span>
+    {t('ingredientForm.ai.prefix')} {aiNutritionSuggestions[field].toFixed(1)}
+</span>
 				)}
 			</div>
 		);
 	}
 
-	function applyAllClaudeNutritionValues() {
-		if (!claudeNutritionSuggestions) return;
+	function applyAllAiNutritionValues() {
+		if (!aiNutritionSuggestions) return;
 		const next = { ...nutritionInputs };
 		for (const key of NUTRITION_KEYS) {
-			next[key] = claudeNutritionSuggestions[key].toString();
+			next[key] = aiNutritionSuggestions[key].toString();
 		}
 		setNutritionInputs(next);
 	}
@@ -369,15 +368,15 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 					/>
 				</div>
 
-				{claudeEnabled && (
+				{aiEnabled && (
 					<div className="form-field">
 						<button
 							type="button"
-							onClick={handleSuggestWithClaude}
-							disabled={isSuggestingWithClaude}
+							onClick={handleSuggestWithAI}
+							disabled={isSuggestingWithAI}
 							className="ingredient-form-submit"
 						>
-							{isSuggestingWithClaude ? t('ingredientForm.suggestWithClaude.thinking') : t('ingredientForm.suggestWithClaude')}
+							{isSuggestingWithAI ? t('ingredientForm.suggestWithAi.thinking') : t('ingredientForm.suggestWithAi')}
 						</button>
 					</div>
 				)}
@@ -532,14 +531,14 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 				<div className="ingredient-form-nutrition-rows">
 					<div className="ingredient-form-nutrition-row">
 						{renderNutritionField('kcal')}
-						{claudeEnabled && claudeNutritionSuggestions && (
-							<div className="ingredient-form-claude-apply-all-wrapper">
+						{aiEnabled && aiNutritionSuggestions && (
+							<div className="ingredient-form-ai-apply-all-wrapper">
 								<button
 									type="button"
-									onClick={applyAllClaudeSuggestions}
-									className="ingredient-form-claude-apply-all"
+									onClick={applyAllAiSuggestions}
+									className="ingredient-form-ai-apply-all"
 								>
-									{t('ingredientForm.claude.copyAll')}
+									{t('ingredientForm.ai.copyAll')}
 								</button>
 							</div>
 						)}

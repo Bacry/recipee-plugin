@@ -15,6 +15,7 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 
 	lines.push(`requires_cooking: ${recipe.requiresCooking}`);
 	lines.push(`made_before_tracking: ${recipe.madeBeforeTracking}`);
+	lines.push(`is_base_recipe: ${recipe.isBaseRecipe}`);
 
 	if (recipe.ingredients.length === 0) {
 		lines.push('ingredients: []');

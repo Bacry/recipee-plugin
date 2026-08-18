@@ -1,16 +1,18 @@
 import { App, Modal, Notice } from 'obsidian';
-import { extractRecipeFromText } from '../services/claudeRecipeExtraction';
+import { extractRecipeFromText } from '../services/ai/aiRecipeExtraction';
+import { AIProviderId, AICredentials } from '../services/ai/types';
 import { RecipeFormValues } from './RecipeForm';
 import { t } from '../i18n/strings';
 import type { Language } from '../i18n/strings';
 
 // A native Obsidian modal with a large textarea for pasting free-form recipe
-// text, plus an "Analyser" button that calls Claude to extract structured
-// data. On success, calls onExtracted with the parsed values and closes;
-// on error, shows the error inline and stays open so the user can retry.
+// text (or a URL field, as an alternative), plus an "Analyser" button that
+// calls the configured AI provider to extract structured data. On success,
+// calls onExtracted with the parsed values and closes; on error, shows the
+// error inline and stays open so the user can retry.
 export class ParseRecipeTextModal extends Modal {
-	private apiKey: string;
-	private model: string;
+	private providerId: AIProviderId;
+	private credentials: AICredentials;
 	private ingredientsFolder: string;
 	private onExtracted: (values: RecipeFormValues) => void;
 	private language: Language;
@@ -20,15 +22,15 @@ export class ParseRecipeTextModal extends Modal {
 
 	constructor(
 		app: App,
-		apiKey: string,
-		model: string,
+		providerId: AIProviderId,
+		credentials: AICredentials,
 		ingredientsFolder: string,
 		onExtracted: (values: RecipeFormValues) => void,
 		language: Language = 'fr'
 	) {
 		super(app);
-		this.apiKey = apiKey;
-		this.model = model;
+		this.providerId = providerId;
+		this.credentials = credentials;
 		this.ingredientsFolder = ingredientsFolder;
 		this.onExtracted = onExtracted;
 		this.language = language;
@@ -67,7 +69,15 @@ export class ParseRecipeTextModal extends Modal {
 		this.analyzeButton.textContent = t('parseRecipeTextModal.analyzing', this.language);
 		this.statusEl.style.display = 'none';
 
-		const result = await extractRecipeFromText(this.app, this.apiKey, this.model, this.ingredientsFolder, text);
+		const result = await extractRecipeFromText(
+			this.providerId,
+			this.credentials,
+			this.app,
+			this.ingredientsFolder,
+			text,
+			undefined,
+			this.language
+		);
 
 		if (result.error || !result.values) {
 			this.statusEl.style.display = 'block';

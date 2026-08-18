@@ -380,11 +380,14 @@ export class IngredientView extends ItemView {
 						dietFlags={this.plugin.settings.dietFlags}
 						fruitIngredientTypes={this.plugin.settings.fruitIngredientTypes}
 						usdaApiKey={this.plugin.settings.usdaApiKey}
-						anthropicApiKey={this.plugin.settings.anthropicApiKey}
-						anthropicModel={this.plugin.settings.anthropicModel}
+						aiCredentials={this.plugin.settings.aiCredentials[this.plugin.settings.aiProvider]}
+						usdaEnabled={this.plugin.settings.usdaEnabled}
+						aiEnabled={this.plugin.settings.aiEnabled}
+						aiProvider={this.plugin.settings.aiProvider}
 						initialValues={ingredientToFormValues(ingredient)}
 						submitLabel={t('ingredientForm.submitLabel.update', this.plugin.settings.language)}
 						autoSearchOnMount = {false}
+
 					/>
 				</LanguageProvider>
 			);

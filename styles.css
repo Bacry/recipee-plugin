@@ -376,14 +376,14 @@
 	color: var(--text-normal);
 }
 
-.ingredient-form-claude-suggestion {
+.ingredient-form-ai-suggestion {
 	font-size: 0.8rem;
 	color: var(--text-muted);
 	cursor: pointer;
 	white-space: nowrap;
 }
 
-.ingredient-form-claude-suggestion:hover {
+.ingredient-form-ai-suggestion:hover {
 	color: var(--interactive-accent);
 	text-decoration: underline;
 }
@@ -401,13 +401,13 @@
 }
 
 
-.ingredient-form-claude-apply-all-wrapper {
+.ingredient-form-ai-apply-all-wrapper {
 	flex: 1;
 	display: flex;
 	align-items: center;
 }
 
-.ingredient-form-claude-apply-all {
+.ingredient-form-ai-apply-all {
 	flex: 0 0 auto;
 	padding: 0.3rem 0.6rem;
 	font-size: 0.8rem;
@@ -419,7 +419,7 @@
 	cursor: pointer;
 }
 
-.ingredient-form-claude-apply-all:hover {
+.ingredient-form-ai-apply-all:hover {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
@@ -507,13 +507,13 @@
    ============================================================ */
 
 /* The extract recipe info with Claude button (NewRecipe view) */
-.recipe-form-claude-section {
+.recipe-form-ai-section {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 /* The submit button */
-.recipe-form-claude-submit:hover {
+.recipe-form-ai-submit:hover {
 	background: var(--interactive-accent-hover);
 }
 
@@ -835,7 +835,9 @@
    SHOPPING LIST VIEW — ShoppingListView.tsx / ShoppingListDisplay.tsx
    ============================================================ */
 
-
+.shopping-list-main-div {
+	margin-top: 2rem;
+}
 
 .shopping-list {
 	padding: 1rem;

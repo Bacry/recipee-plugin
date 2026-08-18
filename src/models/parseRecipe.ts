@@ -101,13 +101,14 @@ export function parseRecipeFromFrontmatter(
 	}
 
 	let madeBeforeTracking = false;
-	if (frontmatter.made_before_tracking !== undefined && frontmatter.made_before_tracking !== null) {
-		if (typeof frontmatter.made_before_tracking === 'boolean') {
-			madeBeforeTracking = frontmatter.made_before_tracking;
-		} else if (frontmatter.made_before_tracking === 'true' || frontmatter.made_before_tracking === 'false') {
-			madeBeforeTracking = frontmatter.made_before_tracking === 'true';
+	let isBaseRecipe = false;
+	if (frontmatter.is_base_recipe !== undefined && frontmatter.is_base_recipe !== null) {
+		if (typeof frontmatter.is_base_recipe === 'boolean') {
+			isBaseRecipe = frontmatter.is_base_recipe;
+		} else if (frontmatter.is_base_recipe === 'true' || frontmatter.is_base_recipe === 'false') {
+			isBaseRecipe = frontmatter.is_base_recipe === 'true';
 		} else {
-			errors.push('"made_before_tracking" est présent mais n\'est pas un booléen valide.');
+			errors.push('"is_base_recipe" est présent mais n\'est pas un booléen valide.');
 		}
 	}
 
@@ -182,6 +183,7 @@ export function parseRecipeFromFrontmatter(
 		preparationDurationMin,
 		requiresCooking,
 		madeBeforeTracking,
+		isBaseRecipe,
 		cookingDurationMin,
 		fryingOilName,
 		ingredients,
@@ -294,6 +296,7 @@ export function parseRecipeTemplate(
 	const instructions = typeof frontmatter?.instructions === 'string' ? frontmatter.instructions : '';
 	const requiresCooking = typeof frontmatter?.requires_cooking === 'boolean' ? frontmatter.requires_cooking : false;
 	const madeBeforeTracking = typeof frontmatter?.made_before_tracking === 'boolean' ? frontmatter.made_before_tracking : false;
+	const isBaseRecipe = typeof frontmatter?.is_base_recipe === 'boolean' ? frontmatter.is_base_recipe : false;
 
 	const tags = Array.isArray(frontmatter?.tags)
 		? frontmatter.tags.filter((t): t is string => typeof t === 'string')
@@ -354,6 +357,7 @@ export function parseRecipeTemplate(
 		cookingDurationMin,
 		requiresCooking,
 		madeBeforeTracking,
+		isBaseRecipe,
 		fryingOilName,
 		ingredients,
 		baseRecipes,
@@ -362,5 +366,6 @@ export function parseRecipeTemplate(
 		source,
 		image,
 		tags,
+		cookedDates: [],
 	};
 }

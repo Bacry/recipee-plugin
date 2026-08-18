@@ -278,6 +278,8 @@ instructions: |
   1. Heat a lightly oiled griddle or pan over medium heat. Pour about 1/4 cup of batter per pancake.
   2. Cook until bubbles form on the surface, then flip and cook until golden on the other side.notes: |
   This is one of the plugin's example recipes — feel free to edit or delete it.
+source: |
+  Tuto example base recipe  
 tags:
   - "breakfast"
   - "example"
@@ -309,6 +311,8 @@ instructions: |
   3. Strain into a glass over fresh ice.
 notes: |
   This is one of the plugin's example recipes, created from the "Cocktail" template — it lives in the "Cocktails" subfolder, matching that template's default_subfolder.
+source: |
+  Tuto example base recipe  
 tags:
   - "cocktail"
   - "drink"
@@ -361,6 +365,8 @@ instructions: |
   
 notes: |
   This is one of the plugin's example recipes — a good one to check out the Frying & Oil Absorption feature on.
+source: |
+  Tuto example base recipe  
 tags:
   - "dinner"
   - "fried"
@@ -370,13 +376,14 @@ cooked_dates: []
 `,
 	},
 	{
-		relativePath: 'lemonade Base Syrup.md',
+		relativePath: 'lemonade base syrup.md',
 		content: `---
 base_servings: 2
 servings_label: "cup"
 requires_cooking: true
 cooking_duration_min: 5
 made_before_tracking: false
+is_base_recipe: true
 ingredients:
   - ingredient_name: "sugar"
     quantity: 1
@@ -392,9 +399,8 @@ instructions: |
 notes: |
   This recipe is tagged "base" — it's meant to be used as a component of other recipes, like "Lemonade". See the plugin's Base Recipes feature.
 source: |
-  Example base recipe
+  Tuto example base recipe
 tags:
-  - "base"
   - "example"
 cooked_dates: []
 ---
@@ -413,7 +419,7 @@ ingredients:
     unit: ""
     complement: "slice, for garnish"
 base_recipes:
-  - recipe_name: "lemonade Base Syrup"
+  - recipe_name: "lemonade base syrup"
     quantity: 0.25
     unit: "cup"
 instructions: |
@@ -422,7 +428,9 @@ instructions: |
   2. Fill with cold water and ice, stir well.
   3. Garnish with a lemon slice.
 notes: |
-  This recipe references "Lemonade Base Syrup" as a base recipe — try scaling the servings here and watch the base recipe's contribution scale with it.
+  This recipe references "Lemonade base syrup" as a base recipe — try scaling the servings here and watch the base recipe's contribution scale with it.
+source: |
+  Tuto example base recipe  
 tags:
   - "drink"
   - "example"

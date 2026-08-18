@@ -10,12 +10,19 @@ interface StringEntry {
 // file (see the comment above each group) to make it easy to find where a
 // given string is actually used.
 const STRINGS: Record<string, StringEntry> = {
-	// --- src/components/IngredientForm.tsx ---
-	'ingredientForm.suggestWithClaude': {
-		fr: "Suggérer avec Claude",
-		en: "Suggest with Claude",
+
+	// BE CAREFUL --> this is not a traduction !
+	'ai.languageName': {
+		fr: "français",
+		en: "english",
 	},
-	'ingredientForm.suggestWithClaude.thinking': {
+
+	// --- src/components/IngredientForm.tsx ---
+	'ingredientForm.suggestWithAi': {
+		fr: "Suggérer avec l'IA",
+		en: "Suggest with AI",
+	},
+	'ingredientForm.suggestWithAi.thinking': {
 		fr: "Réflexion en cours...",
 		en: "Thinking...",
 	},
@@ -133,13 +140,13 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Cholestérol (mg)",
 		en: "Cholesterol (mg)",
 	},
-	'ingredientForm.claude.copyAll': {
-		fr: "Copier les valeurs de Claude",
-		en: "Copy Claude's values",
+	'ingredientForm.ai.copyAll': {
+		fr: "Copier les valeurs suggérées par l'IA",
+		en: "Copy AI's suggested values",
 	},
-	'ingredientForm.claude.prefix': {
-		fr: "Claude :",
-		en: "Claude:",
+	'ingredientForm.ai.prefix': {
+		fr: "IA :",
+		en: "AI:",
 	},'ingredientForm.error.nameRequired': {
 		fr: "Le nom est obligatoire.",
 		en: "Name is required.",
@@ -244,9 +251,9 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Créer la recette",
 		en: "Create recipe",
 	},
-	'recipeForm.claude.extract': {
-		fr: "Extraire les informations depuis un texte à l'aide de Claude",
-		en: "Extract information from text using Claude",
+	'recipeForm.ai.extract': {
+		fr: "Extraire les informations depuis un texte à l'aide de l'IA",
+		en: "Extract information from text using AI",
 	},
 	'recipeForm.generalInfo': {
 		fr: "Informations générales",
@@ -907,8 +914,8 @@ const STRINGS: Record<string, StringEntry> = {
 		en: "fruit{plural}",
 	},
 	'shoppingListDisplay.recipesSection.title': {
-		fr: "Courses incluses pour les recettes suivantes",
-		en: "Groceries included for the following recipes",
+		fr: "Recettes sélectionnées",
+		en: "Selected recipes",
 	},
 	'shoppingListDisplay.recipesSection.servingsFallback': {
 		fr: "personnes",
@@ -1090,8 +1097,8 @@ const STRINGS: Record<string, StringEntry> = {
 		en: "Extract a recipe from text",
 	},
 	'parseRecipeTextModal.description': {
-		fr: "Colle le texte brut d'une recette (depuis un site, un livre...) — Claude va essayer d'en extraire les champs.",
-		en: "Paste the raw text of a recipe (from a website, a book...) — Claude will try to extract the fields from it.",
+		fr: "Colle le texte brut d'une recette (depuis un site, un livre...) — l'IA va essayer d'en extraire les champs.",
+		en: "Paste the raw text of a recipe (from a website, a book...) — the AI will try to extract the fields from it.",
 	},
 	'parseRecipeTextModal.analyze': {
 		fr: "Analyser",
@@ -1199,14 +1206,6 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Ta clé API",
 		en: "Your API key",
 	},
-	'settings.anthropicApiKey.name': {
-		fr: "Clé API Anthropic",
-		en: "Anthropic API key",
-	},
-	'settings.anthropicApiKey.desc': {
-		fr: "Ta propre clé API Anthropic, utilisée pour extraire des recettes structurées depuis du texte collé",
-		en: "Your own Anthropic API key, used to extract structured recipes from pasted text",
-	},
 	'settings.anthropicModel.name': {
 		fr: "Modèle Anthropic",
 		en: "Anthropic model",
@@ -1268,14 +1267,6 @@ const STRINGS: Record<string, StringEntry> = {
 	'settings.usdaEnabled.desc': {
 		fr: "Affiche la recherche de données nutritionnelles USDA dans le formulaire ingrédient. Désactive-la si tu n'as pas de clé API ou préfères remplir les valeurs manuellement.",
 		en: "Shows the USDA nutritional data search in the ingredient form. Turn this off if you don't have an API key or prefer to fill in values manually.",
-	},
-	'settings.claudeEnabled.name': {
-		fr: "Activer les fonctionnalités Claude",
-		en: "Enable Claude features",
-	},
-	'settings.claudeEnabled.desc': {
-		fr: "Affiche les boutons \"Suggérer avec Claude\" et \"Extraire depuis un texte\" dans les formulaires. Désactive-les si tu n'as pas de clé API Anthropic.",
-		en: "Shows the \"Suggest with Claude\" and \"Extract from text\" buttons in the forms. Turn this off if you don't have an Anthropic API key.",
 	},
 
 	// --- src/main.ts ---
@@ -1454,7 +1445,7 @@ const STRINGS: Record<string, StringEntry> = {
 	},
 
 	// --- src/components/IngredientForm.tsx (Claude error) ---
-	'ingredientForm.claude.unknownError': {
+	'ingredientForm.ai.unknownError': {
 		fr: "Erreur inconnue.",
 		en: "Unknown error.",
 	},
@@ -1483,7 +1474,44 @@ const STRINGS: Record<string, StringEntry> = {
 		en: "Filter by this tag",
 	},
 
+	'recipeForm.isBaseRecipe': {
+		fr: "C'est une recette de base (utilisable comme composant d'une autre recette)",
+		en: "This is a base recipe (usable as a component of another recipe)",
+	},
 
+
+	'settings.aiProvider.name': {
+		fr: "Fournisseur IA",
+		en: "AI provider",
+	},
+	'settings.aiProvider.desc': {
+		fr: "Le service IA utilisé pour aider à l'ajout d'ingrédients et l'extraction de recettes.",
+		en: "The AI service used for ingredient suggestions and recipe extraction.",
+	},
+	'settings.aiEnabled.desc': {
+		fr: "Affiche le bouton \"Suggérer avec l'IA\" dans le formulaire ingrédient, et \"Extraire depuis un texte\" dans le formulaire recette. Nécessite un compte chez le fournisseur choisi ci-dessous.",
+		en: "Shows the \"Suggest with AI\" button in the ingredient form, and \"Extract from text\" in the recipe form. Requires an account with the provider selected below.",
+	},
+	'settings.ai.heading': {
+		fr: "Intelligence artificielle",
+		en: "AI",
+	},
+	'parseRecipeTextModal.urlLabel': {
+		fr: "URL de la recette (optionnel)",
+		en: "Recipe URL (optional)",
+	},
+	'parseRecipeTextModal.or': {
+		fr: "— ou —",
+		en: "— or —",
+	},
+	'settings.aiApiKey.name': {
+		fr: "Clé API ({provider})",
+		en: "API key ({provider})",
+	},
+	'settings.aiModel.name': {
+		fr: "Modèle",
+		en: "Model",
+	},
 };
 
 // Falls back to the French string (then the raw key) if a translation is

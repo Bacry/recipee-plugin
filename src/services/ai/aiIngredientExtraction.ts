@@ -1,4 +1,7 @@
-import { requestUrl } from 'obsidian';
+import { getProvider } from './getProvider';
+import { AIProviderId, AICredentials } from './types';
+import { t } from '../../i18n/strings';
+import type { Language } from '../../i18n/strings';
 
 export interface IngredientSuggestion {
 	type: string;
@@ -15,7 +18,7 @@ export interface IngredientExtractionResult {
 	error: string | null;
 }
 
-const SYSTEM_PROMPT_TEMPLATE = (types: string[], shopSections: string[], dietFlags: string[]) => `Tu aides à remplir la fiche d'un ingrédient de cuisine. Retourne UNIQUEMENT un JSON strict, sans texte avant/après, sans balises markdown :
+const SYSTEM_PROMPT_TEMPLATE = (types: string[], shopSections: string[], dietFlags: string[], language: Language) => `Tu aides à remplir la fiche d'un ingrédient de cuisine. Retourne UNIQUEMENT un JSON strict, sans texte avant/après, sans balises markdown :
 
 {
   "type": string,
@@ -38,44 +41,33 @@ Règles :
 - "density_g_ml" : uniquement si l'ingrédient se mesure typiquement en volume — sinon null.
 - "entity_weight_g" : uniquement si l'ingrédient se compte à l'unité — sinon null.
 - "possible_forms" : formes de préparation courantes — liste vide si non pertinent.
-- "nutrition_per_100g" : ta meilleure estimation, pour 100g de produit — reste une estimation générale, pas une mesure certifiée.`;
+- "nutrition_per_100g" : ta meilleure estimation, pour 100g de produit — reste une estimation générale, pas une mesure certifiée.
+- Les valeurs de texte libre ("possible_forms") doivent être rédigées en ${t('ai.languageName', language)}.`;
 
 export async function suggestIngredientFields(
-	apiKey: string,
-	model: string,
+	providerId: AIProviderId,
+	credentials: AICredentials,
 	ingredientName: string,
 	knownTypes: string[],
 	knownShopSections: string[],
-	knownDietFlags: string[]
+	knownDietFlags: string[],
+	language: Language = 'fr'
 ): Promise<IngredientExtractionResult> {
-	if (apiKey.trim() === '') {
-		return { suggestion: null, error: 'Aucune clé API Anthropic configurée dans les settings.' };
+	const provider = getProvider(providerId);
+
+	const result = await provider.complete({
+		systemPrompt: SYSTEM_PROMPT_TEMPLATE(knownTypes, knownShopSections, knownDietFlags, language),
+		userMessage: `Ingrédient : ${ingredientName}`,
+		apiKey: credentials.apiKey,
+		model: credentials.model,
+	});
+
+	if (result.error || !result.text) {
+		return { suggestion: null, error: result.error };
 	}
 
 	try {
-		const response = await requestUrl({
-			url: 'https://api.anthropic.com/v1/messages',
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'x-api-key': apiKey,
-				'anthropic-version': '2023-06-01',
-			},
-			body: JSON.stringify({
-				model,
-				max_tokens: 800,
-				system: SYSTEM_PROMPT_TEMPLATE(knownTypes, knownShopSections, knownDietFlags),
-				messages: [{ role: 'user', content: `Ingrédient : ${ingredientName}` }],
-			}),
-		});
-
-		const data = response.json;
-		const textBlock = data.content?.find((block: any) => block.type === 'text');
-		if (!textBlock) {
-			return { suggestion: null, error: 'Réponse inattendue de l\'API (pas de texte trouvé).' };
-		}
-
-		const cleaned = textBlock.text.replace(/```json|```/g, '').trim();
+		const cleaned = result.text.replace(/```json|```/g, '').trim();
 		const parsed = JSON.parse(cleaned);
 
 		const nutrition = parsed.nutrition_per_100g && typeof parsed.nutrition_per_100g === 'object'
@@ -94,6 +86,6 @@ export async function suggestIngredientFields(
 
 		return { suggestion, error: null };
 	} catch (e) {
-		return { suggestion: null, error: `Erreur lors de l'appel à l'API : ${e}` };
+		return { suggestion: null, error: `Erreur lors du traitement de la réponse : ${e}` };
 	}
 }

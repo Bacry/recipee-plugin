@@ -96,12 +96,12 @@ export class NewRecipeView extends ItemView {
 					recipesFolder={this.plugin.settings.recipesFolder}
 					ingredientsFolder={this.plugin.settings.ingredientsFolder}
 					recipeImagesFolder={this.plugin.settings.recipeImagesFolder}
-					anthropicApiKey={this.plugin.settings.anthropicApiKey}
-					anthropicModel={this.plugin.settings.anthropicModel}
+					aiCredentials={this.plugin.settings.aiCredentials[this.plugin.settings.aiProvider]}
+					aiProvider={this.plugin.settings.aiProvider}
 					onSubmit={(values) => this.handleSubmit(values)}
 					initialValues={this.prefilledValues}
 					oilIngredientTypes={this.plugin.settings.oilIngredientTypes}
-					claudeEnabled={this.plugin.settings.claudeEnabled}
+					aiEnabled={this.plugin.settings.aiEnabled}
 				/>
 				</UnitSystemProvider>
 			</LanguageProvider>

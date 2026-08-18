@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import MyPlugin from './main';
 import { t } from './i18n/strings';
+import { AIProviderId, AICredentials, AI_PROVIDERS, DEFAULT_AI_CREDENTIALS } from './services/ai/types';
 
 export interface MyPluginSettings {
 	ingredientTypes: string[];
@@ -13,8 +14,7 @@ export interface MyPluginSettings {
 	recipesFolder: string; // folder where recipe notes are stored
 	recipeTemplatesFolder: string;
 	recipeImagesFolder: string;
-	anthropicApiKey: string;
-	anthropicModel: string;
+	aiCredentials: Record<AIProviderId, AICredentials>;
 	dietFlags: string[];
 	dietPresets: DietPreset[];
 	pinnedTags: string[];
@@ -23,7 +23,8 @@ export interface MyPluginSettings {
 	fruitIngredientTypes: string[]; // parmi ingredientTypes, lesquels comptent comme "fruit" (affiche "Rendement en jus")
 	language: 'fr' | 'en';
 	usdaEnabled: boolean;
-	claudeEnabled: boolean;
+	aiEnabled: boolean;
+	aiProvider: 'anthropic';
 }
 
 export interface DietPreset {
@@ -42,8 +43,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	shoppingListPath: 'Shopping list.md',
 	otherItemsNotePath: 'Other items.md',
 	recipeImagesFolder: 'Images',
-	anthropicApiKey: '',
-	anthropicModel: 'claude-sonnet-5',
+	aiCredentials: DEFAULT_AI_CREDENTIALS,
 	dietFlags: ['gluten', 'lactose', 'egg', 'peanut', 'tree nuts', 'soy', 'fish', 'shellfish', 'meat'],
 	dietPresets: [
 		{ name: 'Vegetarian', flags: ['meat', 'fish', 'shellfish'] },
@@ -55,7 +55,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	fruitIngredientTypes: ['fruit juice'],
 	language: 'en',
 	usdaEnabled: false,
-	claudeEnabled: false,
+	aiEnabled: false,
+	aiProvider: 'anthropic',
 };
 
 
@@ -249,46 +250,69 @@ export class SampleSettingTab extends PluginSettingTab {
 
 
 		new Setting(containerEl)
-			.setName(t('settings.claudeEnabled.name', language))
-			.setDesc(t('settings.claudeEnabled.desc', language))
+			.setName(t('settings.ai.heading', language))
+			.setHeading();
+
+		new Setting(containerEl)
+			.setName(t('settings.aiEnabled.name', language))
+			.setDesc(t('settings.aiEnabled.desc', language))
 			.addToggle((toggle) =>
 				toggle
-					.setValue(this.plugin.settings.claudeEnabled)
+					.setValue(this.plugin.settings.aiEnabled)
 					.onChange(async (value) => {
-						this.plugin.settings.claudeEnabled = value;
+						this.plugin.settings.aiEnabled = value;
 						await this.plugin.saveSettings();
 						this.display();
 					}),
 			);
 
-		if (this.plugin.settings.claudeEnabled) {
+		if (this.plugin.settings.aiEnabled) {
 			new Setting(containerEl)
-				.setName(t('settings.anthropicApiKey.name', language))
-				.setDesc(t('settings.anthropicApiKey.desc', language))
-				.addText((text) =>
-					text
-						.setPlaceholder('sk-ant-...')
-						.setValue(this.plugin.settings.anthropicApiKey)
-						.onChange(async (value) => {
-							this.plugin.settings.anthropicApiKey = value;
-							await this.plugin.saveSettings();
-						}),
-				);
-
-			new Setting(containerEl)
-				.setName(t('settings.anthropicModel.name', language))
-				.setDesc(t('settings.anthropicModel.desc', language))
-				.addDropdown((dropdown) =>
+				.setName(t('settings.aiProvider.name', language))
+				.setDesc(t('settings.aiProvider.desc', language))
+				.addDropdown((dropdown) => {
+					for (const provider of AI_PROVIDERS) {
+						dropdown.addOption(provider.id, provider.label);
+					}
 					dropdown
-						.addOption('claude-haiku-4-5-20251001', t('settings.anthropicModel.haiku', language))
-						.addOption('claude-sonnet-5', t('settings.anthropicModel.sonnet', language))
-						.addOption('claude-opus-4-8', t('settings.anthropicModel.opus', language))
-						.setValue(this.plugin.settings.anthropicModel)
+						.setValue(this.plugin.settings.aiProvider)
 						.onChange(async (value) => {
-							this.plugin.settings.anthropicModel = value;
+							this.plugin.settings.aiProvider = value as AIProviderId;
 							await this.plugin.saveSettings();
-						}),
-				);
+							this.display();
+						});
+				});
+
+			const activeProvider = AI_PROVIDERS.find((p) => p.id === this.plugin.settings.aiProvider);
+			if (activeProvider) {
+				const credentials = this.plugin.settings.aiCredentials[activeProvider.id];
+
+				new Setting(containerEl)
+					.setName(t('settings.aiApiKey.name', language).replace('{provider}', activeProvider.label))
+					.addText((text) =>
+						text
+							.setPlaceholder(activeProvider.apiKeyPlaceholder)
+							.setValue(credentials.apiKey)
+							.onChange(async (value) => {
+								this.plugin.settings.aiCredentials[activeProvider.id].apiKey = value;
+								await this.plugin.saveSettings();
+							}),
+					);
+
+				new Setting(containerEl)
+					.setName(t('settings.aiModel.name', language))
+					.addDropdown((dropdown) => {
+						for (const modelOption of activeProvider.models) {
+							dropdown.addOption(modelOption.id, modelOption.label);
+						}
+						dropdown
+							.setValue(credentials.model)
+							.onChange(async (value) => {
+								this.plugin.settings.aiCredentials[activeProvider.id].model = value;
+								await this.plugin.saveSettings();
+							});
+					});
+			}
 		}
 
 		new Setting(containerEl)

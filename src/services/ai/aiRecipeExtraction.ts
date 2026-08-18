@@ -1,9 +1,13 @@
-import { App, requestUrl, TFile } from 'obsidian';
-import { RecipeFormValues } from '../components/RecipeForm';
+import { App, TFile } from 'obsidian';
+import { RecipeFormValues } from '../../components/RecipeForm';
+import { getProvider } from './getProvider';
+import { AIProviderId, AICredentials } from './types';
+import { t } from '../../i18n/strings';
+import type { Language } from '../../i18n/strings';
 
-// Collects the basenames of every known ingredient file, to help Claude
-// reuse exact existing names when the pasted text refers to something we
-// already have a fiche for (rather than inventing a slightly different name).
+// Collects the basenames of every known ingredient file, to help the AI
+// reuse exact existing names when the text refers to something we already
+// have a fiche for (rather than inventing a slightly different name).
 function getKnownIngredientNames(app: App, ingredientsFolder: string): string[] {
 	return app.vault
 		.getMarkdownFiles()
@@ -11,7 +15,7 @@ function getKnownIngredientNames(app: App, ingredientsFolder: string): string[] 
 		.map((f) => f.basename);
 }
 
-const SYSTEM_PROMPT = `Tu extrais une recette de cuisine à partir d'un texte libre, et tu la retournes au format JSON strict suivant, sans aucun texte avant ou après le JSON, sans balises markdown :
+const SYSTEM_PROMPT = (language: Language) => `Tu extrais une recette de cuisine à partir d'un texte libre (ou d'une page web dont l'URL t'est fournie), et tu la retournes au format JSON strict suivant, sans aucun texte avant ou après le JSON, sans balises markdown :
 
 {
   "name": string,
@@ -32,7 +36,9 @@ Règles :
 - "instructions" est un bloc markdown unique, avec des tirets "-" pour les étapes, et éventuellement des titres "####" si le texte distingue plusieurs phases (préparation, cuisson...).
 - Si un nom d'ingrédient de la liste "ingrédients connus" fournie ci-dessous correspond clairement à un ingrédient du texte, réutilise EXACTEMENT ce nom (même orthographe, mêmes accents) plutôt que d'en inventer un autre.
 - "tags" : 1 à 3 tags pertinents en minuscule (ex: "dessert", "entrée", "plat", "patisserie", "asiatique", "apéro", "tarte", "soupe", "cocktail").
-- Les durées sont en minutes ; laisse à null si non précisées.`;
+- Les durées sont en minutes ; laisse à null si non précisées.
+- Si une URL t'est fournie, va chercher la recette sur cette page avant d'extraire les champs.
+- Les champs de texte libre ("name", "servings_label", "instructions", "tags") doivent être rédigés en ${t('ai.languageName', language)} — sauf le nom d'un ingrédient déjà connu que tu réutilises tel quel, même si son orthographe est dans une autre langue.`;
 
 export interface ExtractionResult {
 	values: RecipeFormValues | null;
@@ -40,49 +46,36 @@ export interface ExtractionResult {
 }
 
 export async function extractRecipeFromText(
+	providerId: AIProviderId,
+	credentials: AICredentials,
 	app: App,
-	apiKey: string,
-	model: string,
 	ingredientsFolder: string,
-	rawText: string
+	rawText: string,
+	fetchUrl?: string,
+	language: Language = 'fr'
 ): Promise<ExtractionResult> {
-	if (apiKey.trim() === '') {
-		return { values: null, error: 'Aucune clé API Anthropic configurée dans les settings.' };
-	}
-
+	const provider = getProvider(providerId);
 	const knownIngredients = getKnownIngredientNames(app, ingredientsFolder);
 
 	const userMessage = `Ingrédients connus (réutilise ces noms exacts si pertinent) :
 ${knownIngredients.join(', ')}
 
-Texte de la recette à extraire :
-${rawText}`;
+${fetchUrl ? 'Extrait la recette depuis la page web dont l\'URL est fournie ci-dessous.' : `Texte de la recette à extraire :\n${rawText}`}`;
+
+	const result = await provider.complete({
+		systemPrompt: SYSTEM_PROMPT(language),
+		userMessage,
+		apiKey: credentials.apiKey,
+		model: credentials.model,
+		fetchUrl,
+	});
+
+	if (result.error || !result.text) {
+		return { values: null, error: result.error };
+	}
 
 	try {
-		const response = await requestUrl({
-			url: 'https://api.anthropic.com/v1/messages',
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'x-api-key': apiKey,
-				'anthropic-version': '2023-06-01',
-			},
-			body: JSON.stringify({
-				model,
-				max_tokens: 2000,
-				system: SYSTEM_PROMPT,
-				messages: [{ role: 'user', content: userMessage }],
-			}),
-		});
-
-		const data = response.json;
-		const textBlock = data.content?.find((block: any) => block.type === 'text');
-		if (!textBlock) {
-			return { values: null, error: 'Réponse inattendue de l\'API (pas de texte trouvé).' };
-		}
-
-		// Defensive: strip markdown code fences if Claude wrapped the JSON despite instructions.
-		const cleaned = textBlock.text.replace(/```json|```/g, '').trim();
+		const cleaned = result.text.replace(/```json|```/g, '').trim();
 		const parsed = JSON.parse(cleaned);
 
 		const values: RecipeFormValues = {
@@ -91,6 +84,10 @@ ${rawText}`;
 			servingsLabel: typeof parsed.servings_label === 'string' ? parsed.servings_label : '',
 			preparationDurationMin: typeof parsed.preparation_duration_min === 'number' ? parsed.preparation_duration_min.toString() : '',
 			cookingDurationMin: typeof parsed.cooking_duration_min === 'number' ? parsed.cooking_duration_min.toString() : '',
+			requiresCooking: false,
+			madeBeforeTracking: false,
+			isBaseRecipe: false,
+			fryingOilName: '',
 			ingredients: Array.isArray(parsed.ingredients)
 				? parsed.ingredients.map((i: any) => ({
 					ingredientName: i.ingredient_name ?? '',
@@ -112,6 +109,6 @@ ${rawText}`;
 
 		return { values, error: null };
 	} catch (e) {
-		return { values: null, error: `Erreur lors de l'appel à l'API : ${e}` };
+		return { values: null, error: `Erreur lors du traitement de la réponse : ${e}` };
 	}
 }

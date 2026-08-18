@@ -21,6 +21,7 @@ import { ManageListsView, MANAGE_LISTS_VIEW_TYPE } from './views/ManageListsView
 import { IngredientListView, INGREDIENT_LIST_VIEW_TYPE } from './views/IngredientListView';
 import { loadExampleData } from './models/loadExampleData';
 import { t } from './i18n/strings';
+import { DEFAULT_AI_CREDENTIALS } from './services/ai/types';
 
 
 
@@ -400,6 +401,17 @@ export default class MyPlugin extends Plugin {
 	async loadSettings() {
 		const loaded = (await this.loadData()) as Partial<MyPluginSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
+
+		// Migrate old flat anthropicApiKey/anthropicModel fields (pre-multi-provider)
+// into the new aiCredentials structure, so existing users don't lose their
+// saved key on first load after this update.
+		const legacy = loaded as Record<string, unknown> | null;
+		if (legacy?.anthropicApiKey && !this.settings.aiCredentials.anthropic.apiKey) {
+			this.settings.aiCredentials.anthropic.apiKey = legacy.anthropicApiKey as string;
+		}
+		if (legacy?.anthropicModel && this.settings.aiCredentials.anthropic.model === DEFAULT_AI_CREDENTIALS.anthropic.model) {
+			this.settings.aiCredentials.anthropic.model = legacy.anthropicModel as string;
+		}
 
 		// Guard against empty-string values that may have been persisted by
 		// mistake in the past (e.g. from a settings field's onChange firing

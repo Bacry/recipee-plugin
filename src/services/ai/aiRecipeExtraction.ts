@@ -37,7 +37,6 @@ Règles :
 - Si un nom d'ingrédient de la liste "ingrédients connus" fournie ci-dessous correspond clairement à un ingrédient du texte, réutilise EXACTEMENT ce nom (même orthographe, mêmes accents) plutôt que d'en inventer un autre.
 - "tags" : 1 à 3 tags pertinents en minuscule (ex: "dessert", "entrée", "plat", "patisserie", "asiatique", "apéro", "tarte", "soupe", "cocktail").
 - Les durées sont en minutes ; laisse à null si non précisées.
-- Si une URL t'est fournie, va chercher la recette sur cette page avant d'extraire les champs.
 - Les champs de texte libre ("name", "servings_label", "instructions", "tags") doivent être rédigés en ${t('ai.languageName', language)} — sauf le nom d'un ingrédient déjà connu que tu réutilises tel quel, même si son orthographe est dans une autre langue.`;
 
 export interface ExtractionResult {
@@ -51,7 +50,6 @@ export async function extractRecipeFromText(
 	app: App,
 	ingredientsFolder: string,
 	rawText: string,
-	fetchUrl?: string,
 	language: Language = 'fr'
 ): Promise<ExtractionResult> {
 	const provider = getProvider(providerId);
@@ -60,14 +58,14 @@ export async function extractRecipeFromText(
 	const userMessage = `Ingrédients connus (réutilise ces noms exacts si pertinent) :
 ${knownIngredients.join(', ')}
 
-${fetchUrl ? 'Extrait la recette depuis la page web dont l\'URL est fournie ci-dessous.' : `Texte de la recette à extraire :\n${rawText}`}`;
+Texte de la recette à extraire :
+${rawText}`;
 
 	const result = await provider.complete({
 		systemPrompt: SYSTEM_PROMPT(language),
 		userMessage,
 		apiKey: credentials.apiKey,
 		model: credentials.model,
-		fetchUrl,
 	});
 
 	if (result.error || !result.text) {

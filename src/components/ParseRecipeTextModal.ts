@@ -4,6 +4,7 @@ import { AIProviderId, AICredentials } from '../services/ai/types';
 import { RecipeFormValues } from './RecipeForm';
 import { t } from '../i18n/strings';
 import type { Language } from '../i18n/strings';
+import { fetchPageText } from '../services/fetchPageText';
 
 // A native Obsidian modal with a large textarea for pasting free-form recipe
 // text (or a URL field, as an alternative), plus an "Analyser" button that
@@ -16,6 +17,7 @@ export class ParseRecipeTextModal extends Modal {
 	private ingredientsFolder: string;
 	private onExtracted: (values: RecipeFormValues) => void;
 	private language: Language;
+	private urlInputEl!: HTMLInputElement;
 	private textareaEl!: HTMLTextAreaElement;
 	private statusEl!: HTMLElement;
 	private analyzeButton!: HTMLButtonElement;
@@ -43,6 +45,13 @@ export class ParseRecipeTextModal extends Modal {
 			text: t('parseRecipeTextModal.description', this.language),
 		});
 
+		contentEl.createEl('label', { text: t('parseRecipeTextModal.urlLabel', this.language) });
+		this.urlInputEl = contentEl.createEl('input', { type: 'text' });
+		this.urlInputEl.style.width = '100%';
+		this.urlInputEl.placeholder = 'https://...';
+
+		contentEl.createEl('p', { text: t('parseRecipeTextModal.or', this.language), cls: 'usda-popup-empty' });
+
 		this.textareaEl = contentEl.createEl('textarea', {
 			cls: 'markdown-editable-textarea',
 		});
@@ -62,12 +71,27 @@ export class ParseRecipeTextModal extends Modal {
 	}
 
 	private async handleAnalyze() {
-		const text = this.textareaEl.value.trim();
-		if (text === '') return;
+		const url = this.urlInputEl.value.trim();
+		let text = this.textareaEl.value.trim();
+		if (url === '' && text === '') return;
 
 		this.analyzeButton.disabled = true;
-		this.analyzeButton.textContent = t('parseRecipeTextModal.analyzing', this.language);
 		this.statusEl.style.display = 'none';
+
+		if (url !== '') {
+			this.analyzeButton.textContent = t('parseRecipeTextModal.fetching', this.language);
+			const pageResult = await fetchPageText(url);
+			if (pageResult.error || !pageResult.text) {
+				this.statusEl.style.display = 'block';
+				this.statusEl.textContent = pageResult.error ?? t('parseRecipeTextModal.unknownError', this.language);
+				this.analyzeButton.disabled = false;
+				this.analyzeButton.textContent = t('parseRecipeTextModal.analyze', this.language);
+				return;
+			}
+			text = pageResult.text;
+		}
+
+		this.analyzeButton.textContent = t('parseRecipeTextModal.analyzing', this.language);
 
 		const result = await extractRecipeFromText(
 			this.providerId,
@@ -75,7 +99,6 @@ export class ParseRecipeTextModal extends Modal {
 			this.app,
 			this.ingredientsFolder,
 			text,
-			undefined,
 			this.language
 		);
 

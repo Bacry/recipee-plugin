@@ -26,7 +26,6 @@ const SYSTEM_PROMPT_TEMPLATE = (types: string[], shopSections: string[], dietFla
   "shop_section": string,
   "density_g_ml": number | null,
   "entity_weight_g": number | null,
-  "possible_forms": string[],
   "diet_flags": string[],
   "nutrition_per_100g": {
     "kcal": number, "lipids": number, "non_saturated_lipids": number,
@@ -41,7 +40,6 @@ Règles :
 - "diet_flags" ne doit contenir QUE des valeurs de cette liste (peut être vide si aucune ne s'applique) : ${dietFlags.join(', ')}.
 - "density_g_ml" : uniquement si l'ingrédient se mesure typiquement en volume — sinon null.
 - "entity_weight_g" : uniquement si l'ingrédient se compte à l'unité — sinon null.
-- "possible_forms" : formes de préparation courantes — liste vide si non pertinent.
 - "nutrition_per_100g" : ta meilleure estimation, pour 100g de produit — reste une estimation générale, pas une mesure certifiée.
 - Les valeurs de texte libre ("possible_forms") doivent être rédigées en ${t('ai.languageName', language)}.`;
 
@@ -80,7 +78,7 @@ export async function suggestIngredientFields(
 			shopSection: typeof parsed.shop_section === 'string' ? parsed.shop_section : '',
 			densityGMl: typeof parsed.density_g_ml === 'number' ? parsed.density_g_ml.toString() : '',
 			entityWeightG: typeof parsed.entity_weight_g === 'number' ? parsed.entity_weight_g.toString() : '',
-			possibleForms: Array.isArray(parsed.possible_forms) ? parsed.possible_forms.join(', ') : '',
+			possibleForms: '',
 			dietFlags: Array.isArray(parsed.diet_flags) ? parsed.diet_flags.join(', ') : '',
 			nutrition,
 		};

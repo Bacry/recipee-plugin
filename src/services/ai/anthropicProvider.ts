@@ -8,30 +8,20 @@ export const anthropicProvider: AIProvider = {
 		}
 
 		try {
-			const headers: Record<string, string> = {
-				'Content-Type': 'application/json',
-				'x-api-key': request.apiKey,
-				'anthropic-version': '2023-06-01',
-			};
-
-			const body: Record<string, unknown> = {
-				model: request.model,
-				max_tokens: 1500,
-				system: request.systemPrompt,
-				messages: [{ role: 'user', content: request.userMessage }],
-			};
-
-			if (request.fetchUrl) {
-				headers['anthropic-beta'] = 'web-fetch-2025-09-10';
-				body.tools = [{ type: 'web_fetch_20250910', name: 'web_fetch', max_uses: 1 }];
-				body.messages = [{ role: 'user', content: `${request.userMessage}\n\nURL: ${request.fetchUrl}` }];
-			}
-
 			const response = await requestUrl({
 				url: 'https://api.anthropic.com/v1/messages',
 				method: 'POST',
-				headers,
-				body: JSON.stringify(body),
+				headers: {
+					'Content-Type': 'application/json',
+					'x-api-key': request.apiKey,
+					'anthropic-version': '2023-06-01',
+				},
+				body: JSON.stringify({
+					model: request.model,
+					max_tokens: 1500,
+					system: request.systemPrompt,
+					messages: [{ role: 'user', content: request.userMessage }],
+				}),
 			});
 
 			const data = response.json;

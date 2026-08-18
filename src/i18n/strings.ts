@@ -1577,6 +1577,10 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: " — {input} tokens entrée, {output} tokens sortie",
 		en: " — {input} input tokens, {output} output tokens",
 	},
+	'parseRecipeTextModal.fetching': {
+		fr: "Récupération de la page...",
+		en: "Fetching page...",
+	},
 };
 
 // Falls back to the French string (then the raw key) if a translation is

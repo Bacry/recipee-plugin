@@ -56,6 +56,7 @@ export function listAllIngredients(
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 		const { ingredient } = parseIngredientFromFrontmatter(frontmatter, file.basename, ingredientTypes, shopSections);
 		if (!ingredient) continue;
+		if (ingredient.needs_review) continue; // shown separately — see listIngredientsNeedingReview
 
 		summaries.push({
 			name: ingredient.name,
@@ -64,6 +65,36 @@ export function listAllIngredients(
 			shopSection: ingredient.shop_section,
 			usedInRecipesCount: usageCounts.get(ingredient.name) ?? 0,
 		});
+	}
+
+	return summaries.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export interface NeedsReviewIngredientSummary {
+	name: string;
+	filePath: string;
+}
+
+// Every ingredient sheet flagged needs_review: true — created in bulk by
+// the AI, not yet confirmed by the user. Kept separate from
+// listAllIngredients so it never mixes with normal/validated ingredients.
+export function listIngredientsNeedingReview(
+	app: App,
+	ingredientsFolder: string,
+	ingredientTypes: string[],
+	shopSections: string[]
+): NeedsReviewIngredientSummary[] {
+	const files = app.vault
+		.getMarkdownFiles()
+		.filter((f: TFile) => f.path.startsWith(ingredientsFolder + '/'));
+
+	const summaries: NeedsReviewIngredientSummary[] = [];
+	for (const file of files) {
+		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
+		const { ingredient } = parseIngredientFromFrontmatter(frontmatter, file.basename, ingredientTypes, shopSections);
+		if (!ingredient || !ingredient.needs_review) continue;
+
+		summaries.push({ name: ingredient.name, filePath: file.path });
 	}
 
 	return summaries.sort((a, b) => a.name.localeCompare(b.name));

@@ -6,6 +6,11 @@ export interface AICompletionRequest {
 	fetchUrl?: string; // if present, the provider should try to fetch/read this URL as part of the request
 }
 
+export interface AITokenUsage {
+	inputTokens: number;
+	outputTokens: number;
+}
+
 export interface AICompletionResult {
 	text: string | null;
 	error: string | null;

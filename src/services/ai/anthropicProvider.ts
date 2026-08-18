@@ -40,7 +40,11 @@ export const anthropicProvider: AIProvider = {
 				return { text: null, error: 'Unexpected API response (no text found).' };
 			}
 
-			return { text: textBlock.text, error: null };
+			const usage = data.usage
+				? { inputTokens: data.usage.input_tokens ?? 0, outputTokens: data.usage.output_tokens ?? 0 }
+				: undefined;
+
+			return { text: textBlock.text, error: null, usage };
 		} catch (e) {
 			return { text: null, error: `API call error: ${e}` };
 		}

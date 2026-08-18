@@ -1,7 +1,7 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import type MyPlugin from '../main';
-import { listAllIngredients, listUndefinedIngredients } from '../models/listAllIngredients';
+import { listAllIngredients, listUndefinedIngredients, listIngredientsNeedingReview } from '../models/listAllIngredients';
 import { IngredientListDisplay } from '../components/IngredientListDisplay';
 import { navigateTo } from '../navigation';
 import { INGREDIENT_VIEW_TYPE } from './IngredientView';
@@ -10,13 +10,16 @@ import { RECIPE_VIEW_TYPE } from './RecipeView';
 import { NavigableViewState, NavigationEntry, canNavigateBack, closeOrGoBack } from '../navigation';
 import { t } from '../i18n/strings';
 import { LanguageProvider } from '../i18n/LanguageContext';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { generateIngredientsInBulk } from '../models/generateIngredientsInBulk';
 
 export const INGREDIENT_LIST_VIEW_TYPE = 'ingredient-list-view';
 
 type SortKey = 'name' | 'type' | 'shopSection' | 'usedInRecipesCount';
+type ListMode = 'defined' | 'undefined' | 'needsReview';
 
 interface IngredientListViewState extends NavigableViewState {
-	showUndefined?: boolean;
+	mode?: ListMode;
 	searchQuery?: string;
 	selectedTypes?: string[];
 	excludedDietFlags?: string[];
@@ -30,7 +33,7 @@ export class IngredientListView extends ItemView {
 	private root: Root | null = null;
 	private history: NavigationEntry[] = [];
 	private closeAction!: HTMLElement;
-	private showUndefined = false;
+	private mode: ListMode = 'defined';
 	private searchQuery = '';
 	private selectedTypes: Set<string> = new Set();
 	private typeMenuOpen = false;
@@ -39,6 +42,8 @@ export class IngredientListView extends ItemView {
 	private sortKey: SortKey = 'name';
 	private sortDirection: 'asc' | 'desc' = 'asc';
 	private scrollTop = 0;
+	private selectedUndefinedNames: Set<string> = new Set();
+	private isGenerating = false;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -61,7 +66,7 @@ export class IngredientListView extends ItemView {
 
 	async setState(state: IngredientListViewState, result: unknown) {
 		this.history = state.history ?? [];
-		this.showUndefined = state.showUndefined ?? false;
+		this.mode = state.mode ?? 'defined';
 		this.searchQuery = state.searchQuery ?? '';
 		this.selectedTypes = new Set(state.selectedTypes ?? []);
 		this.excludedDietFlags = new Set(state.excludedDietFlags ?? []);
@@ -80,7 +85,7 @@ export class IngredientListView extends ItemView {
 	getState(): IngredientListViewState {
 		return {
 			history: this.history,
-			showUndefined: this.showUndefined,
+			mode: this.mode,
 			searchQuery: this.searchQuery,
 			selectedTypes: Array.from(this.selectedTypes),
 			excludedDietFlags: Array.from(this.excludedDietFlags),
@@ -91,17 +96,14 @@ export class IngredientListView extends ItemView {
 	}
 
 	async onOpen() {
-
-		// We add the close button at top right of the note.
 		this.closeAction = this.addAction('arrow-left', t('ingredientListView.closeAction.close', this.plugin.settings.language), () => {
 			closeOrGoBack(this.leaf, this.history);
-		});		this.closeAction.addClass('header-button');
+		});
+		this.closeAction.addClass('header-button');
 
-		// Create the container and root
 		const container = this.containerEl.children[1] as HTMLElement;
 		this.root = createRoot(container);
 
-		// We store the scroll state
 		container.addEventListener('scroll', () => {
 			this.scrollTop = container.scrollTop;
 		});
@@ -109,8 +111,9 @@ export class IngredientListView extends ItemView {
 		this.render();
 	}
 
-	private toggleShowUndefined(value: boolean) {
-		this.showUndefined = value;
+	private setMode(mode: ListMode) {
+		this.mode = mode;
+		this.selectedUndefinedNames = new Set();
 		this.app.workspace.requestSaveLayout();
 		this.render();
 	}
@@ -146,6 +149,26 @@ export class IngredientListView extends ItemView {
 		this.render();
 	}
 
+	private toggleUndefinedSelected(name: string) {
+		if (this.selectedUndefinedNames.has(name)) {
+			this.selectedUndefinedNames.delete(name);
+		} else {
+			this.selectedUndefinedNames.add(name);
+		}
+		this.render();
+	}
+
+	private toggleSelectAllUndefined() {
+		const undefinedIngredients = listUndefinedIngredients(
+			this.app,
+			this.plugin.settings.ingredientsFolder,
+			this.plugin.settings.recipesFolder
+		);
+		const allSelected = undefinedIngredients.length > 0 && undefinedIngredients.every((e) => this.selectedUndefinedNames.has(e.name));
+		this.selectedUndefinedNames = allSelected ? new Set() : new Set(undefinedIngredients.map((e) => e.name));
+		this.render();
+	}
+
 	handleUndefinedClick(name: string) {
 		navigateTo(this.leaf, NEW_INGREDIENT_VIEW_TYPE, { prefilledName: name });
 	}
@@ -159,10 +182,73 @@ export class IngredientListView extends ItemView {
 		}
 	}
 
+	handleNeedsReviewClick(filePath: string) {
+		navigateTo(this.leaf, INGREDIENT_VIEW_TYPE, { filePath });
+	}
+
+	private handleGenerateWithAI() {
+		const language = this.plugin.settings.language;
+		const names = Array.from(this.selectedUndefinedNames);
+		if (names.length === 0) return;
+
+		new ConfirmModal(
+			this.app,
+			t('ingredientListView.generation.confirm', language).replace('{count}', names.length.toString()),
+			async () => {
+				this.isGenerating = true;
+				this.render();
+
+				const result = await generateIngredientsInBulk(
+					this.app,
+					this.plugin.settings,
+					names,
+					(current, total, name) => {
+						new Notice(t('ingredientListView.generation.progress', language).replace('{current}', current.toString()).replace('{total}', total.toString()) + ` (${name})`);
+					}
+				);
+
+				this.isGenerating = false;
+				this.selectedUndefinedNames = new Set();
+
+				const failedSuffix = result.failedNames.length > 0
+					? t('ingredientListView.generation.failedSuffix', language).replace('{count}', result.failedNames.length.toString())
+					: '';
+				const tokenSuffix = t('ingredientListView.generation.tokenUsage', language)
+					.replace('{input}', result.totalInputTokens.toString())
+					.replace('{output}', result.totalOutputTokens.toString());
+				new Notice(t('ingredientListView.generation.done', language).replace('{success}', result.successCount.toString()).replace('{failedSuffix}', failedSuffix) + tokenSuffix, 10000);
+				if (result.failedNames.length > 0) {
+					console.warn('Ingredient generation failures:', result.failedNames);
+				}
+
+				this.mode = 'needsReview';
+				this.render();
+			},
+			language,
+			t('ingredientListView.generation.confirmButton', language)
+		).open();
+	}
+
 	render() {
 		if (!this.root) return;
+		const language = this.plugin.settings.language;
 
-		if (this.showUndefined) {
+		const definedCount = listAllIngredients(
+			this.app,
+			this.plugin.settings.ingredientsFolder,
+			this.plugin.settings.recipesFolder,
+			this.plugin.settings.ingredientTypes,
+			this.plugin.settings.shopSections
+		).length;
+		const undefinedCount = listUndefinedIngredients(this.app, this.plugin.settings.ingredientsFolder, this.plugin.settings.recipesFolder).length;
+		const needsReviewCount = listIngredientsNeedingReview(
+			this.app,
+			this.plugin.settings.ingredientsFolder,
+			this.plugin.settings.ingredientTypes,
+			this.plugin.settings.shopSections
+		).length;
+
+		if (this.mode === 'undefined') {
 			const undefinedIngredients = listUndefinedIngredients(
 				this.app,
 				this.plugin.settings.ingredientsFolder,
@@ -173,37 +259,96 @@ export class IngredientListView extends ItemView {
 				: undefinedIngredients.filter((n) => n.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
 
 			this.root.render(
-				<LanguageProvider value={this.plugin.settings.language}>
-				<IngredientListDisplay
-					mode="undefined"
-					showUndefined={this.showUndefined}
-					onToggleShowUndefined={(v) => this.toggleShowUndefined(v)}
-					searchQuery={this.searchQuery}
-					onSearchQueryChange={(v) => { this.searchQuery = v; this.render(); }}
-					undefinedIngredients={filtered}
-					onUndefinedClick={(name) => this.handleUndefinedClick(name)}
-					onUndefinedRecipeClick={(name) => this.handleUndefinedRecipeClick(name)}
-					ingredients={[]}
-					allTypes={[]}
-					selectedTypes={this.selectedTypes}
-					onToggleType={() => {}}
-					typeMenuOpen={false}
-					onToggleTypeMenu={() => {}}
-					allDietFlags={[]}
-					excludedDietFlags={this.excludedDietFlags}
-					onToggleDietFlag={() => {}}
-					dietMenuOpen={false}
-					onToggleDietMenu={() => {}}
-					onIngredientClick={() => {}}
-					sortKey={this.sortKey}
-					sortDirection={this.sortDirection}
-					onToggleSort={() => {}}
-				/>
+				<LanguageProvider value={language}>
+					<IngredientListDisplay
+						mode="undefined"
+						onModeChange={(m) => this.setMode(m)}
+						definedCount={definedCount}
+						undefinedCount={undefinedCount}
+						needsReviewCount={needsReviewCount}
+						searchQuery={this.searchQuery}
+						onSearchQueryChange={(v) => { this.searchQuery = v; this.render(); }}
+						undefinedIngredients={filtered}
+						selectedUndefinedNames={this.selectedUndefinedNames}
+						onToggleUndefinedSelected={(name) => this.toggleUndefinedSelected(name)}
+						onToggleSelectAllUndefined={() => this.toggleSelectAllUndefined()}
+						onGenerateWithAI={() => this.handleGenerateWithAI()}
+						isGenerating={this.isGenerating}
+						onUndefinedClick={(name) => this.handleUndefinedClick(name)}
+						onUndefinedRecipeClick={(name) => this.handleUndefinedRecipeClick(name)}
+						ingredients={[]}
+						needsReviewIngredients={[]}
+						onNeedsReviewClick={() => {}}
+						allTypes={[]}
+						selectedTypes={this.selectedTypes}
+						onToggleType={() => {}}
+						typeMenuOpen={false}
+						onToggleTypeMenu={() => {}}
+						allDietFlags={[]}
+						excludedDietFlags={this.excludedDietFlags}
+						onToggleDietFlag={() => {}}
+						dietMenuOpen={false}
+						onToggleDietMenu={() => {}}
+						onIngredientClick={() => {}}
+						sortKey={this.sortKey}
+						sortDirection={this.sortDirection}
+						onToggleSort={() => {}}
+					/>
 				</LanguageProvider>
 			);
 			return;
 		}
 
+		if (this.mode === 'needsReview') {
+			const needsReviewIngredients = listIngredientsNeedingReview(
+				this.app,
+				this.plugin.settings.ingredientsFolder,
+				this.plugin.settings.ingredientTypes,
+				this.plugin.settings.shopSections
+			);
+
+			this.root.render(
+				<LanguageProvider value={language}>
+					<IngredientListDisplay
+						mode="needsReview"
+						onModeChange={(m) => this.setMode(m)}
+						definedCount={definedCount}
+						undefinedCount={undefinedCount}
+						needsReviewCount={needsReviewCount}
+						searchQuery={this.searchQuery}
+						onSearchQueryChange={() => {}}
+						undefinedIngredients={[]}
+						selectedUndefinedNames={new Set()}
+						onToggleUndefinedSelected={() => {}}
+						onToggleSelectAllUndefined={() => {}}
+						onGenerateWithAI={() => {}}
+						isGenerating={false}
+						onUndefinedClick={() => {}}
+						onUndefinedRecipeClick={() => {}}
+						ingredients={[]}
+						needsReviewIngredients={needsReviewIngredients}
+						onNeedsReviewClick={(filePath) => this.handleNeedsReviewClick(filePath)}
+						allTypes={[]}
+						selectedTypes={this.selectedTypes}
+						onToggleType={() => {}}
+						typeMenuOpen={false}
+						onToggleTypeMenu={() => {}}
+						allDietFlags={[]}
+						excludedDietFlags={this.excludedDietFlags}
+						onToggleDietFlag={() => {}}
+						dietMenuOpen={false}
+						onToggleDietMenu={() => {}}
+						onIngredientClick={() => {}}
+						sortKey={this.sortKey}
+						sortDirection={this.sortDirection}
+						onToggleSort={() => {}}
+					/>
+				</LanguageProvider>
+			);
+			return;
+		}
+
+		// mode === 'defined'
 		const allIngredients = listAllIngredients(
 			this.app,
 			this.plugin.settings.ingredientsFolder,
@@ -244,32 +389,41 @@ export class IngredientListView extends ItemView {
 		});
 
 		this.root.render(
-			<LanguageProvider value={this.plugin.settings.language}>
-			<IngredientListDisplay
-				mode="defined"
-				showUndefined={this.showUndefined}
-				onToggleShowUndefined={(v) => this.toggleShowUndefined(v)}
-				searchQuery={this.searchQuery}
-				onSearchQueryChange={(v) => { this.searchQuery = v; this.render(); }}
-				undefinedIngredients={[]}
-				onUndefinedClick={() => {}}
-				onUndefinedRecipeClick={() => {}}
-				ingredients={sorted}
-				allTypes={this.plugin.settings.ingredientTypes}
-				selectedTypes={this.selectedTypes}
-				onToggleType={(t) => this.toggleType(t)}
-				typeMenuOpen={this.typeMenuOpen}
-				onToggleTypeMenu={() => { this.typeMenuOpen = !this.typeMenuOpen; this.render(); }}
-				allDietFlags={this.plugin.settings.dietFlags}
-				excludedDietFlags={this.excludedDietFlags}
-				onToggleDietFlag={(f) => this.toggleDietFlag(f)}
-				dietMenuOpen={this.dietMenuOpen}
-				onToggleDietMenu={() => { this.dietMenuOpen = !this.dietMenuOpen; this.render(); }}
-				onIngredientClick={(filePath) => navigateTo(this.leaf, INGREDIENT_VIEW_TYPE, { filePath })}
-				sortKey={this.sortKey}
-				sortDirection={this.sortDirection}
-				onToggleSort={(key) => this.toggleSort(key)}
-			/>
+			<LanguageProvider value={language}>
+				<IngredientListDisplay
+					mode="defined"
+					onModeChange={(m) => this.setMode(m)}
+					definedCount={definedCount}
+					undefinedCount={undefinedCount}
+					needsReviewCount={needsReviewCount}
+					searchQuery={this.searchQuery}
+					onSearchQueryChange={(v) => { this.searchQuery = v; this.render(); }}
+					undefinedIngredients={[]}
+					selectedUndefinedNames={new Set()}
+					onToggleUndefinedSelected={() => {}}
+					onToggleSelectAllUndefined={() => {}}
+					onGenerateWithAI={() => {}}
+					isGenerating={false}
+					onUndefinedClick={() => {}}
+					onUndefinedRecipeClick={() => {}}
+					ingredients={sorted}
+					needsReviewIngredients={[]}
+					onNeedsReviewClick={() => {}}
+					allTypes={this.plugin.settings.ingredientTypes}
+					selectedTypes={this.selectedTypes}
+					onToggleType={(t) => this.toggleType(t)}
+					typeMenuOpen={this.typeMenuOpen}
+					onToggleTypeMenu={() => { this.typeMenuOpen = !this.typeMenuOpen; this.render(); }}
+					allDietFlags={this.plugin.settings.dietFlags}
+					excludedDietFlags={this.excludedDietFlags}
+					onToggleDietFlag={(f) => this.toggleDietFlag(f)}
+					dietMenuOpen={this.dietMenuOpen}
+					onToggleDietMenu={() => { this.dietMenuOpen = !this.dietMenuOpen; this.render(); }}
+					onIngredientClick={(filePath) => navigateTo(this.leaf, INGREDIENT_VIEW_TYPE, { filePath })}
+					sortKey={this.sortKey}
+					sortDirection={this.sortDirection}
+					onToggleSort={(key) => this.toggleSort(key)}
+				/>
 			</LanguageProvider>
 		);
 	}

@@ -402,6 +402,17 @@ export default class MyPlugin extends Plugin {
 		const loaded = (await this.loadData()) as Partial<MyPluginSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
 
+		// Object.assign only merges top-level keys — if `loaded.aiCredentials`
+// already existed (e.g. saved before a new provider like OpenAI was added),
+// it fully replaces DEFAULT_SETTINGS.aiCredentials rather than merging with
+// it, leaving newer providers' entries missing entirely. Backfill any
+// missing provider entries here so settings.ts never has to null-check.
+		this.settings.aiCredentials = {
+			...DEFAULT_AI_CREDENTIALS,
+			...this.settings.aiCredentials,
+		};
+
+
 		// Migrate old flat anthropicApiKey/anthropicModel fields (pre-multi-provider)
 // into the new aiCredentials structure, so existing users don't lose their
 // saved key on first load after this update.

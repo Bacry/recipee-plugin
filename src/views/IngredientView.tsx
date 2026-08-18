@@ -206,6 +206,35 @@ export class IngredientView extends ItemView {
 		navigateTo(this.leaf, RECIPE_VIEW_TYPE, { filePath: file.path });
 	}
 
+	async handleValidate(): Promise<void> {
+		if (!this.filePath) return;
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		if (!(file instanceof TFile)) return;
+
+		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const { ingredient } = parseIngredientFromFrontmatter(
+			frontmatter,
+			file.basename,
+			this.plugin.settings.ingredientTypes,
+			this.plugin.settings.shopSections,
+		);
+		if (!ingredient) return;
+
+		const values = ingredientToFormValues(ingredient);
+		values.needsReview = false;
+
+		await updateIngredient({
+			app: this.app,
+			ingredientsFolder: this.plugin.settings.ingredientsFolder,
+			file,
+			values,
+		});
+
+		new Notice(t('ingredientView.validated', this.plugin.settings.language).replace('{name}', file.basename));
+		this.render();
+	}
+
+
 	// If we got here by navigating from another view (history is non-empty),
 	// go back to that view. Otherwise (opened fresh, e.g. via command), just
 	// close this leaf — there's nothing in our navigation stack to return to.
@@ -409,6 +438,8 @@ export class IngredientView extends ItemView {
 						nutrition={ingredient.nutrition_per_100g}
 						usedInRecipes={findRecipesUsingIngredient(this.app, this.plugin.settings.recipesFolder, file.basename)}
 						onRecipeClick={(name) => this.handleRecipeClick(name)}
+						needsReview={ingredient.needs_review}
+						onValidate={() => this.handleValidate()}
 					/>
 				</LanguageProvider>
 			)

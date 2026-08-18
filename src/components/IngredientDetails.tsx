@@ -17,6 +17,8 @@ interface IngredientDetailsProps {
 	brand?: string;
 	usedInRecipes: string[];
 	onRecipeClick: (recipeName: string) => void;
+	needsReview?: boolean;
+	onValidate?: () => void;
 }
 
 function fmt(value: number): string {
@@ -37,11 +39,21 @@ export function IngredientDetails({
 									  nutrition,
 									  usedInRecipes,
 									  onRecipeClick,
+									  needsReview,
+									  onValidate,
 								  }: IngredientDetailsProps) {
 	const t = useT();
 
 	return (
 		<div>
+			{needsReview && (
+				<div className="ingredient-validation-warnings">
+					{t('ingredientDetails.needsReview.banner')}{' '}
+					<button type="button" onClick={onValidate} className="standard-button">
+						{t('ingredientDetails.needsReview.validate')}
+					</button>
+				</div>
+			)}
 			<div className="section">
 
 

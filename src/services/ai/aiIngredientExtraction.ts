@@ -16,6 +16,7 @@ export interface IngredientSuggestion {
 export interface IngredientExtractionResult {
 	suggestion: IngredientSuggestion | null;
 	error: string | null;
+	usage?: { inputTokens: number; outputTokens: number };
 }
 
 const SYSTEM_PROMPT_TEMPLATE = (types: string[], shopSections: string[], dietFlags: string[], language: Language) => `Tu aides à remplir la fiche d'un ingrédient de cuisine. Retourne UNIQUEMENT un JSON strict, sans texte avant/après, sans balises markdown :
@@ -84,7 +85,7 @@ export async function suggestIngredientFields(
 			nutrition,
 		};
 
-		return { suggestion, error: null };
+		return { suggestion, error: null, usage: result.usage };
 	} catch (e) {
 		return { suggestion: null, error: `Erreur lors du traitement de la réponse : ${e}` };
 	}

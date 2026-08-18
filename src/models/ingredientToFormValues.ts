@@ -15,6 +15,7 @@ export function ingredientToFormValues(ingredient: Ingredient): IngredientFormVa
 		brand: ingredient.brand ?? '',
 		dietFlags: ingredient.diet_flags?.join(', ') ?? '',
 		juiceYieldMl: ingredient.juice_yield_ml?.toString() ?? '',
+		needsReview: ingredient.needs_review,
 		nutrition: ingredient.nutrition_per_100g,
 	};
 }

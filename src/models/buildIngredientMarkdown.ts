@@ -47,6 +47,9 @@ export function buildIngredientMarkdown(values: IngredientFormValues): string {
 			}
 		}
 	}
+	if (values.needsReview) {
+		lines.push('needs_review: true');
+	}
 
 	lines.push('nutrition_per_100g:');
 	lines.push(`  kcal: ${values.nutrition.kcal}`);

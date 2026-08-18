@@ -6,7 +6,6 @@ import { translateToEnglish } from '../services/translate';
 import { ErrorModal } from './ErrorModal';
 import { sortAlphabetically } from '../models/textNormalize';
 import { suggestIngredientFields } from '../services/ai/aiIngredientExtraction';
-import { AIProviderId } from '../services/ai/types';
 import { forwardRef, useImperativeHandle } from 'react';
 import { useT } from '../i18n/LanguageContext';
 import { useContext } from 'react';
@@ -29,6 +28,7 @@ export interface IngredientFormValues {
 	brand: string;
 	dietFlags: string;
 	juiceYieldMl: string;
+	needsReview?: boolean;
 	nutrition: NutritionPer100g;
 }
 
@@ -229,7 +229,7 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 			return;
 		}
 
-		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, dietFlags: dietFlagsSelected.join(', '), possibleForms, juiceYieldMl, nutrition: parsedNutrition });
+		onSubmit({ name, nameEn, type, shopSection, densityGMl, entityWeightG, brand, dietFlags: dietFlagsSelected.join(', '), possibleForms, juiceYieldMl, needsReview: initialValues?.needsReview, nutrition: parsedNutrition });
 	}
 
 	async function runSearch(query: string) {

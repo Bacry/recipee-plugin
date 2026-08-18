@@ -120,6 +120,17 @@ export function parseIngredientFromFrontmatter(
 		}
 	}
 
+	let needsReview = false;
+	if (frontmatter.needs_review !== undefined && frontmatter.needs_review !== null) {
+		if (typeof frontmatter.needs_review === 'boolean') {
+			needsReview = frontmatter.needs_review;
+		} else if (frontmatter.needs_review === 'true' || frontmatter.needs_review === 'false') {
+			needsReview = frontmatter.needs_review === 'true';
+		} else {
+			errors.push('"needs_review" est présent mais n\'est pas un booléen valide.');
+		}
+	}
+
 	if (errors.length > 0) {
 		return { ingredient: null, errors, warnings };
 	}
@@ -135,6 +146,7 @@ export function parseIngredientFromFrontmatter(
 		possible_forms: possibleForms,
 		diet_flags: dietFlags,
 		juice_yield_ml: juiceYieldMl,
+		needs_review: needsReview,
 		nutrition_per_100g: parsedNutrition,
 	};
 

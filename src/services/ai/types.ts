@@ -1,4 +1,4 @@
-export type AIProviderId = 'anthropic'; // 'openai' etc. added here later
+export type AIProviderId = 'anthropic' | 'openai';
 
 export interface AIModelOption {
 	id: string;
@@ -36,10 +36,21 @@ export const AI_PROVIDERS: AIProviderInfo[] = [
 			{ id: 'claude-opus-4-8', label: 'Claude Opus 4.8 (most capable)' },
 		],
 	},
+	{
+		id: 'openai',
+		label: 'OpenAI (ChatGPT)',
+		apiKeyPlaceholder: 'sk-...',
+		models: [
+			{ id: 'gpt-5.6-luna', label: 'GPT-5.6 Luna (fast, cheap)' },
+			{ id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra (balanced)' },
+			{ id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol (most capable)' },
+		],
+	},
 ];
 
 export const DEFAULT_AI_CREDENTIALS: Record<AIProviderId, AICredentials> = {
 	anthropic: { apiKey: '', model: 'claude-sonnet-5' },
+	openai: { apiKey: '', model: 'gpt-5.6-terra' },
 };
 
 export function getProviderInfo(providerId: AIProviderId): AIProviderInfo | undefined {

@@ -216,6 +216,24 @@ nutrition_per_100g:
 ---
 `,
 	},
+	{
+		relativePath: 'cayenne pepper.md',
+		content: `---
+type: other
+shop_section: pantry
+nutrition_per_100g:
+  kcal: 318
+  lipids: 17.3
+  non_saturated_lipids: 3.3
+  glucids: 56.6
+  sugar: 10.3
+  proteins: 12
+  salt: 0.1
+  fibers: 27.2
+  cholesterol: 0
+---
+`,
+	},
 
 	{
 		relativePath: 'whiskey.md',
@@ -322,7 +340,7 @@ cooked_dates: []
 `,
 	},
 	{
-		relativePath: 'fried Chicken Tenders.md',
+		relativePath: 'fried chicken tenders.md',
 		content: `---
 base_servings: 4
 servings_label: "servings"
@@ -332,6 +350,9 @@ requires_cooking: true
 made_before_tracking: false
 total_weight_g: 620
 frying_oil_name: "vegetable oil"
+variants:
+  - "Original"
+  - "Spicy"
 ingredients:
   - is_section_header: true
     section_title: "For the coating"
@@ -344,29 +365,31 @@ ingredients:
     quantity: 1
     unit: "tsp"
     order: 2
+  - ingredient_name: "cayenne pepper"
+    quantity: 0.5
+    unit: "tsp"
+    variant: "Spicy"
+    order: 3
   - is_section_header: true
     section_title: "For the chicken"
-    order: 3
+    order: 4
   - ingredient_name: "chicken breast"
     quantity: 1
     unit: "lb"
     form: "diced"
     fried: true
-    order: 4
+    order: 5
 instructions: |
   #### Preparation
   1. Cut the chicken breast into strips.
-  2. Season the flour with salt, then coat each piece of chicken.
+  2. Season the flour with salt (and cayenne pepper, for the spicy version), then coat each piece of chicken.
 
   #### Cooking
   1. Heat the vegetable oil in a deep pan to 350°F (175°C).
   2. Fry the chicken in batches until golden and cooked through, about 4-5 minutes per batch.
   3. Drain on paper towels before serving.
-  
 notes: |
-  This is one of the plugin's example recipes — a good one to check out the Frying & Oil Absorption feature on.
-source: |
-  Tuto example base recipe  
+  This is one of the plugin's example recipes — a good one to check out the Frying & Oil Absorption feature on. It also has two variants ("Original" and "Spicy") to try out the Recipe Variants feature.
 tags:
   - "dinner"
   - "fried"

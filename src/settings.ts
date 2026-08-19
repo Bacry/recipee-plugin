@@ -339,42 +339,38 @@ export class SampleSettingTab extends PluginSettingTab {
 							});
 					});
 			}
-
-
-			new Setting(containerEl)
-				.setName(t('settings.usda.heading', language))
-				.setHeading();
-
-			new Setting(containerEl)
-				.setName(t('settings.usdaEnabled.name', language))
-				.setDesc(t('settings.usdaEnabled.desc', language))
-				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.usdaEnabled)
-						.onChange(async (value) => {
-							this.plugin.settings.usdaEnabled = value;
-							await this.plugin.saveSettings();
-							this.display();
-						}),
-				);
-
-			if (this.plugin.settings.usdaEnabled) {
-				new Setting(containerEl)
-					.setName(t('settings.usdaApiKey.name', language))
-					.setDesc(t('settings.usdaApiKey.desc', language))
-					.addText((text) =>
-						text
-							.setPlaceholder(t('settings.usdaApiKey.placeholder', language))
-							.setValue(this.plugin.settings.usdaApiKey)
-							.onChange(async (value) => {
-								this.plugin.settings.usdaApiKey = value;
-								await this.plugin.saveSettings();
-							}),
-					);
-			}
-
-
 		}
 
+		new Setting(containerEl)
+			.setName(t('settings.usda.heading', language))
+			.setHeading();
+
+		new Setting(containerEl)
+			.setName(t('settings.usdaEnabled.name', language))
+			.setDesc(t('settings.usdaEnabled.desc', language))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.usdaEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.usdaEnabled = value;
+						await this.plugin.saveSettings();
+						this.display();
+					}),
+			);
+
+		if (this.plugin.settings.usdaEnabled) {
+			new Setting(containerEl)
+				.setName(t('settings.usdaApiKey.name', language))
+				.setDesc(t('settings.usdaApiKey.desc', language))
+				.addText((text) =>
+					text
+						.setPlaceholder(t('settings.usdaApiKey.placeholder', language))
+						.setValue(this.plugin.settings.usdaApiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.usdaApiKey = value;
+							await this.plugin.saveSettings();
+						}),
+				);
+		}
 	}
 }

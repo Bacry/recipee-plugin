@@ -772,6 +772,8 @@
 	border-radius: 8px;
 	margin-bottom: 1rem;
 	line-height: 1.4;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 /* Forces the same font-size/line-height on both the committed "tokens"

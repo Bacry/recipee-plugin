@@ -10,6 +10,7 @@ import { findUnit, roundQuantityForUnit, convertQuantity, UNITS, Unit, formatRou
 import { useT } from '../i18n/LanguageContext';
 import { useContext } from 'react';
 import { LanguageContext } from '../i18n/LanguageContext';
+import { formatQuantityWithHint } from '../models/formatQuantityWithHint';
 
 interface RecipeDetailsProps {
 	app: App;
@@ -206,6 +207,22 @@ export function RecipeDetails({
 		return options;
 	}
 
+
+	function getIngredientHint(entry: { ingredientName: string; quantity: number | null; unit: string }): string {
+		if (entry.quantity == null) return '';
+		const ingredientData = getIngredientData(entry.ingredientName);
+		if (!ingredientData) return '';
+
+		const originalUnit = entry.unit === '' ? null : findUnit(entry.unit);
+		const displayQuantity = Number(formatScaledQuantity(entry.quantity, entry.unit, factor));
+
+		return formatQuantityWithHint(displayQuantity, entry.unit, {
+			densityGMl: ingredientData.densityGMl,
+			entityWeightG: ingredientData.entityWeightG,
+			juiceYieldMl: ingredientData.juiceYieldMl,
+		}, t).hint;
+	}
+
 	function renderIngredientQuantity(entry: { ingredientName: string; quantity: number | null; unit: string }, index: number) {
 		if (entry.quantity == null) return '';
 
@@ -236,6 +253,13 @@ export function RecipeDetails({
 
 		const options = getAvailableUnitOptions(entry);
 		const quantityText = `${formatRoundedQuantity(displayQuantity)}${displayUnitName}`;
+		const hint = ingredientData
+			? formatQuantityWithHint(displayQuantity, displayUnitName, {
+				densityGMl: ingredientData.densityGMl,
+				entityWeightG: ingredientData.entityWeightG,
+				juiceYieldMl: ingredientData.juiceYieldMl,
+			}, t).hint
+			: '';
 		const suffix = displayUnitName ? ' de' : '';
 
 		if (options.length === 0) {
@@ -243,7 +267,7 @@ export function RecipeDetails({
 		}
 
 		return (
-			<span className="recipe-unit-picker-wrapper">
+			<span key="quantity" className="recipe-unit-picker-wrapper">
 		<span
 			className="recipe-quantity-clickable"
 			onClick={(e) => {
@@ -435,16 +459,17 @@ export function RecipeDetails({
 								>
 									{renderIngredientQuantity(entry, index)}{' '}
 									{showAsLink ? (
-										<a
+<a
 											href="#"
-											className={exists ? '' : 'recipe-ingredient-missing'}
-											onClick={(e) => { e.preventDefault(); onIngredientClick(entry.ingredientName); }}
+										className={exists ? '' : 'recipe-ingredient-missing'}
+										onClick={(e) => { e.preventDefault(); onIngredientClick(entry.ingredientName); }}
 										>
-											{entry.ingredientName}
+									{entry.ingredientName}
 										</a>
-									) : (
+										) : (
 										<span>{entry.ingredientName}</span>
-									)}
+							)}
+						{getIngredientHint(entry) && ` ${getIngredientHint(entry)}`}
 									{entry.complement ? ' (' + entry.complement + ')' : ''}
 									{entry.form ? ' (' + entry.form + ')' : ''}
 									{entry.isFryingOil ? ` ${t('recipeDetails.fryingOilSuffix')}` : ''}

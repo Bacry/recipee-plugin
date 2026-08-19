@@ -32,7 +32,7 @@ function addNutrition(a: NutritionPer100g, b: NutritionPer100g, factor: number):
 // don't matter for a nutrition calculation.
 export function readIngredientForCalc(
 	frontmatter: Record<string, unknown> | undefined
-): { nutritionPer100g: NutritionPer100g; densityGMl?: number; entityWeightG?: number } | null {
+): { nutritionPer100g: NutritionPer100g; densityGMl?: number; entityWeightG?: number; juiceYieldMl?: number } | null {
 	if (!frontmatter) return null;
 
 	const nutritionRaw = frontmatter.nutrition_per_100g;
@@ -50,6 +50,7 @@ export function readIngredientForCalc(
 		nutritionPer100g,
 		densityGMl: typeof frontmatter.density_g_ml === 'number' ? frontmatter.density_g_ml : undefined,
 		entityWeightG: typeof frontmatter.entity_weight_g === 'number' ? frontmatter.entity_weight_g : undefined,
+		juiceYieldMl: typeof frontmatter.juice_yield_ml === 'number' ? frontmatter.juice_yield_ml : undefined,
 	};
 }
 

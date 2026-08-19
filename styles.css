@@ -840,7 +840,7 @@
 }
 
 .shopping-list {
-	padding: 1rem;
+	padding: 0rem;
 }
 
 .shopping-list-section {
@@ -848,11 +848,16 @@
 	margin-bottom: 1.2rem; /* space between one shop section block and the next */
 }
 
-.shopping-list-section h4 {
+.shopping-list-section h4, .shopping-list-recipes-section h4 {
 	margin-bottom: 0.4rem;
 	line-height: 1.1;
 	font-size: 1rem;
 	font-style: italic;
+	font-weight: 400;
+}
+
+
+.shopping-list-section h4 {
 	font-weight: 800;
 	color: green;
 }
@@ -931,6 +936,7 @@
 .shopping-list-recipes-section {
 	margin-bottom: 1rem;
 	padding-bottom: 0.75rem;
+	margin-left: 4rem;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 

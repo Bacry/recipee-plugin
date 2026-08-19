@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { ShoppingListItem, ShoppingListRecipeEntry } from '../models/ShoppingList';
 import { AggregationResult } from '../models/aggregateContributions';
-import { convertQuantity, findUnit, parseQuantityString } from '../models/units';
+import { parseQuantityString } from '../models/units';
 import { useT } from '../i18n/LanguageContext';
 import { UNASSIGNED_SHOP_SECTION } from '../models/resolveShopSection';
+import { formatQuantity, formatQuantityWithHint } from '../models/formatQuantityWithHint';
 
 export interface ResolvedItem {
 	item: ShoppingListItem;
@@ -41,53 +42,18 @@ function groupBySection(resolvedItems: ResolvedItem[]): Map<string, ResolvedItem
 
 	return groups;
 }
-
-function formatQuantity(value: number, unit: string): string {
-	if (unit === '') {
-		return Math.ceil(value).toString();
-	}
-	return Number(value.toFixed(2)).toString();
-}
-
 function formatAggregation(resolved: ResolvedItem, t: (key: string) => string): string {
 	const { aggregation } = resolved;
 	const parts: string[] = [];
 	const hasRealTotal = aggregation.totalQuantity > 0;
 
 	if (hasRealTotal) {
-		const formatted = formatQuantity(aggregation.totalQuantity, aggregation.totalUnit);
-		const withUnit = aggregation.totalUnit ? `${formatted}${aggregation.totalUnit}` : formatted;
-
-		let mainPart = withUnit;
-
-		if (aggregation.totalUnit !== '' && resolved.entityWeightG != null) {
-			const fromUnit = findUnit(aggregation.totalUnit);
-			const entityCount = convertQuantity(aggregation.totalQuantity, fromUnit, null, {
-				densityGMl: resolved.densityGMl,
-				entityWeightG: resolved.entityWeightG,
-			});
-
-			if (entityCount !== null) {
-				mainPart = `~${Math.max(1, Math.ceil(entityCount))} (${withUnit})`;
-			}
-		}
-
-		// If this is a juice-type ingredient (juice_yield_ml known on its
-		// sheet) and the total is expressed in a volume unit, also show the
-		// approximate number of whole fruits — a shopping-time alternative to
-		// buying bottled juice, independent of the entity-count branch above.
-		if (aggregation.totalUnit !== '' && resolved.juiceYieldMl != null) {
-			const fromUnit = findUnit(aggregation.totalUnit);
-			if (fromUnit?.isVolume) {
-				const mlAmount = convertQuantity(aggregation.totalQuantity, fromUnit, findUnit('ml'));
-				if (mlAmount !== null) {
-					const fruitCount = Math.max(1, Math.ceil(mlAmount / resolved.juiceYieldMl));
-					mainPart += ` (≈ ${fruitCount} ${t('shoppingListDisplay.fruitCount').replace('{plural}', fruitCount > 1 ? 's' : '')})`;
-				}
-			}
-		}
-
-		parts.push(mainPart);
+		const { main, hint } = formatQuantityWithHint(aggregation.totalQuantity, aggregation.totalUnit, {
+			densityGMl: resolved.densityGMl,
+			entityWeightG: resolved.entityWeightG,
+			juiceYieldMl: resolved.juiceYieldMl,
+		}, t);
+		parts.push(hint ? `${main} ${hint}` : main);
 	}
 
 	for (const c of aggregation.unmerged) {
@@ -153,8 +119,9 @@ export function ShoppingListDisplay({
 	return (
 		<div>
 			{recipeEntries.length > 0 && (
-				<div className="shopping-list-recipes-section">
-					<h5>{t('shoppingListDisplay.recipesSection.title')}</h5>
+				<div className="shopping-list">
+					<div className="shopping-list-recipes-section">
+					<h4>{t('shoppingListDisplay.recipesSection.title')}</h4>
 					<ul>
 						{recipeEntries.map((entry) => (
 							<li key={entry.id}>
@@ -162,6 +129,7 @@ export function ShoppingListDisplay({
 								<button onClick={() => onRemoveRecipe(entry.id)} title={t('shoppingListDisplay.recipesSection.cancel')}>✕</button>							</li>
 						))}
 					</ul>
+				</div>
 				</div>
 			)}
 

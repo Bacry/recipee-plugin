@@ -43,8 +43,8 @@ const STRINGS: Record<string, StringEntry> = {
 		en: "Shop section *",
 	},
 	'ingredientForm.density': {
-		fr: "Densité (g/mL)",
-		en: "Density (g/mL)",
+		fr: "Densité (g/ml)",
+		en: "Density (g/ml)",
 	},
 	'ingredientForm.entityWeight': {
 		fr: "Poids unitaire (g)",
@@ -450,7 +450,7 @@ const STRINGS: Record<string, StringEntry> = {
 	},
 	'recipeView.shop.alreadyAdded': {
 		fr: "\"{name}\" est déjà dans votre liste de courses. Ajouter quand même ?",
-		en: "\"{name}\" is already on your shopping list. Add it anyway?",
+		en: "\"{name}\" is already on your shop list. Add it anyway?",
 	},
 	'recipeView.shop.addedWithWarnings': {
 		fr: "Ajouté avec {count} avertissement(s) — voir la console.",
@@ -458,7 +458,7 @@ const STRINGS: Record<string, StringEntry> = {
 	},
 	'recipeView.shop.added': {
 		fr: "\"{name}\" ajouté à la liste de courses.",
-		en: "\"{name}\" added to the shopping list.",
+		en: "\"{name}\" added to the shop list.",
 	},
 	'recipeView.cooked.alreadyToday': {
 		fr: "Déjà marquée comme réalisée aujourd'hui.",
@@ -587,7 +587,7 @@ const STRINGS: Record<string, StringEntry> = {
 	},
 	'recipeDetails.shop.title': {
 		fr: "Ajouter à la liste de courses",
-		en: "Add to shopping list",
+		en: "Add to shop list",
 	},
 	'recipeDetails.unitOption.original': {
 		fr: "(original)",
@@ -1122,6 +1122,10 @@ const STRINGS: Record<string, StringEntry> = {
 	},
 
 	// --- src/settings.ts ---
+	'settings.language.heading': {
+		fr: "Langue et Unités",
+		en: "Language and units",
+	},
 	'settings.language.name': {
 		fr: "Langue",
 		en: "Language",
@@ -1130,120 +1134,6 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Langue de l'interface du plugin.",
 		en: "Language of the plugin's interface.",
 	},
-	'settings.ingredientsFolder.name': {
-		fr: "Dossier des ingrédients",
-		en: "Ingredients folder",
-	},
-	'settings.ingredientsFolder.desc': {
-		fr: "Dossier où sont stockées vos fiches ingrédients",
-		en: "Folder where your ingredient notes are stored",
-	},
-	'settings.recipesFolder.name': {
-		fr: "Dossier des recettes",
-		en: "Recipes folder",
-	},
-	'settings.recipesFolder.desc': {
-		fr: "Dossier où sont stockées vos recettes",
-		en: "Folder where your recipe notes are stored",
-	},
-	'settings.recipeTemplatesFolder.name': {
-		fr: "Dossier des modèles de recette",
-		en: "Recipe templates folder",
-	},
-	'settings.recipeTemplatesFolder.desc': {
-		fr: "Dossier racine contenant les modèles de recette (ex: un modèle \"Cocktail\") — utilisé par \"Créer une nouvelle recette depuis un modèle\"",
-		en: "Root-level folder containing recipe templates (e.g. a \"Cocktail\" template) — used by \"Create new recipe from template\"",
-	},
-	'settings.recipeImagesFolder.name': {
-		fr: "Dossier des images de recette",
-		en: "Recipe images folder",
-	},
-	'settings.recipeImagesFolder.desc': {
-		fr: "Dossier où sont stockées les images de recette — indépendant du dossier des recettes, créé automatiquement si absent",
-		en: "Folder where recipe images are stored — independent from the recipes folder, created automatically if missing",
-	},
-	'settings.lists.name': {
-		fr: "Types d'ingrédients, rayons et contraintes alimentaires",
-		en: "Ingredient types, shop sections & diet flags",
-	},
-	'settings.lists.desc': {
-		fr: "Géré via une vue dédiée — lance la commande \"Gérer les listes\" ou clique sur l'icône étiquette dans le ruban.",
-		en: "Managed via a dedicated view — run the \"Manage lists\" command or click the tag icon in the ribbon.",
-	},
-	'settings.specialCategories.name': {
-		fr: "Catégories spéciales",
-		en: "Special categories",
-	},
-	'settings.specialCategories.desc': {
-		fr: "Parmi tes types d'ingrédients existants, lesquels correspondent à une huile (active \"Peut être utilisé pour la friture\") ou un fruit (active \"Rendement en jus\") sur la fiche ingrédient.",
-		en: "Among your existing ingredient types, which ones count as an oil (enables \"Can be used for frying\") or a fruit (enables \"Juice yield\") on the ingredient sheet.",
-	},
-	'settings.oilTypes.label': {
-		fr: "Types \"huile\" (friture)",
-		en: "\"Oil\" types (frying)",
-	},
-	'settings.fruitTypes.label': {
-		fr: "Types \"fruit\" (rendement en jus)",
-		en: "\"Fruit\" types (juice yield)",
-	},
-	'settings.absorptionPercent.name': {
-		fr: "Absorption d'huile par défaut",
-		en: "Default oil absorption",
-	},
-	'settings.absorptionPercent.desc': {
-		fr: "Pourcentage utilisé au départ pour estimer l'huile absorbée par les aliments frits — ajustable ensuite dans chaque recette. La littérature situe l'absorption entre 8% et 25% selon la porosité de l'aliment.",
-		en: "Percentage used initially to estimate the oil absorbed by fried foods — adjustable afterward in each recipe. Literature places absorption between 8% and 25% depending on the food's porosity.",
-	},
-	'settings.usdaApiKey.name': {
-		fr: "Clé API USDA",
-		en: "USDA API key",
-	},
-	'settings.usdaApiKey.desc': {
-		fr: "Clé API gratuite depuis fdc.nal.usda.gov, utilisée pour rechercher les données nutritionnelles",
-		en: "Free API key from fdc.nal.usda.gov, used to search nutritional data",
-	},
-	'settings.usdaApiKey.placeholder': {
-		fr: "Ta clé API",
-		en: "Your API key",
-	},
-	'settings.anthropicModel.name': {
-		fr: "Modèle Anthropic",
-		en: "Anthropic model",
-	},
-	'settings.anthropicModel.desc': {
-		fr: "Modèle utilisé pour l'extraction de texte de recette",
-		en: "Model used for recipe text extraction",
-	},
-	'settings.anthropicModel.haiku': {
-		fr: "Claude Haiku 4.5 (rapide, économique)",
-		en: "Claude Haiku 4.5 (fast, cheap)",
-	},
-	'settings.anthropicModel.sonnet': {
-		fr: "Claude Sonnet 5 (équilibré)",
-		en: "Claude Sonnet 5 (balanced)",
-	},
-	'settings.anthropicModel.opus': {
-		fr: "Claude Opus 4.8 (le plus performant)",
-		en: "Claude Opus 4.8 (most capable)",
-	},
-	'settings.shoppingListPath.name': {
-		fr: "Chemin de la liste de courses",
-		en: "Shopping list note path",
-	},
-	'settings.shoppingListPath.desc': {
-		fr: "Chemin vers la note unique utilisée comme liste de courses",
-		en: "Path to the single note used as your shopping list",
-	},
-	'settings.otherItemsNotePath.name': {
-		fr: "Chemin de la note \"Autres articles\"",
-		en: "Other items note path",
-	},
-	'settings.otherItemsNotePath.desc': {
-		fr: "Note unique listant les noms d'articles (sans fiche ingrédient), utilisée pour enrichir l'autocomplétion au fil du temps",
-		en: "Single note listing item names not corresponding to ingredient notes, used to grow autocomplete over time",
-	},
-
-	// --- src/settings.ts (unit system) ---
 	'settings.unitSystem.name': {
 		fr: "Système d'unités",
 		en: "Unit system",
@@ -1260,14 +1150,192 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "US (oz, cup, lb)",
 		en: "US (oz, cup, lb)",
 	},
+
+
+	'settings.paths.heading': {
+		fr: "Dossiers spéciaux",
+		en: "Special folders",
+	},
+	'settings.ingredientsFolder.name': {
+		fr: "Dossier des ingrédients",
+		en: "Ingredients folder",
+	},
+	'settings.ingredientsFolder.desc': {
+		fr: "Dossier où sont stockées (sous forme de notes) vos ingrédients",
+		en: "Folder where your ingredient notes are stored",
+	},
+	'settings.recipesFolder.name': {
+		fr: "Dossier des recettes",
+		en: "Recipes folder",
+	},
+	'settings.recipesFolder.desc': {
+		fr: "Dossier où sont stockées (sous forme de notes) vos recettes",
+		en: "Folder where your recipe notes are stored",
+	},
+	'settings.recipeTemplatesFolder.name': {
+		fr: "Dossier des modèles de recette",
+		en: "Recipe templates folder",
+	},
+	'settings.recipeTemplatesFolder.desc': {
+		fr: "Dossier où sont stockées (sous forme de notes) vos modèles de recette (ex: le modèle \"Cocktail\") — utilisé par \"Créer une nouvelle recette depuis un modèle\"",
+		en: "Folder containing recipe templates (e.g. the \"Cocktail\" template) — used by \"Create new recipe from template\"",
+	},
+	'settings.recipeImagesFolder.name': {
+		fr: "Dossier des images de recette",
+		en: "Recipe images folder",
+	},
+	'settings.recipeImagesFolder.desc': {
+		fr: "Dossier où sont stockées les images de recette — indépendant du dossier des recettes",
+		en: "Folder where recipe images are stored — independent from the recipes folder",
+	},
+
+	'settings.notes.heading': {
+		fr: "Notes spéciales",
+		en: "Special notes",
+	},
+
+	'settings.shoppingListPath.name': {
+		fr: "Liste de courses",
+		en: "Shopping list",
+	},
+	'settings.shoppingListPath.desc': {
+		fr: "Note utilisée pour la liste de courses",
+		en: "Note used as your shopping list",
+	},
+	'settings.otherItemsNotePath.name': {
+		fr: "Note répertoriant tous les articles (et leur rayon de magasin) autres que les ingrédients",
+		en: "Note listing all items (and their shopping section) other than ingredients",
+	},
+	'settings.otherItemsNotePath.desc': {
+		fr: "Note unique listant les noms d'articles (sans note ingrédient), utilisée pour enrichir l'autocomplétion pour la liste de courses",
+		en: "Single note listing item names not corresponding to ingredient notes, used to grow autocomplete for the shopping list",
+	},
+
+	'settings.specialcategories.heading': {
+		fr: "Catégories spéciales",
+		en: "Special categories",
+	},
+
+	'settings.lists.name': {
+		fr: "Types d'ingrédients, rayons de magasins et contraintes alimentaires",
+		en: "Ingredient types, shop sections & diet flags",
+	},
+	'settings.lists.desc': {
+		fr: "Géré via une vue dédiée — lance la commande \"Manage lists\" ou clique sur l'icône étiquette dans le ruban, à gauche",
+		en: "Managed via a dedicated view — run the \"Manage lists\" command or click the tag icon in the left ribbon.",
+	},
+
+	'settings.oilTypes.name': {
+		fr: "Catégories \"huile\" (potentiellement pour la friture)",
+		en: "\"Oil\" types (potentially for frying)",
+	},
+	'settings.oilTypes.desc': {
+		fr: "Identification des catégories d'ingrédients correspondant à de l'huile pouvant être utilisée pour de la friture",
+		en: "Identification of ingredient categories corresponding to oil that can be used for frying",
+	},
+	'settings.oilTypes.label': {
+		fr: "Catégories \"huile\" (friture)",
+		en: "\"Oil\" categories (frying)",
+	},
+
+	'settings.absorptionPercent.name': {
+		fr: "Pourcentage d'absorption d'huile par défaut par des ingrédients frits",
+		en: "Default oil absorption percentage by fried ingredients",
+	},
+	'settings.absorptionPercent.desc': {
+		fr: "Pourcentage utilisé au départ pour estimer l'huile absorbée par les aliments frits — ajustable ensuite dans chaque recette. La littérature situe l'absorption entre 8% et 25% selon la porosité de l'aliment.",
+		en: "Percentage used initially to estimate the oil absorbed by fried foods — adjustable afterward in each recipe. Literature places absorption between 8% and 25% depending on the food's porosity.",
+	},
+
+	'settings.fruitTypes.name': {
+		fr: "Catégories \"jus de fruit\"",
+		en: "\"Fruit\" categories",
+	},
+	'settings.fruitTypes.desc': {
+		fr: "Identification des catégories \"jus de fruits\" (active le rendement en jus d'un fruit dans le formulaire de saisie d'un ingrédient).",
+		en: "Identification of the categories \"fruit juice\" (enables the juice yield of a fruit in the ingredient entry form).",
+	},
+	'settings.fruitTypes.label': {
+		fr: "Catégories \"jus de fruit\"",
+		en: "\"Fruit juice\" categories",
+	},
+
+
+	'settings.ai.heading': {
+		fr: "Fonctionnalités d'Intelligence artificielle/LLM",
+		en: "AI/LLM features",
+	},
+	'settings.aiEnabled.name': {
+		fr: "Activation des fonctions d'IA/LLM",
+		en: "Enables AI/LLM features.",
+	},
+	'settings.aiEnabled.desc': {
+		fr: "Remplissage automatique du formulaire d'un nouvel ingrédient ou  extraction automatique d'une recette à partir d'un texte libre ou d'une url. Nécessite un compte chez le fournisseur choisi ci-dessous.",
+		en: "Automatically fills in the form for a new ingredient or automatically extracts a recipe from free text or a URL. Requires an account with the provider chosen below."
+	},
+
+	'settings.aiProvider.name': {
+		fr: "Fournisseur IA/LLM",
+		en: "AI/LLM provider",
+	},
+	'settings.aiProvider.desc': {
+		fr: "Pour accéder à ces fonctionnalités, Vous devez avoir un compte (payant) chez l'un de ces fournisseurs.",
+		en: "To access these features, you must have a (paid) account with one of these providers."
+	},
+	'settings.aiApiKey.name': {
+		fr: "Clé API ({provider})",
+		en: "API key ({provider})",
+	},
+	'settings.aiModel.name': {
+		fr: "Modèle",
+		en: "Model",
+	},
+	'settings.anthropicModel.name': {
+		fr: "Modèle Anthropic",
+		en: "Anthropic model",
+	},
+	'settings.anthropicModel.haiku': {
+		fr: "Claude Haiku 4.5 (rapide, économique)",
+		en: "Claude Haiku 4.5 (fast, cheap)",
+	},
+	'settings.anthropicModel.sonnet': {
+		fr: "Claude Sonnet 5 (équilibré)",
+		en: "Claude Sonnet 5 (balanced)",
+	},
+	'settings.anthropicModel.opus': {
+		fr: "Claude Opus 4.8 (le plus performant)",
+		en: "Claude Opus 4.8 (most capable)",
+	},
+
+	'settings.usda.heading': {
+		fr: "Fonctionnalités utilisant le site de l'USDA (US Department of Agriculture)",
+		en: "USDA (US Department of Agriculture) features",
+	},
+
 	'settings.usdaEnabled.name': {
 		fr: "Activer la recherche USDA",
 		en: "Enable USDA search",
 	},
 	'settings.usdaEnabled.desc': {
-		fr: "Affiche la recherche de données nutritionnelles USDA dans le formulaire ingrédient. Désactive-la si tu n'as pas de clé API ou préfères remplir les valeurs manuellement.",
-		en: "Shows the USDA nutritional data search in the ingredient form. Turn this off if you don't have an API key or prefer to fill in values manually.",
+		fr: "Active la recherche de données nutritionnelles USDA dans le formulaire ingrédient. Pour obtenir une clé il faut ouvrir un compte (gratuit).",
+		en: "Activates USDA nutritional data search in the ingredient form. To obtain a key, you must open an account (free)."
 	},
+	'settings.usdaApiKey.name': {
+		fr: "Clé API USDA",
+		en: "USDA API key",
+	},
+	'settings.usdaApiKey.desc': {
+		fr: "Clé API gratuite depuis fdc.nal.usda.gov, utilisée pour rechercher les données nutritionnelles d'un ingrédient",
+		en: "Free API key from fdc.nal.usda.gov, used to search nutritional data of an ingredient",
+	},
+	'settings.usdaApiKey.placeholder': {
+		fr: "Clé API",
+		en: "API key",
+	},
+
+
+
+
 
 	// --- src/main.ts ---
 	'main.templatePicker.emptyRecipe': {
@@ -1480,38 +1548,6 @@ const STRINGS: Record<string, StringEntry> = {
 	},
 
 
-	'settings.aiProvider.name': {
-		fr: "Fournisseur IA",
-		en: "AI provider",
-	},
-	'settings.aiProvider.desc': {
-		fr: "Le service IA utilisé pour aider à l'ajout d'ingrédients et l'extraction de recettes.",
-		en: "The AI service used for ingredient suggestions and recipe extraction.",
-	},
-	'settings.aiEnabled.desc': {
-		fr: "Affiche le bouton \"Suggérer avec l'IA\" dans le formulaire ingrédient, et \"Extraire depuis un texte\" dans le formulaire recette. Nécessite un compte chez le fournisseur choisi ci-dessous.",
-		en: "Shows the \"Suggest with AI\" button in the ingredient form, and \"Extract from text\" in the recipe form. Requires an account with the provider selected below.",
-	},
-	'settings.ai.heading': {
-		fr: "Intelligence artificielle",
-		en: "AI",
-	},
-	'parseRecipeTextModal.urlLabel': {
-		fr: "URL de la recette (optionnel)",
-		en: "Recipe URL (optional)",
-	},
-	'parseRecipeTextModal.or': {
-		fr: "— ou —",
-		en: "— or —",
-	},
-	'settings.aiApiKey.name': {
-		fr: "Clé API ({provider})",
-		en: "API key ({provider})",
-	},
-	'settings.aiModel.name': {
-		fr: "Modèle",
-		en: "Model",
-	},
 
 	'ingredientListDisplay.needsReview': {
 		fr: "À valider",
@@ -1581,6 +1617,15 @@ const STRINGS: Record<string, StringEntry> = {
 		fr: "Récupération de la page...",
 		en: "Fetching page...",
 	},
+
+'parseRecipeTextModal.urlLabel': {
+	fr: "URL de la recette (optionnel)",
+		en: "Recipe URL (optional)",
+},
+'parseRecipeTextModal.or': {
+	fr: "— ou —",
+		en: "— or —",
+},
 };
 
 // Falls back to the French string (then the raw key) if a translation is

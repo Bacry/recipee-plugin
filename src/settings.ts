@@ -69,10 +69,16 @@ export class SampleSettingTab extends PluginSettingTab {
 	}
 	private renderCategoryPicker(
 		containerEl: HTMLElement,
+		name: string,
+		desc: string,
 		label: string,
 		settingsKey: 'oilIngredientTypes' | 'fruitIngredientTypes'
 	): void {
-		const wrapper = containerEl.createDiv({ cls: 'recipe-list-tag-menu-wrapper' });
+		const setting = new Setting(containerEl)
+			.setName(name)
+			.setDesc(desc);
+
+		const wrapper = setting.controlEl.createDiv({ cls: 'recipe-list-tag-menu-wrapper' });
 
 		const updateButtonText = () => {
 			const stored = this.plugin.settings[settingsKey] as string[];
@@ -113,6 +119,10 @@ export class SampleSettingTab extends PluginSettingTab {
 		const language = this.plugin.settings.language;
 
 		new Setting(containerEl)
+			.setName(t('settings.language.heading', language))
+			.setHeading();
+
+		new Setting(containerEl)
 			.setName(t('settings.language.name', language))
 			.setDesc(t('settings.language.desc', language))
 			.addDropdown((dropdown) =>
@@ -140,6 +150,11 @@ export class SampleSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}),
 			);
+
+		new Setting(containerEl)
+			.setName(t('settings.paths.heading', language))
+			.setHeading();
+
 
 		new Setting(containerEl)
 			.setName(t('settings.ingredientsFolder.name', language))
@@ -192,15 +207,49 @@ export class SampleSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName(t('settings.notes.heading', language))
+			.setHeading();
+
+		new Setting(containerEl)
+			.setName(t('settings.shoppingListPath.name', language))
+			.setDesc(t('settings.shoppingListPath.desc', language))
+			.addText((text) =>
+				text
+					.setPlaceholder('Courses.md')
+					.setValue(this.plugin.settings.shoppingListPath)
+					.onChange(async (value) => {
+						this.plugin.settings.shoppingListPath = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+		new Setting(containerEl)
+			.setName(t('settings.otherItemsNotePath.name', language))
+			.setDesc(t('settings.otherItemsNotePath.desc', language))
+			.addText((text) =>
+				text
+					.setPlaceholder('Autres.md')
+					.setValue(this.plugin.settings.otherItemsNotePath)
+					.onChange(async (value) => {
+						this.plugin.settings.otherItemsNotePath = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t('settings.specialcategories.heading', language))
+			.setHeading();
+
+		new Setting(containerEl)
 			.setName(t('settings.lists.name', language))
 			.setDesc(t('settings.lists.desc', language));
 
-		new Setting(containerEl)
-			.setName(t('settings.specialCategories.name', language))
-			.setDesc(t('settings.specialCategories.desc', language))
-			.setHeading();
-
-		this.renderCategoryPicker(containerEl, t('settings.oilTypes.label', language), 'oilIngredientTypes');
+		this.renderCategoryPicker(
+			containerEl,
+			t('settings.oilTypes.name', language),
+			t('settings.oilTypes.desc', language),
+			t('settings.oilTypes.label', language),
+			'oilIngredientTypes'
+		);
 
 		new Setting(containerEl)
 			.setName(t('settings.absorptionPercent.name', language))
@@ -218,36 +267,13 @@ export class SampleSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		this.renderCategoryPicker(containerEl, t('settings.fruitTypes.label', language), 'fruitIngredientTypes');
-
-		new Setting(containerEl)
-			.setName(t('settings.usdaEnabled.name', language))
-			.setDesc(t('settings.usdaEnabled.desc', language))
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.usdaEnabled)
-					.onChange(async (value) => {
-						this.plugin.settings.usdaEnabled = value;
-						await this.plugin.saveSettings();
-						this.display();
-					}),
-			);
-
-		if (this.plugin.settings.usdaEnabled) {
-			new Setting(containerEl)
-				.setName(t('settings.usdaApiKey.name', language))
-				.setDesc(t('settings.usdaApiKey.desc', language))
-				.addText((text) =>
-					text
-						.setPlaceholder(t('settings.usdaApiKey.placeholder', language))
-						.setValue(this.plugin.settings.usdaApiKey)
-						.onChange(async (value) => {
-							this.plugin.settings.usdaApiKey = value;
-							await this.plugin.saveSettings();
-						}),
-				);
-		}
-
+		this.renderCategoryPicker(
+			containerEl,
+			t('settings.fruitTypes.name', language),
+			t('settings.fruitTypes.desc', language),
+			t('settings.fruitTypes.label', language),
+			'fruitIngredientTypes'
+		);
 
 		new Setting(containerEl)
 			.setName(t('settings.ai.heading', language))
@@ -313,31 +339,42 @@ export class SampleSettingTab extends PluginSettingTab {
 							});
 					});
 			}
+
+
+			new Setting(containerEl)
+				.setName(t('settings.usda.heading', language))
+				.setHeading();
+
+			new Setting(containerEl)
+				.setName(t('settings.usdaEnabled.name', language))
+				.setDesc(t('settings.usdaEnabled.desc', language))
+				.addToggle((toggle) =>
+					toggle
+						.setValue(this.plugin.settings.usdaEnabled)
+						.onChange(async (value) => {
+							this.plugin.settings.usdaEnabled = value;
+							await this.plugin.saveSettings();
+							this.display();
+						}),
+				);
+
+			if (this.plugin.settings.usdaEnabled) {
+				new Setting(containerEl)
+					.setName(t('settings.usdaApiKey.name', language))
+					.setDesc(t('settings.usdaApiKey.desc', language))
+					.addText((text) =>
+						text
+							.setPlaceholder(t('settings.usdaApiKey.placeholder', language))
+							.setValue(this.plugin.settings.usdaApiKey)
+							.onChange(async (value) => {
+								this.plugin.settings.usdaApiKey = value;
+								await this.plugin.saveSettings();
+							}),
+					);
+			}
+
+
 		}
 
-		new Setting(containerEl)
-			.setName(t('settings.shoppingListPath.name', language))
-			.setDesc(t('settings.shoppingListPath.desc', language))
-			.addText((text) =>
-				text
-					.setPlaceholder('Courses.md')
-					.setValue(this.plugin.settings.shoppingListPath)
-					.onChange(async (value) => {
-						this.plugin.settings.shoppingListPath = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-		new Setting(containerEl)
-			.setName(t('settings.otherItemsNotePath.name', language))
-			.setDesc(t('settings.otherItemsNotePath.desc', language))
-			.addText((text) =>
-				text
-					.setPlaceholder('Autres.md')
-					.setValue(this.plugin.settings.otherItemsNotePath)
-					.onChange(async (value) => {
-						this.plugin.settings.otherItemsNotePath = value;
-						await this.plugin.saveSettings();
-					}),
-			);
 	}
 }

@@ -13,6 +13,7 @@ import { useT } from '../i18n/LanguageContext';
 import { useContext } from 'react';
 import { LanguageContext } from '../i18n/LanguageContext';
 import { AIProviderId, AICredentials } from '../services/ai/types';
+import { useUnitSystem } from '../models/UnitSystemContext';
 
 export interface RecipeFormHandle {
 	triggerSubmit: () => void;
@@ -120,6 +121,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	const [isBaseRecipe, setIsBaseRecipe] = useState(base.isBaseRecipe);
 	const [fryingOilName, setFryingOilName] = useState(base.fryingOilName);
 	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+	const unitSystem = useUnitSystem();
 
 	function handleSubmit() {
 		// Tag each entry with its position in the unified list before splitting
@@ -298,7 +300,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	function openParseTextModal() {
 		new ParseRecipeTextModal(app, aiProvider, aiCredentials, ingredientsFolder, (values) => {
 			applyExtractedValues(values);
-		}, language).open();
+		}, language, unitSystem).open();
 	}
 
 	useImperativeHandle(ref, () => ({

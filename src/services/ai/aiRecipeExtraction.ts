@@ -4,6 +4,8 @@ import { getProvider } from './getProvider';
 import { AIProviderId, AICredentials } from './types';
 import { t } from '../../i18n/strings';
 import type { Language } from '../../i18n/strings';
+import { findUnit } from '../../models/units';
+import { normalizeParsedQuantity } from '../../models/normalizeQuantityUnit';
 
 // Collects the basenames of every known ingredient file, to help the AI
 // reuse exact existing names when the text refers to something we already
@@ -31,9 +33,10 @@ const SYSTEM_PROMPT = (language: Language) => `Tu extrais une recette de cuisine
 }
 
 Règles :
-- "unit" doit être une unité courte parmi: "g", "kg", "l", "dl", "cl", "ml", "cs", "cc", "dash", ou une chaîne vide "" si l'ingrédient se compte à l'unité (ex: "3 oeufs" → unit: "").
+- "unit" doit être une unité courte parmi: "g", "kg", "l", "dl", "cl", "ml", "cs", "cc", "trait" (système métrique), "cup", "tbsp", "tsp", "oz", "lb", "dash" (système US), ou une chaîne vide "" si l'ingrédient se compte à l'unité (ex: "3 oeufs" → unit: "") ou une chaîne vide "" si l'ingrédient se compte à l'unité (ex: "3 oeufs" → unit: ""). Choisis l'unité qui correspond le mieux au texte source.  
+- "servings_label" doit être UNIQUEMENT le mot décrivant l'unité de portion sans nombre (par exemple l'équivalent de "persons", "servings", "cookies" ou "glasses" DANS LA LANGUE DE SORTIE demandée ci-dessous — jamais en anglais si une autre langue est demandée)".
 - "quantity" est null uniquement si aucune quantité n'est précisée dans le texte (ex: "sel à volonté").
-- "instructions" est un bloc markdown unique, avec des tirets "-" pour les étapes, et éventuellement des titres "####" si le texte distingue plusieurs phases (préparation, cuisson...).
+- "instructions" est un bloc markdown unique, avec des tirets "-" pour les étapes, organisées sous un ou plusieurs titres "####" (ex: "#### Préparation", "#### Cuisson", "#### Dressage" — utilise autant de titres que le texte source distingue de phases). Il DOIT y avoir AU MOINS un titre "####" dans "instructions", même si le texte source ne décrit qu'une seule phase (dans ce cas, un simple "#### Préparation" au-dessus de toutes les étapes suffit).
 - Si un nom d'ingrédient de la liste "ingrédients connus" fournie ci-dessous correspond clairement à un ingrédient du texte, réutilise EXACTEMENT ce nom (même orthographe, mêmes accents) plutôt que d'en inventer un autre.
 - "tags" : 1 à 3 tags pertinents en minuscule (ex: "dessert", "entrée", "plat", "patisserie", "asiatique", "apéro", "tarte", "soupe", "cocktail").
 - Les durées sont en minutes ; laisse à null si non précisées.
@@ -50,7 +53,8 @@ export async function extractRecipeFromText(
 	app: App,
 	ingredientsFolder: string,
 	rawText: string,
-	language: Language = 'fr'
+	language: Language = 'fr',
+	unitSystem: 'metric' | 'us' = 'metric'
 ): Promise<ExtractionResult> {
 	const provider = getProvider(providerId);
 	const knownIngredients = getKnownIngredientNames(app, ingredientsFolder);
@@ -87,13 +91,38 @@ ${rawText}`;
 			isBaseRecipe: false,
 			fryingOilName: '',
 			ingredients: Array.isArray(parsed.ingredients)
-				? parsed.ingredients.map((i: any) => ({
-					ingredientName: i.ingredient_name ?? '',
-					quantity: typeof i.quantity === 'number' ? i.quantity : null,
-					unit: typeof i.unit === 'string' ? i.unit : '',
-					complement: i.complement || undefined,
-					form: i.form || undefined,
-				}))
+				? parsed.ingredients.map((i: any) => {
+					const rawUnit = typeof i.unit === 'string' ? i.unit : '';
+					const rawQuantity = typeof i.quantity === 'number' ? i.quantity : null;
+					const ingredientName = i.ingredient_name ?? '';
+
+					if (rawQuantity === null) {
+						return {
+							ingredientName,
+							quantity: null,
+							unit: rawUnit,
+							complement: i.complement || undefined,
+							form: i.form || undefined,
+						};
+					}
+
+					const parsedUnit = rawUnit === '' ? null : findUnit(rawUnit);
+					const normalized = normalizeParsedQuantity(
+						app,
+						ingredientsFolder,
+						ingredientName,
+						{ quantity: rawQuantity, unit: parsedUnit },
+						unitSystem
+					);
+
+					return {
+						ingredientName,
+						quantity: normalized.quantity,
+						unit: normalized.unit?.name ?? '',
+						complement: i.complement || undefined,
+						form: i.form || undefined,
+					};
+				})
 				: [],
 			baseRecipes: [],
 			instructions: typeof parsed.instructions === 'string' ? parsed.instructions : '',

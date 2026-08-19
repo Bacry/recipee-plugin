@@ -15,6 +15,7 @@ export class ParseRecipeTextModal extends Modal {
 	private providerId: AIProviderId;
 	private credentials: AICredentials;
 	private ingredientsFolder: string;
+	private unitSystem: 'metric' | 'us';
 	private onExtracted: (values: RecipeFormValues) => void;
 	private language: Language;
 	private urlInputEl!: HTMLInputElement;
@@ -28,7 +29,8 @@ export class ParseRecipeTextModal extends Modal {
 		credentials: AICredentials,
 		ingredientsFolder: string,
 		onExtracted: (values: RecipeFormValues) => void,
-		language: Language = 'fr'
+		language: Language = 'fr',
+		unitSystem: 'metric' | 'us' = 'metric'
 	) {
 		super(app);
 		this.providerId = providerId;
@@ -36,6 +38,7 @@ export class ParseRecipeTextModal extends Modal {
 		this.ingredientsFolder = ingredientsFolder;
 		this.onExtracted = onExtracted;
 		this.language = language;
+		this.unitSystem = unitSystem;
 	}
 
 	onOpen() {
@@ -99,7 +102,8 @@ export class ParseRecipeTextModal extends Modal {
 			this.app,
 			this.ingredientsFolder,
 			text,
-			this.language
+			this.language,
+			this.unitSystem
 		);
 
 		if (result.error || !result.values) {

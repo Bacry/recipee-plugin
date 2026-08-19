@@ -18,7 +18,8 @@ export const UNITS: Unit[] = [
 	{ name: 'ml', ratioToBaseline: 1, isVolume: true, roundToNearest: 1 },
 	{ name: 'cs', ratioToBaseline: 15, isVolume: true, roundToNearest: 1, system: 'metric', equivalentUnit: 'tbsp' },
 	{ name: 'cc', ratioToBaseline: 5, isVolume: true, roundToNearest: 1, system: 'metric', equivalentUnit: 'tsp' },
-	{ name: 'dash', ratioToBaseline: 0.9, isVolume: true, roundToNearest: 1, excludeFromPicker: true },
+	{ name: 'dash', ratioToBaseline: 0.9, isVolume: true, roundToNearest: 1, excludeFromPicker: true, system: 'us', equivalentUnit: 'trait' },
+	{ name: 'trait', ratioToBaseline: 0.9, isVolume: true, roundToNearest: 1, excludeFromPicker: true, system: 'metric', equivalentUnit: 'dash' },
 	{ name: 'cup', ratioToBaseline: 236.588, isVolume: true, autoConvertTo: 'cl', roundToNearest: 0.1, system: 'us', equivalentUnit: 'cl' },
 	{ name: 'tbsp', ratioToBaseline: 14.787, isVolume: true, autoConvertTo: 'cs', roundToNearest: 1, system: 'us', equivalentUnit: 'cs' },
 	{ name: 'tsp', ratioToBaseline: 4.929, isVolume: true, autoConvertTo: 'cc', roundToNearest: 1, system: 'us', equivalentUnit: 'cc' },
@@ -126,8 +127,14 @@ export function parseQuantityString(input: string): ParsedQuantity | null {
 
 export function roundQuantityForUnit(quantity: number, unit: Unit | null): number {
 	const step = unit?.roundToNearest ?? 0.01;
-	return Math.round(quantity / step) * step;
+	const rounded = Math.round(quantity / step) * step;
+	// Math.round(x / step) * step can reintroduce floating-point artifacts
+	// (e.g. 5.300000000000001) even though the result is conceptually a
+	// clean rounded value — strip them via a fixed-precision round-trip,
+	// same pattern used elsewhere in the plugin (formatScaledQuantity, etc.).
+	return Number(rounded.toFixed(6));
 }
+
 
 // Formats a quantity for display, capped at 2 decimals and stripped of
 // floating-point noise (e.g. 0.1 * 3 = 0.30000000000000004).

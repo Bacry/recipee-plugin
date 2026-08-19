@@ -12,6 +12,7 @@ import { useContext } from 'react';
 import { LanguageContext } from '../i18n/LanguageContext';
 import { AIProviderId } from '../services/ai/types';
 import { AICredentials } from '../services/ai/types';
+import { parseQuantityString, convertQuantity, findUnit } from '../models/units';
 
 export interface IngredientFormHandle {
 	triggerSubmit: () => void;
@@ -319,6 +320,20 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 		return value.replace(/[^0-9.]/g, '');
 	}
 
+	// Lets the user type a value with a unit (e.g. "10oz", "1lb") in a
+// grams-only field — converts to grams on blur, so typing isn't disrupted
+// mid-keystroke. A bare number with no unit is left untouched, always
+// treated as already being in grams.
+	function handleWeightBlur(value: string, setValue: (v: string) => void) {
+		const parsed = parseQuantityString(value);
+		if (!parsed || !parsed.unit) return; // no unit typed, or unparseable — leave as-is (already grams)
+
+		const converted = convertQuantity(parsed.quantity, parsed.unit, findUnit('g'));
+		if (converted !== null) {
+			setValue(Number(converted.toFixed(2)).toString());
+		}
+	}
+
 	function renderNutritionField(field: keyof NutritionPer100g) {
 		return (
 			<div className="ingredient-form-nutrition-field" key={field}>
@@ -409,7 +424,11 @@ export const IngredientForm = forwardRef<IngredientFormHandle, IngredientFormPro
 
 					<div className="form-field">
 						<label>{t('ingredientForm.entityWeight')}</label>
-						<input value={entityWeightG} onChange={(e) => setEntityWeightG(sanitizeNumericInput(e.target.value))} />
+						<input
+							value={entityWeightG}
+							onChange={(e) => setEntityWeightG(e.target.value)}
+							onBlur={(e) => handleWeightBlur(e.target.value, setEntityWeightG)}
+						/>
 					</div>
 				</div>
 			</section>

@@ -41,7 +41,10 @@ export function RecipeListDisplay({ app, recipes, onRecipeClick }: RecipeListDis
 
 				return (
 					<div key={recipe.filePath} className="recipe-list-row" onClick={() => onRecipeClick(recipe.filePath)}>
-						<div className="recipe-list-cell-name">{upperFirstLetter(recipe.name)}</div>
+						<div className="recipe-list-cell-name">
+							{upperFirstLetter(recipe.name)}
+							{recipe.variants.length > 0 && <em> ({recipe.variants.join(', ')})</em>}
+						</div>
 						<div className="recipe-list-cell-duration">{formatTotalDuration(recipe)}</div>
 						<div className="recipe-list-cell-created">{formatCreatedDate(recipe.createdTime)}</div>
 						<div className="recipe-list-cell-cooked">

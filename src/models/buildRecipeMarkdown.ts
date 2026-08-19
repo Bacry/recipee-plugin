@@ -46,6 +46,9 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			if (entry.order != null) {
 				lines.push(`    order: ${entry.order}`);
 			}
+			if (entry.variant) {
+				lines.push(`    variant: ${escapeYamlString(entry.variant)}`);
+			}
 		}
 	}
 
@@ -59,6 +62,9 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			lines.push(`    unit: ${escapeYamlString(entry.unit)}`);
 			if (entry.order != null) {
 				lines.push(`    order: ${entry.order}`);
+			}
+			if (entry.variant) {
+				lines.push(`    variant: ${escapeYamlString(entry.variant)}`);
 			}
 		}
 	}
@@ -97,6 +103,20 @@ export function buildRecipeMarkdown(recipe: Recipe): string {
 			lines.push(`  - ${escapeYamlString(tag)}`);
 		}
 	}
+	if (recipe.variants.length > 0) {
+		lines.push('variants:');
+		for (const variant of recipe.variants) {
+			lines.push(`  - ${escapeYamlString(variant)}`);
+		}
+	}
+
+	if (Object.keys(recipe.ratings).length > 0) {
+		lines.push('ratings:');
+		for (const [key, value] of Object.entries(recipe.ratings)) {
+			lines.push(`  ${escapeYamlString(key)}: ${value}`);
+		}
+	}
+
 	if (recipe.cookedDates.length > 0) {
 		lines.push('cooked_dates:');
 		for (const date of recipe.cookedDates) {

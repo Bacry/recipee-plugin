@@ -11,6 +11,7 @@ import { useT } from '../i18n/LanguageContext';
 import { useContext } from 'react';
 import { LanguageContext } from '../i18n/LanguageContext';
 import { formatQuantityWithHint } from '../models/formatQuantityWithHint';
+import { RATING_DEFAULT_KEY } from '../models/recipe';
 
 interface RecipeDetailsProps {
 	app: App;
@@ -18,6 +19,9 @@ interface RecipeDetailsProps {
 	ingredientsFolder: string;
 	recipesFolder: string;
 	initialServings?: number;
+	selectedVariant: string | null;
+	onVariantChange: (variant: string | null) => void;
+	onRatingChange: (variantKey: string, rating: number) => void;
 	onIngredientClick: (ingredientName: string) => void;
 	ingredientExists: (ingredientName: string) => boolean;
 	onBaseRecipeClick: (recipeName: string, scaledQuantity: number, unit: string) => void;
@@ -40,7 +44,7 @@ function formatScaledQuantity(quantity: number, unit: string, factor: number): s
 	return Number(rounded.toFixed(4)).toString(); // toFixed(4) puis toString() évite les artefacts de virgule flottante (ex: 2.0000000004) sans réintroduire un arrondi fixe
 }
 
-type UnifiedIngredientEntry = { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string };
+type UnifiedIngredientEntry = { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string; variant?: string };
 
 // Places the frying oil right after a randomly-picked fried ingredient (so it
 // visually lands in the same section as what it's frying), instead of always
@@ -102,6 +106,9 @@ export function RecipeDetails({
 								  ingredientsFolder,
 								  recipesFolder,
 								  initialServings,
+								  selectedVariant,
+								  onVariantChange,
+								  onRatingChange,
 								  onIngredientClick,
 								  ingredientExists,
 								  onBaseRecipeClick,
@@ -129,7 +136,7 @@ export function RecipeDetails({
 	const factor = servings / recipe.baseServings;
 
 	const language = useContext(LanguageContext);
-	const nutritionResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, recipe, undefined, absorptionPercent, language);
+	const nutritionResult = computeRecipeNutrition(app, ingredientsFolder, recipesFolder, recipe, undefined, absorptionPercent, language, selectedVariant);
 
 	const scaledTotal = { ...nutritionResult.totalNutrition };
 	for (const key of Object.keys(scaledTotal) as (keyof typeof scaledTotal)[]) {
@@ -309,6 +316,9 @@ export function RecipeDetails({
 		);
 	}
 
+	const ratingKey = selectedVariant ?? RATING_DEFAULT_KEY;
+	const currentRating = recipe.ratings[ratingKey] ?? 0;
+
 	return (
 		<div>
 			{recipe.tags.length > 0 && (
@@ -318,6 +328,19 @@ export function RecipeDetails({
 					))}
 				</div>
 			)}
+
+			<div className="recipe-rating-row">
+				{[1, 2, 3, 4, 5].map((star) => (
+					<span
+						key={star}
+						className="recipe-rating-star"
+						onClick={() => onRatingChange(ratingKey, star)}
+						title={t('recipeDetails.rating.set')}
+					>
+					{star <= currentRating ? '★' : '☆'}
+				</span>
+				))}
+			</div>
 
 			<div className="recipe-time-source-row section">
 				<div className="recipe-time-source-column">
@@ -366,6 +389,25 @@ export function RecipeDetails({
 			</div>
 
 
+			{recipe.variants.length > 0 && (
+				<div className="section">
+					<div className="section-title">{t('recipeDetails.variants')}</div>
+					<div className="section-content recipe-variants-buttons">
+						{recipe.variants.map((v) => (
+							<button
+								key={v}
+								type="button"
+								onClick={() => onVariantChange(v)}
+								className={v === selectedVariant ? 'recipe-list-pinned-tag recipe-list-pinned-tag-active' : 'recipe-list-pinned-tag'}
+							>
+								{v}
+							</button>
+						))}
+					</div>
+				</div>
+			)}
+
+
 			<div className="section">
 				<div className="section-title">
 					{t('recipeDetails.ingredients')}{' '}
@@ -398,8 +440,8 @@ export function RecipeDetails({
 
 			{(() => {
 				type UnifiedEntry =
-					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string; order?: number }
-					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string; order?: number };
+					| { kind: 'baseRecipe'; recipeName: string; quantity: number; unit: string; order?: number; variant?: string }
+					| { kind: 'ingredient'; ingredientName: string; quantity: number | null; unit: string; form?: string; complement?: string; isFryingOil?: boolean; isSectionHeader?: boolean; sectionTitle?: string; order?: number; variant?: string };
 				const unifiedEntries: UnifiedEntry[] = [
 					...recipe.baseRecipes.map((entry): UnifiedEntry => ({ kind: 'baseRecipe', ...entry })),
 					...ingredientEntriesWithOil,
@@ -407,9 +449,14 @@ export function RecipeDetails({
 				let inSection = false;
 				let sectionSubtitleGap = false;
 
+				const visibleEntries = unifiedEntries.filter((entry) => {
+					if (entry.kind === 'ingredient' && entry.isSectionHeader) return true; // section headers always shown
+					return !entry.variant || entry.variant === selectedVariant;
+				});
+
 				return (
 					<div className="section-content">
-						{unifiedEntries.map((entry, index) => {
+						{visibleEntries.map((entry, index) => {
 							if (entry.kind === 'ingredient' && entry.isSectionHeader) {
 								if ((entry.sectionTitle ?? '').trim() === '') {
 									inSection = false

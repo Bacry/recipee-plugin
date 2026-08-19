@@ -101,6 +101,16 @@ export function parseRecipeFromFrontmatter(
 	}
 
 	let madeBeforeTracking = false;
+	if (frontmatter.made_before_tracking !== undefined && frontmatter.made_before_tracking !== null) {
+		if (typeof frontmatter.made_before_tracking === 'boolean') {
+			madeBeforeTracking = frontmatter.made_before_tracking;
+		} else if (frontmatter.made_before_tracking === 'true' || frontmatter.made_before_tracking === 'false') {
+			madeBeforeTracking = frontmatter.made_before_tracking === 'true';
+		} else {
+			errors.push('"made_before_tracking" est présent mais n\'est pas un booléen valide.');
+		}
+	}
+
 	let isBaseRecipe = false;
 	if (frontmatter.is_base_recipe !== undefined && frontmatter.is_base_recipe !== null) {
 		if (typeof frontmatter.is_base_recipe === 'boolean') {
@@ -118,6 +128,29 @@ export function parseRecipeFromFrontmatter(
 			errors.push('"tags" est présent mais n\'est pas une liste.');
 		} else {
 			tags = frontmatter.tags.filter((t): t is string => typeof t === 'string');
+		}
+	}
+
+	let variants: string[] = [];
+	if (frontmatter.variants !== undefined && frontmatter.variants !== null) {
+		if (!Array.isArray(frontmatter.variants)) {
+			errors.push('"variants" est présent mais n\'est pas une liste.');
+		} else {
+			variants = frontmatter.variants.filter((v): v is string => typeof v === 'string');
+		}
+	}
+
+	let ratings: Record<string, number> = {};
+	if (frontmatter.ratings !== undefined && frontmatter.ratings !== null) {
+		if (typeof frontmatter.ratings !== 'object' || Array.isArray(frontmatter.ratings)) {
+			errors.push('"ratings" est présent mais n\'est pas un objet valide.');
+		} else {
+			const raw = frontmatter.ratings as Record<string, unknown>;
+			for (const [key, value] of Object.entries(raw)) {
+				if (typeof value === 'number' && value >= 1 && value <= 5) {
+					ratings[key] = value;
+				}
+			}
 		}
 	}
 
@@ -184,6 +217,8 @@ export function parseRecipeFromFrontmatter(
 		requiresCooking,
 		madeBeforeTracking,
 		isBaseRecipe,
+		variants,
+		ratings,
 		cookingDurationMin,
 		fryingOilName,
 		ingredients,
@@ -245,6 +280,12 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 		fried = obj.fried;
 	}
 
+	let variant: string | undefined;
+	if (obj.variant !== undefined && obj.variant !== null) {
+		if (typeof obj.variant !== 'string') return null;
+		variant = obj.variant;
+	}
+
 	return {
 		ingredientName: obj.ingredient_name,
 		complement,
@@ -253,6 +294,7 @@ function parseIngredientEntry(raw: unknown): RecipeIngredientEntry | null {
 		form,
 		fried,
 		order: typeof obj.order === 'number' ? obj.order : undefined,
+		variant,
 	};
 }
 
@@ -271,6 +313,7 @@ function parseBaseRecipeEntry(raw: unknown): RecipeBaseRecipeEntry | null {
 		quantity: obj.quantity,
 		unit: obj.unit,
 		order: typeof obj.order === 'number' ? obj.order : undefined,
+		variant: typeof obj.variant === 'string' ? obj.variant : undefined,
 	};
 }
 
@@ -301,6 +344,17 @@ export function parseRecipeTemplate(
 	const tags = Array.isArray(frontmatter?.tags)
 		? frontmatter.tags.filter((t): t is string => typeof t === 'string')
 		: [];
+	const variants = Array.isArray(frontmatter?.variants)
+		? frontmatter.variants.filter((v): v is string => typeof v === 'string')
+		: [];
+	const ratings: Record<string, number> = {};
+	if (frontmatter?.ratings && typeof frontmatter.ratings === 'object' && !Array.isArray(frontmatter.ratings)) {
+		for (const [key, value] of Object.entries(frontmatter.ratings as Record<string, unknown>)) {
+			if (typeof value === 'number' && value >= 1 && value <= 5) {
+				ratings[key] = value;
+			}
+		}
+	}
 	const ingredients = Array.isArray(frontmatter?.ingredients)
 		? frontmatter.ingredients
 			.map((raw: unknown) => {
@@ -327,6 +381,7 @@ export function parseRecipeTemplate(
 					form: typeof obj.form === 'string' ? obj.form : undefined,
 					fried: typeof obj.fried === 'boolean' ? obj.fried : undefined,
 					order: typeof obj.order === 'number' ? obj.order : undefined,
+					variant: typeof obj.variant === 'string' ? obj.variant : undefined,
 				};
 			})
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
@@ -343,6 +398,7 @@ export function parseRecipeTemplate(
 					quantity: obj.quantity,
 					unit: obj.unit,
 					order: typeof obj.order === 'number' ? obj.order : undefined,
+					variant: typeof obj.variant === 'string' ? obj.variant : undefined,
 				};
 			})
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
@@ -358,6 +414,8 @@ export function parseRecipeTemplate(
 		requiresCooking,
 		madeBeforeTracking,
 		isBaseRecipe,
+		variants,
+		ratings,
 		fryingOilName,
 		ingredients,
 		baseRecipes,

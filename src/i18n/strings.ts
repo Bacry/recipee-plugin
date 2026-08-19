@@ -1081,8 +1081,8 @@ const STRINGS: Record<string, StringEntry> = {
 
 	// --- src/components/ConfirmModal.tsx ---
 	'confirmModal.confirm': {
-		fr: "Ajouter quand même",
-		en: "Add anyway",
+		fr: "Ajouter",
+		en: "Add",
 	},
 
 
@@ -1626,6 +1626,38 @@ const STRINGS: Record<string, StringEntry> = {
 	fr: "— ou —",
 		en: "— or —",
 },
+
+
+
+	'recipeForm.addVariant': {
+		fr: "+ variante",
+		en: "+ variant",
+	},
+	'recipeForm.addVariant.title': {
+		fr: "Ajouter une variante",
+		en: "Add a variant",
+	},
+	'recipeForm.addVariant.prompt': {
+		fr: "Nom de la nouvelle variante :",
+		en: "Name of the new variant:",
+	},
+	'recipeForm.variant.common': {
+		fr: "Commune",
+		en: "Common",
+	},
+	'recipeForm.variant.remove.title': {
+		fr: "Retirer cette variante (les ingrédients associés repasseront en commun)",
+		en: "Remove this variant (its ingredients will become common)",
+	},
+	'recipeDetails.variants': {
+		fr: "Variantes",
+		en: "Variants",
+	},
+	'recipeDetails.rating.set': {
+		fr: "Noter cette variante",
+		en: "Rate this variant",
+	},
+
 };
 
 // Falls back to the French string (then the raw key) if a translation is

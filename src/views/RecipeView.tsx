@@ -27,6 +27,7 @@ import { t } from '../i18n/strings';
 import { LanguageProvider } from '../i18n/LanguageContext';
 import { UnitSystemProvider } from '../models/UnitSystemContext';
 import { findRecipesUsingBaseRecipe } from '../models/findRecipesUsingBaseRecipe';
+import { RATING_DEFAULT_KEY } from '../models/recipe';
 
 
 export const RECIPE_VIEW_TYPE = 'recipe-view';
@@ -50,6 +51,7 @@ export class RecipeView extends ItemView {
 	private saveAction!: HTMLElement;
 	private formRef = createRef<RecipeFormHandle>();
 	private deleteAction!: HTMLElement;
+	private selectedVariant: string | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
@@ -70,12 +72,47 @@ export class RecipeView extends ItemView {
 		const file = this.app.vault.getAbstractFileByPath(this.filePath);
 		const name = file instanceof TFile ? upperFirstLetter(file.basename) : t('recipeView.title.generic', language);
 
-		return this.isEditing ? t('recipeView.title.editingNamed', language).replace('{name}', name) : name;
+		if (this.isEditing) {
+			return t('recipeView.title.editingNamed', language).replace('{name}', name);
+		}
+
+		if (file instanceof TFile && this.selectedVariant) {
+			return `${name} (${this.selectedVariant})`;
+		}
+
+		return name;
 	}
 
 	private updateTitle(): void {
-		this.titleEl.setText(this.getDisplayText());
+		const language = this.plugin.settings.language;
+		this.titleEl.empty();
+
+		if (!this.filePath) {
+			this.titleEl.setText(this.getDisplayText());
+			this.leaf.updateHeader();
+			return;
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		const name = file instanceof TFile ? upperFirstLetter(file.basename) : t('recipeView.title.generic', language);
+
+		if (this.isEditing) {
+			this.titleEl.setText(t('recipeView.title.editingNamed', language).replace('{name}', name));
+			this.leaf.updateHeader();
+			return;
+		}
+
+		this.titleEl.createSpan({ text: name });
+		if (file instanceof TFile && this.selectedVariant) {
+			this.titleEl.createEl('em', { text: ` (${this.selectedVariant})` });
+		}
 		this.leaf.updateHeader();
+	}
+
+	handleVariantChange(variant: string | null) {
+		this.selectedVariant = variant;
+		this.updateTitle();
+		this.render();
 	}
 
 	private updateSaveButtonVisibility(): void {
@@ -124,6 +161,7 @@ export class RecipeView extends ItemView {
 		this.initialServings = state.initialServings;
 		this.readOnly = state.readOnly ?? false;
 		this.history = state.history ?? [];
+		this.selectedVariant = null; // re-derived from the recipe's first variant on next render
 		this.updateModifyButton();
 		this.updateModifyButton();
 		this.updateCloseAction();
@@ -277,7 +315,8 @@ export class RecipeView extends ItemView {
 			this.plugin.settings.otherItemsNotePath,
 			recipe,
 			servings,
-			this.plugin.settings.language
+			this.plugin.settings.language,
+			this.selectedVariant
 		);
 
 		const language = this.plugin.settings.language;
@@ -369,6 +408,19 @@ export class RecipeView extends ItemView {
 		await this.app.vault.modify(file, buildRecipeMarkdown(updatedRecipe));
 	}
 
+	async handleRatingChange(variantKey: string, rating: number) {
+		if (!this.filePath) return;
+		const file = this.app.vault.getAbstractFileByPath(this.filePath);
+		if (!(file instanceof TFile)) return;
+
+		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const { recipe } = parseRecipeFromFrontmatter(frontmatter, file.basename);
+		if (!recipe) return;
+
+		const updatedRecipe = { ...recipe, ratings: { ...recipe.ratings, [variantKey]: rating } };
+		await this.app.vault.modify(file, buildRecipeMarkdown(updatedRecipe));
+	}
+
 	// Called when the inline edit form is submitted: validates, moves the
 	// file if its name/subfolder changed, then overwrites its content.
 	async handleSave(values: RecipeFormValues) {
@@ -388,8 +440,7 @@ export class RecipeView extends ItemView {
 		// formValuesToRecipe's empty default silently wipe it out.
 		const existingFrontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 		const { recipe: existingRecipe } = parseRecipeFromFrontmatter(existingFrontmatter, file.basename);
-		const recipeWithHistory = { ...recipe!, cookedDates: existingRecipe?.cookedDates ?? [] };
-
+		const recipeWithHistory = { ...recipe!, cookedDates: existingRecipe?.cookedDates ?? [], ratings: existingRecipe?.ratings ?? {} };
 		try {
 			const updatedFile = await updateRecipe({
 				app: this.app,
@@ -441,6 +492,11 @@ export class RecipeView extends ItemView {
 
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
 		const { recipe, errors, warnings } = parseRecipeFromFrontmatter(frontmatter, file.basename);
+
+		if (recipe && this.selectedVariant === null && recipe.variants.length > 0) {
+			this.selectedVariant = recipe.variants[0];
+			this.updateTitle();
+		}
 
 		if (errors.length > 0) {
 			this.root.render(
@@ -498,6 +554,9 @@ export class RecipeView extends ItemView {
 						ingredientsFolder={this.plugin.settings.ingredientsFolder}
 						recipesFolder={this.plugin.settings.recipesFolder}
 						initialServings={this.initialServings}
+						selectedVariant={this.selectedVariant}
+						onVariantChange={(v) => this.handleVariantChange(v)}
+						onRatingChange={(key, value) => this.handleRatingChange(key, value)}
 						onIngredientClick={(name) => this.handleIngredientClick(name)}
 						ingredientExists={(name) => this.ingredientExists(name)}
 						onBaseRecipeClick={(name, qty, unit) => this.handleBaseRecipeClick(name, qty, unit)}

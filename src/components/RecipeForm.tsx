@@ -14,6 +14,7 @@ import { useContext } from 'react';
 import { LanguageContext } from '../i18n/LanguageContext';
 import { AIProviderId, AICredentials } from '../services/ai/types';
 import { useUnitSystem } from '../models/UnitSystemContext';
+import { PromptModal } from './PromptModal';
 
 export interface RecipeFormHandle {
 	triggerSubmit: () => void;
@@ -28,6 +29,7 @@ export interface RecipeFormValues {
 	requiresCooking: boolean;
 	madeBeforeTracking: boolean;
 	isBaseRecipe: boolean;
+	variants: string[];
 	fryingOilName: string;
 	ingredients: RecipeIngredientEntry[];
 	baseRecipes: RecipeBaseRecipeEntry[];
@@ -64,6 +66,7 @@ function emptyValues(): RecipeFormValues {
 		requiresCooking: false,
 		madeBeforeTracking: false,
 		isBaseRecipe: false,
+		variants: [],
 		ingredients: [],
 		baseRecipes: [],
 		instructions: '',
@@ -121,6 +124,8 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 	const [isBaseRecipe, setIsBaseRecipe] = useState(base.isBaseRecipe);
 	const [fryingOilName, setFryingOilName] = useState(base.fryingOilName);
 	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+	const [variants, setVariants] = useState<string[]>(base.variants);
+
 	const unitSystem = useUnitSystem();
 
 	function handleSubmit() {
@@ -146,6 +151,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 			requiresCooking,
 			madeBeforeTracking,
 			isBaseRecipe,
+			variants,
 			ingredients,
 			baseRecipes,
 			instructions,
@@ -231,6 +237,32 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		);
 	}
 
+	function addVariant() {
+		new PromptModal(app, t('recipeForm.addVariant.prompt'), (value) => {
+			const trimmed = value.trim();
+			if (trimmed === '' || variants.includes(trimmed)) return;
+			setVariants((prev) => [...prev, trimmed]);
+		}, language).open();
+	}
+
+	function removeVariant(variantName: string) {
+		setVariants((prev) => prev.filter((v) => v !== variantName));
+		// Any entry assigned to the removed variant becomes common again,
+		// rather than being deleted or left pointing at a variant that no
+		// longer exists.
+		setEntries((prev) =>
+			prev.map((entry) => (entry.variant === variantName ? { ...entry, variant: undefined } : entry))
+		);
+	}
+
+	function setEntryVariant(index: number, variantName: string) {
+		setEntries((prev) =>
+			prev.map((entry, i) =>
+				i === index ? { ...entry, variant: variantName === '' ? undefined : variantName } : entry
+			)
+		);
+	}
+
 	async function handleImageUpload(file: File) {
 		const buffer = await file.arrayBuffer();
 		const folder = recipeImagesFolder;
@@ -287,6 +319,7 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 		setRequiresCooking(values.requiresCooking);
 		setMadeBeforeTracking(values.madeBeforeTracking);
 		setIsBaseRecipe(values.isBaseRecipe);
+		setVariants(values.variants);
 		setEntries(toEntries(values.ingredients, values.baseRecipes));
 		setInstructions(values.instructions);
 		setNotes(values.notes);
@@ -535,6 +568,18 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 										)}
 
 										<div className="recipe-ingredient-actions">
+											{!(entry.kind === 'ingredient' && entry.isSectionHeader) && variants.length > 0 && (
+												<select
+													value={entry.variant ?? ''}
+													onChange={(e) => setEntryVariant(index, e.target.value)}
+													className="recipe-ingredient-variant-select"
+												>
+													<option value="">{t('recipeForm.variant.common')}</option>
+													{variants.map((v) => (
+														<option key={v} value={v}>{v}</option>
+													))}
+												</select>
+											)}
 											{entry.kind === 'ingredient' && !entry.isSectionHeader && fryingOilName && (
 												<button
 													type="button"
@@ -566,7 +611,28 @@ export const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(function
 					<button type="button" onClick={addSection} className="recipe-add-section-button" title={t('recipeForm.addSection.title')}>
 						{t('recipeForm.addSection')}
 					</button>
+					<button type="button" onClick={addVariant} className="recipe-add-section-button" title={t('recipeForm.addVariant.title')}>
+						{t('recipeForm.addVariant')}
+					</button>
 				</div>
+
+				{variants.length > 0 && (
+					<div className="recipe-variants-list">
+						{variants.map((v) => (
+							<span key={v} className="recipe-list-pinned-tag">
+				{v}
+								<button
+									type="button"
+									onClick={() => removeVariant(v)}
+									title={t('recipeForm.variant.remove.title')}
+									className="recipe-ingredient-remove"
+								>
+					✕
+				</button>
+			</span>
+						))}
+					</div>
+				)}
 				<div className="recipe-frying-oil-row">
 					<label>{t('recipeForm.fryingOil')}</label>
 					<select value={fryingOilName} onChange={(e) => setFryingOilName(e.target.value)}>

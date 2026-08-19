@@ -15,6 +15,7 @@ export interface RecipeSummary {
 	cookedCount: number;
 	madeBeforeTracking: boolean;
 	createdTime: number; // TFile.stat.ctime, ms since epoch
+	variants: string[];
 }
 
 // Lists every recipe in the vault (recursively, any subfolder under
@@ -43,6 +44,7 @@ export function listAllRecipes(app: App, recipesFolder: string): RecipeSummary[]
 			cookedCount: recipe.cookedDates.length,
 			madeBeforeTracking: recipe.madeBeforeTracking,
 			createdTime: file.stat.ctime,
+			variants: recipe.variants,
 		});
 	}
 

@@ -24,7 +24,8 @@ export async function addRecipeToShoppingList(
 	otherItemsNotePath: string,
 	recipe: Recipe,
 	servings: number,
-	language: Language = 'fr'
+	language: Language = 'fr',
+	selectedVariant: string | null = null
 ): Promise<AddRecipeResult> {
 	const file = app.vault.getAbstractFileByPath(shoppingListPath);
 	if (!(file instanceof TFile)) {
@@ -33,7 +34,7 @@ export async function addRecipeToShoppingList(
 
 	const scaleFactor = recipe.baseServings > 0 ? servings / recipe.baseServings : 1;
 	const { ingredients: flattened, warnings } = flattenRecipeIngredients(
-		app, ingredientsFolder, recipesFolder, recipe, scaleFactor, language
+		app, ingredientsFolder, recipesFolder, recipe, scaleFactor, language, selectedVariant
 	);
 
 	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;

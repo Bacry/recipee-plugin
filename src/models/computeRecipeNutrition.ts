@@ -116,7 +116,8 @@ export function computeRecipeNutrition(
 	recipe: Recipe,
 	visiting: Set<string> = new Set(),
 	fryingAbsorptionPercent: number = 15,
-	language: Language = 'fr'
+	language: Language = 'fr',
+	selectedVariant: string | null = null
 ): RecipeNutritionResult {
 	const warnings: string[] = [];
 	let totalNutrition = emptyNutrition();
@@ -125,6 +126,10 @@ export function computeRecipeNutrition(
 	for (const entry of recipe.ingredients) {
 		if (entry.isSectionHeader) continue;
 		if (entry.quantity == null) continue;
+		// Skip entries belonging to a different variant than the one
+		// selected — entries with no variant (undefined) are always
+		// common and always counted, regardless of selection.
+		if (entry.variant && entry.variant !== selectedVariant) continue;
 
 		const file = findIngredientFileByName(app, ingredientsFolder, entry.ingredientName)
 		if (!(file instanceof TFile)) {
@@ -150,6 +155,8 @@ export function computeRecipeNutrition(
 	}
 
 	for (const entry of recipe.baseRecipes) {
+		if (entry.variant && entry.variant !== selectedVariant) continue;
+
 		if (visiting.has(entry.recipeName)) {
 			warnings.push(t('computeRecipeNutrition.circularReference', language).replace('{name}', entry.recipeName));
 			continue;
@@ -195,6 +202,7 @@ export function computeRecipeNutrition(
 		let friedWeightG = 0;
 		for (const entry of recipe.ingredients) {
 			if (!entry.fried || entry.quantity == null) continue;
+			if (entry.variant && entry.variant !== selectedVariant) continue;
 			const grams = convertIngredientEntryToGrams(app, ingredientsFolder, entry);
 			if (grams !== null) friedWeightG += grams;
 		}
